@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/nextone";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://NEXTONE:Next678@nextone.1frrsde.mongodb.net/nextone?retryWrites=true&w=majority";
 
 /**
  * Global is used here to maintain a cached connection across hot reloads

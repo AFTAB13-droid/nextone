@@ -1,0 +1,90 @@
+"use client";
+
+import React from "react";
+import { MessageSquare, AlertCircle, ArrowUpRight, Clock } from "lucide-react";
+import { IQuery } from "@/lib/types";
+import { StatusBadge, PriorityBadge } from "@/components/ui/Badge";
+import Image from "next/image";
+
+interface QueryCardProps {
+  query: IQuery;
+  onClick: (query: IQuery) => void;
+}
+
+export function QueryCard({ query, onClick }: QueryCardProps) {
+  const isEscalated = Boolean(query.escalatedTo);
+
+  return (
+    <div
+      onClick={() => onClick(query)}
+      className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group flex flex-col justify-between"
+    >
+      <div>
+        <div className="flex items-center justify-between gap-2 mb-2.5">
+          <div className="flex items-center gap-2">
+            <StatusBadge status={query.status} />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+              {query.category}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            {isEscalated && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-100 text-purple-800 text-[10px] font-bold border border-purple-200">
+                <ArrowUpRight className="w-3 h-3" />
+                Escalated to Admin
+              </span>
+            )}
+            <PriorityBadge priority={query.priority} />
+          </div>
+        </div>
+
+        <h3 className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2">
+          {query.title}
+        </h3>
+
+        <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+          {query.description}
+        </p>
+      </div>
+
+      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100 border border-slate-200">
+            <Image
+              src={
+                query.raisedBy?.avatar ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                  query.raisedBy?.name || "User"
+                )}&background=6366f1&color=fff`
+              }
+              alt={query.raisedBy?.name || "User"}
+              width={24}
+              height={24}
+              className="object-cover"
+              unoptimized
+            />
+          </div>
+          <span className="text-[11px] font-medium text-slate-700">
+            {query.raisedBy?.name}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1 text-[11px] text-slate-400">
+            <MessageSquare className="w-3.5 h-3.5" />
+            {query.responses?.length || 0}
+          </span>
+          <span className="text-[10px] text-slate-400">
+            {new Date(query.createdAt).toLocaleDateString([], {
+              month: "short",
+              day: "numeric",
+            })}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default QueryCard;

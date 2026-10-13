@@ -20,16 +20,47 @@ export async function GET() {
 export async function PATCH(req: Request) {
   try {
     const actor = await requireAuth();
-    const { notificationId } = await req.json();
+    const { notificationId, isRead = true } = await req.json();
 
     if (!notificationId) {
       return NextResponse.json({ error: "notificationId is required" }, { status: 400 });
     }
 
-    const success = await NotificationService.markAsRead(notificationId, actor.userId);
+    const success = await NotificationService.setNotificationReadStatus(
+      notificationId,
+      actor.userId,
+      Boolean(isRead)
+    );
     return NextResponse.json({ success });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Error updating notification";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const actor = await requireAuth();
+    const { searchParams } = new URL(req.url);
+    let notificationId = searchParams.get("id");
+
+    if (!notificationId) {
+      try {
+        const body = await req.json();
+        notificationId = body.notificationId;
+      } catch {
+        // body might be empty if using query params
+      }
+    }
+
+    if (!notificationId) {
+      return NextResponse.json({ error: "notificationId is required" }, { status: 400 });
+    }
+
+    const success = await NotificationService.deleteNotification(notificationId, actor.userId);
+    return NextResponse.json({ success });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Error deleting notification";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

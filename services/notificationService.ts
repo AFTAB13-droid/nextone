@@ -56,6 +56,31 @@ export class NotificationService {
     );
     return result.modifiedCount > 0;
   }
+
+  static async setNotificationReadStatus(
+    notificationId: string,
+    userId: string,
+    isRead: boolean
+  ): Promise<boolean> {
+    await connectDB();
+    const result = await Notification.updateOne(
+      { _id: notificationId, recipient: userId },
+      { $set: { isRead } }
+    );
+    return result.modifiedCount > 0;
+  }
+
+  static async deleteNotification(notificationId: string, userId: string): Promise<boolean> {
+    await connectDB();
+    const result = await Notification.deleteOne({ _id: notificationId, recipient: userId });
+    return result.deletedCount > 0;
+  }
+
+  static async deleteAllNotifications(userId: string): Promise<boolean> {
+    await connectDB();
+    const result = await Notification.deleteMany({ recipient: userId });
+    return result.deletedCount > 0;
+  }
 }
 
 export default NotificationService;

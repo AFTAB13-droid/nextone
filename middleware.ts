@@ -25,6 +25,7 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get("nextone_token")?.value;
 
   const isAuthRoute = pathname === "/login";
+  const isProfileRoute = pathname.startsWith("/profile");
   const isAdminRoute = pathname.startsWith("/admin");
   const isManagerRoute = pathname.startsWith("/manager");
   const isEmployeeRoute = pathname.startsWith("/employee");
@@ -49,11 +50,15 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protected routes check
-  if (isAdminRoute || isManagerRoute || isEmployeeRoute) {
+  if (isProfileRoute || isAdminRoute || isManagerRoute || isEmployeeRoute) {
     if (!session) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("from", pathname);
       return NextResponse.redirect(loginUrl);
+    }
+
+    if (isProfileRoute) {
+      return NextResponse.next();
     }
 
     // Role-based authorization
@@ -80,6 +85,7 @@ export const config = {
   matcher: [
     "/",
     "/login",
+    "/profile/:path*",
     "/admin/:path*",
     "/manager/:path*",
     "/employee/:path*",

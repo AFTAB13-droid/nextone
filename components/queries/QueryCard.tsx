@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
-import { MessageSquare, AlertCircle, ArrowUpRight, Clock } from "lucide-react";
+import { MessageSquare, AlertCircle, ArrowUpRight, Clock, HelpCircle, Tag } from "lucide-react";
 import { IQuery } from "@/lib/types";
 import { StatusBadge, PriorityBadge } from "@/components/ui/Badge";
+import { getUserAvatar } from "@/lib/avatarHelper";
 import Image from "next/image";
 
 interface QueryCardProps {
@@ -17,23 +18,36 @@ export function QueryCard({ query, onClick }: QueryCardProps) {
   return (
     <div
       onClick={() => onClick(query)}
-      className="glass-card rounded-2xl p-5 border border-slate-200/90 shadow-2xs hover:shadow-xl hover:-translate-y-1 hover:border-indigo-300 transition-all duration-300 cursor-pointer group flex flex-col justify-between relative overflow-hidden"
+      className="rounded-[26px] bg-white p-5 sm:p-6 border border-slate-200/90 shadow-2xs hover:shadow-xl hover:-translate-y-1 hover:border-indigo-300 transition-all duration-300 cursor-pointer group flex flex-col justify-between relative overflow-hidden"
     >
+      {/* Top accent line */}
+      <div
+        className={`absolute top-0 inset-x-0 h-1.5 ${
+          query.status === "resolved"
+            ? "bg-teal-500"
+            : query.priority === "urgent"
+            ? "bg-rose-500"
+            : isEscalated
+            ? "bg-purple-600"
+            : "bg-indigo-600"
+        }`}
+      />
+
       <div>
-        <div className="flex items-center justify-between gap-2 mb-2.5">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] font-mono font-black bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-lg border border-slate-200">
               {query.queryId || `#${query._id.slice(-6)}`}
             </span>
             <StatusBadge status={query.status} />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg">
               {query.category}
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
             {isEscalated && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] font-bold border border-purple-200">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-xl bg-purple-100 text-purple-800 text-[10px] font-black border border-purple-200">
                 <ArrowUpRight className="w-3 h-3" />
                 Escalated
               </span>
@@ -42,44 +56,44 @@ export function QueryCard({ query, onClick }: QueryCardProps) {
           </div>
         </div>
 
-        <h3 className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">
+        <h3 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">
           {query.title}
         </h3>
 
-        <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed font-medium">
+        <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed font-medium">
           {query.description}
         </p>
       </div>
 
-      <div className="mt-4 pt-3 border-t border-slate-100/90 flex items-center justify-between text-xs text-slate-500">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shadow-2xs">
+      <div className="mt-5 pt-3.5 border-t border-slate-100/90 flex items-center justify-between text-xs text-slate-500">
+        <div className="flex items-center gap-2.5 min-w-0 pr-2">
+          <div className="w-7 h-7 rounded-full overflow-hidden bg-slate-100 ring-1 ring-slate-200 shadow-2xs shrink-0">
             <Image
-              src={
-                query.raisedBy?.avatar ||
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                  query.raisedBy?.name || "User"
-                )}&background=6366f1&color=fff`
-              }
+              src={getUserAvatar(query.raisedBy)}
               alt={query.raisedBy?.name || "User"}
-              width={24}
-              height={24}
-              className="object-cover"
+              width={28}
+              height={28}
+              className="object-cover w-full h-full"
               unoptimized
             />
           </div>
-          <span className="text-[11px] font-bold text-slate-700 truncate max-w-[110px]">
-            {query.raisedBy?.name}
-          </span>
+          <div className="min-w-0">
+            <span className="text-xs font-bold text-slate-800 truncate block">
+              {query.raisedBy?.name || "Anonymous"}
+            </span>
+            <span className="text-[10px] text-slate-400 capitalize block">
+              {query.raisedBy?.role || "Associate"}
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1 text-[11px] text-slate-400 font-medium">
-            <MessageSquare className="w-3.5 h-3.5" />
-            {query.responses?.length || 0}
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="flex items-center gap-1 text-[11px] text-slate-500 font-bold bg-slate-100 px-2.5 py-1 rounded-xl">
+            <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />
+            <span>{query.responses?.length || 0}</span>
           </span>
           <span className="text-[10px] text-slate-400 font-mono">
-            {new Date(query.createdAt).toLocaleDateString([], {
+            {new Date(query.createdAt).toLocaleDateString("en-IN", {
               month: "short",
               day: "numeric",
             })}

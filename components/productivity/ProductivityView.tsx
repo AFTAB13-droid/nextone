@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   FileText,
   CheckSquare,
@@ -17,37 +17,55 @@ import {
   Clock,
   X,
   Palette,
+  Image as ImageIcon,
+  Paperclip,
+  Maximize2,
+  Calendar,
+  Layers,
+  ArrowRight,
+  Upload,
 } from "lucide-react";
 import { INote, ITodo, AuthSession } from "@/lib/types";
+import Image from "next/image";
 
 interface ProductivityViewProps {
   currentUser: AuthSession;
 }
 
 export function ProductivityView({ currentUser }: ProductivityViewProps) {
-  // Tabs: all, notes, todos
-  const [activeTab, setActiveTab] = useState<"both" | "notes" | "todos">("both");
+  // Tabs: notes, todos, both
+  const [activeTab, setActiveTab] = useState<"notes" | "todos">("notes");
 
   // Notes state
   const [notes, setNotes] = useState<INote[]>([]);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [notesLoading, setNotesLoading] = useState(true);
   const [noteSearch, setNoteSearch] = useState("");
-  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
-  const [editingNote, setEditingNote] = useState<INote | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string>("All");
 
-  // Note form state
-  const [noteTitle, setNoteTitle] = useState("");
-  const [noteContent, setNoteContent] = useState("");
-  const [noteTag, setNoteTag] = useState("Work");
-  const [noteColor, setNoteColor] = useState("indigo");
-  const [noteSaving, setNoteSaving] = useState(false);
+  // Note editor form
+  const [editorTitle, setEditorTitle] = useState("");
+  const [editorContent, setEditorContent] = useState("");
+  const [editorTag, setEditorTag] = useState("Work");
+  const [editorColor, setEditorColor] = useState("#f59e0b");
+  const [editorAttachments, setEditorAttachments] = useState<string[]>([]);
+  const [isEditorPinned, setIsEditorPinned] = useState(false);
+  const [isSavingNote, setIsSavingNote] = useState(false);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+
+  // Lightbox / Image preview modal
+  const [previewMediaUrl, setPreviewMediaUrl] = useState<string | null>(null);
 
   // To-dos state
   const [todos, setTodos] = useState<ITodo[]>([]);
   const [todosLoading, setTodosLoading] = useState(true);
   const [newTodoText, setNewTodoText] = useState("");
+  const [todoAttachments, setTodoAttachments] = useState<string[]>([]);
   const [todoSubmitting, setTodoSubmitting] = useState(false);
   const [todoTab, setTodoTab] = useState<"pending" | "completed">("pending");
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const todoFileInputRef = useRef<HTMLInputElement>(null);
 
   // Load Notes
   const fetchNotes = async () => {
@@ -56,7 +74,11 @@ export function ProductivityView({ currentUser }: ProductivityViewProps) {
       const res = await fetch("/api/notes");
       if (res.ok) {
         const d = await res.json();
-        setNotes(d.notes || []);
+        const loadedNotes: INote[] = d.notes || [];
+        setNotes(loadedNotes);
+        if (loadedNotes.length > 0 && !selectedNoteId && !isCreatingNew) {
+          selectNote(loadedNotes[0]);
+        }
       }
     } catch (e) {
       console.error(e);
@@ -86,50 +108,110 @@ export function ProductivityView({ currentUser }: ProductivityViewProps) {
     fetchTodos();
   }, []);
 
-  // Save or Update Note
-  const handleSaveNote = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!noteTitle.trim()) return;
+  const selectNote = (note: INote) => {
+    setSelectedNoteId(note._id);
+    setIsCreatingNew(false);
+    setEditorTitle(note.title);
+    setEditorContent(note.content);
+    setEditorTag(note.tag || "Work");
+    setEditorColor(note.color || "#f59e0b");
+    setEditorAttachments(note.attachments || []);
+    setIsEditorPinned(Boolean(note.isPinned));
+  };
 
-    setNoteSaving(true);
+  const handleStartNewNote = () => {
+    setSelectedNoteId(null);
+    setIsCreatingNew(true);
+    setEditorTitle("");
+    setEditorContent("");
+    setEditorTag("Work");
+    setEditorColor("#f59e0b");
+    setEditorAttachments([]);
+    setIsEditorPinned(false);
+  };
+
+  // Upload Media from device
+  const handleMediaUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    target: "note" | "todo"
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result as string;
+      try {
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ file: base64, folder: "notes_media" }),
+        });
+        const d = await res.json();
+        const uploadedUrl = d.url || base64;
+        if (target === "note") {
+          setEditorAttachments((prev) => [...prev, uploadedUrl]);
+        } else {
+          setTodoAttachments((prev) => [...prev, uploadedUrl]);
+        }
+      } catch {
+        if (target === "note") {
+          setEditorAttachments((prev) => [...prev, base64]);
+        } else {
+          setTodoAttachments((prev) => [...prev, base64]);
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  // Save current note
+  const handleSaveCurrentNote = async () => {
+    if (!editorTitle.trim()) return;
+    setIsSavingNote(true);
+
     try {
-      if (editingNote) {
-        const res = await fetch(`/api/notes/${editingNote._id}`, {
+      if (selectedNoteId) {
+        const res = await fetch(`/api/notes/${selectedNoteId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            title: noteTitle,
-            content: noteContent,
-            tag: noteTag,
-            color: noteColor,
+            title: editorTitle.trim(),
+            content: editorContent.trim(),
+            tag: editorTag,
+            color: editorColor,
+            isPinned: isEditorPinned,
+            attachments: editorAttachments,
           }),
         });
         if (res.ok) {
           const d = await res.json();
           setNotes((prev) => prev.map((n) => (n._id === d.note._id ? d.note : n)));
-          closeNoteModal();
         }
       } else {
         const res = await fetch("/api/notes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            title: noteTitle,
-            content: noteContent,
-            tag: noteTag,
-            color: noteColor,
+            title: editorTitle.trim(),
+            content: editorContent.trim(),
+            tag: editorTag,
+            color: editorColor,
+            attachments: editorAttachments,
           }),
         });
         if (res.ok) {
           const d = await res.json();
           setNotes((prev) => [d.note, ...prev]);
-          closeNoteModal();
+          setSelectedNoteId(d.note._id);
+          setIsCreatingNew(false);
         }
       }
     } catch (err) {
       console.error(err);
     } finally {
-      setNoteSaving(false);
+      setIsSavingNote(false);
     }
   };
 
@@ -138,34 +220,32 @@ export function ProductivityView({ currentUser }: ProductivityViewProps) {
     try {
       const res = await fetch(`/api/notes/${id}`, { method: "DELETE" });
       if (res.ok) {
-        setNotes((prev) => prev.filter((n) => n._id !== id));
+        const remaining = notes.filter((n) => n._id !== id);
+        setNotes(remaining);
+        if (remaining.length > 0) {
+          selectNote(remaining[0]);
+        } else {
+          handleStartNewNote();
+        }
       }
     } catch (e) {
       console.error(e);
     }
   };
 
-  const openCreateNote = () => {
-    setEditingNote(null);
-    setNoteTitle("");
-    setNoteContent("");
-    setNoteTag("Work");
-    setNoteColor("indigo");
-    setIsNoteModalOpen(true);
-  };
-
-  const openEditNote = (note: INote) => {
-    setEditingNote(note);
-    setNoteTitle(note.title);
-    setNoteContent(note.content);
-    setNoteTag(note.tag || "Work");
-    setNoteColor(note.color || "indigo");
-    setIsNoteModalOpen(true);
-  };
-
-  const closeNoteModal = () => {
-    setIsNoteModalOpen(false);
-    setEditingNote(null);
+  const handleTogglePin = async () => {
+    const nextPinned = !isEditorPinned;
+    setIsEditorPinned(nextPinned);
+    if (selectedNoteId) {
+      await fetch(`/api/notes/${selectedNoteId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPinned: nextPinned }),
+      });
+      setNotes((prev) =>
+        prev.map((n) => (n._id === selectedNoteId ? { ...n, isPinned: nextPinned } : n))
+      );
+    }
   };
 
   // Add Todo
@@ -178,12 +258,13 @@ export function ProductivityView({ currentUser }: ProductivityViewProps) {
       const res = await fetch("/api/todos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: newTodoText }),
+        body: JSON.stringify({ text: newTodoText.trim(), attachments: todoAttachments }),
       });
       if (res.ok) {
         const d = await res.json();
         setTodos((prev) => [d.todo, ...prev]);
         setNewTodoText("");
+        setTodoAttachments([]);
       }
     } catch (err) {
       console.error(err);
@@ -192,34 +273,22 @@ export function ProductivityView({ currentUser }: ProductivityViewProps) {
     }
   };
 
-  // Toggle Todo
   const handleToggleTodo = async (id: string, currentCompleted: boolean) => {
     try {
-      // Optimistic update
       setTodos((prev) =>
-        prev.map((t) =>
-          t._id === id
-            ? { ...t, completed: !currentCompleted, completedAt: !currentCompleted ? new Date() : undefined }
-            : t
-        )
+        prev.map((t) => (t._id === id ? { ...t, completed: !currentCompleted } : t))
       );
-
-      const res = await fetch(`/api/todos/${id}`, {
-        method: "PATCH",
+      await fetch(`/api/todos/${id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ completed: !currentCompleted }),
       });
-      if (res.ok) {
-        const d = await res.json();
-        setTodos((prev) => prev.map((t) => (t._id === d.todo._id ? d.todo : t)));
-      }
-    } catch (err) {
-      console.error(err);
+    } catch (e) {
+      console.error(e);
       fetchTodos();
     }
   };
 
-  // Delete Todo
   const handleDeleteTodo = async (id: string) => {
     try {
       setTodos((prev) => prev.filter((t) => t._id !== id));
@@ -230,413 +299,578 @@ export function ProductivityView({ currentUser }: ProductivityViewProps) {
     }
   };
 
-  const filteredNotes = notes.filter(
-    (n) =>
+  // Filter notes
+  const filteredNotes = notes.filter((n) => {
+    const matchesSearch =
       n.title.toLowerCase().includes(noteSearch.toLowerCase()) ||
-      n.content?.toLowerCase().includes(noteSearch.toLowerCase()) ||
-      n.tag?.toLowerCase().includes(noteSearch.toLowerCase())
-  );
+      n.content?.toLowerCase().includes(noteSearch.toLowerCase());
+    const matchesTag = selectedTag === "All" || n.tag === selectedTag;
+    return matchesSearch && matchesTag;
+  });
 
-  const pendingTodos = todos.filter((t) => !t.completed);
-  const completedTodos = todos.filter((t) => t.completed);
+  const pinnedNotes = filteredNotes.filter((n) => n.isPinned);
+  const otherNotes = filteredNotes.filter((n) => !n.isPinned);
 
-  const colorVariants: Record<string, { bg: string; border: string; tagBg: string }> = {
-    indigo: { bg: "bg-indigo-50/40", border: "border-indigo-200/80", tagBg: "bg-indigo-100 text-indigo-700" },
-    emerald: { bg: "bg-emerald-50/40", border: "border-emerald-200/80", tagBg: "bg-emerald-100 text-emerald-700" },
-    amber: { bg: "bg-amber-50/40", border: "border-amber-200/80", tagBg: "bg-amber-100 text-amber-700" },
-    rose: { bg: "bg-rose-50/40", border: "border-rose-200/80", tagBg: "bg-rose-100 text-rose-700" },
-    violet: { bg: "bg-violet-50/40", border: "border-violet-200/80", tagBg: "bg-violet-100 text-violet-700" },
-    slate: { bg: "bg-slate-50", border: "border-slate-200", tagBg: "bg-slate-200 text-slate-700" },
-  };
+  const availableTags = ["All", "Work", "Productivity", "Architecture", "Personal", "Ideas"];
 
   return (
     <div className="space-y-6">
-      {/* Top Banner Notice */}
-      <div className="bg-slate-900 text-white p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-md">
+      {/* Lightbox Modal */}
+      {previewMediaUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setPreviewMediaUrl(null)}
+        >
+          <div className="relative max-w-4xl max-h-[85vh] rounded-3xl overflow-hidden shadow-2xl">
+            <Image
+              src={previewMediaUrl}
+              alt="Media Preview"
+              width={1000}
+              height={800}
+              className="object-contain max-h-[85vh] w-auto h-auto rounded-2xl"
+              unoptimized
+            />
+            <button
+              onClick={() => setPreviewMediaUrl(null)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-black/60 text-white hover:bg-black transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Top MacBook Title & Tab Switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-            <Lock className="w-4 h-4 text-emerald-400" />
+          {/* macOS window traffic lights */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-200/80 border border-slate-300">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" />
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
           </div>
           <div>
-            <h4 className="text-xs font-black tracking-wide uppercase text-slate-200 flex items-center gap-1.5">
-              <span>Strict Private Sanctuary</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
-                End-to-End User Isolation
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <span>MacBook Notes & Workspace</span>
+              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                Encrypted & Private
               </span>
-            </h4>
-            <p className="text-[11px] text-slate-400">
-              Per Section 7 & 8: Notes and to-dos are strictly private to you ({currentUser.name}). No managers, subordinates, or admins can view this content.
+            </h2>
+            <p className="text-xs text-slate-500 font-medium">
+              Apple macOS inspired note-taking canvas with media uploads and isolated to-do list
             </p>
           </div>
         </div>
 
-        {/* View Switcher */}
-        <div className="flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700 text-xs font-bold">
-          <button
-            onClick={() => setActiveTab("both")}
-            className={`px-3 py-1.5 rounded-lg transition-all ${
-              activeTab === "both" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-400 hover:text-white"
-            }`}
-          >
-            Split View
-          </button>
+        {/* View Switcher: Notes vs Reminders */}
+        <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shadow-2xs self-start sm:self-auto">
           <button
             onClick={() => setActiveTab("notes")}
-            className={`px-3 py-1.5 rounded-lg transition-all ${
-              activeTab === "notes" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-400 hover:text-white"
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === "notes"
+                ? "bg-amber-400 text-slate-900 shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            Notes ({notes.length})
+            <FileText className="w-4 h-4" />
+            <span>MacBook Notes ({notes.length})</span>
           </button>
           <button
             onClick={() => setActiveTab("todos")}
-            className={`px-3 py-1.5 rounded-lg transition-all ${
-              activeTab === "todos" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-400 hover:text-white"
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === "todos"
+                ? "bg-amber-400 text-slate-900 shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            To-dos ({pendingTodos.length})
+            <CheckSquare className="w-4 h-4" />
+            <span>Reminders & To-Dos ({todos.filter((t) => !t.completed).length})</span>
           </button>
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className={`grid gap-6 ${activeTab === "both" ? "grid-cols-1 lg:grid-cols-12" : "grid-cols-1"}`}>
-        {/* ================= NOTES COLUMN ================= */}
-        {(activeTab === "both" || activeTab === "notes") && (
-          <div className={activeTab === "both" ? "lg:col-span-7 space-y-4" : "space-y-4"}>
-            {/* Header & Controls */}
-            <div className="glass-card p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-black text-slate-900">Personal Notes</h3>
-                  <p className="text-[11px] text-slate-500 font-medium">Quick thoughts, scratchpads, & snippets</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <div className="relative">
+      {/* ================= MACBOOK NOTES VIEW ================= */}
+      {activeTab === "notes" && (
+        <div className="bg-white rounded-[32px] border border-slate-200 shadow-xl overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[640px]">
+          {/* ================= LEFT COLUMN: NOTES LIST ================= */}
+          <div className="md:col-span-5 lg:col-span-4 border-r border-slate-200/80 bg-slate-50/70 p-4 sm:p-5 flex flex-col justify-between">
+            <div>
+              {/* Search & New Note Header */}
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="relative flex-1">
                   <input
                     type="text"
                     placeholder="Search notes..."
                     value={noteSearch}
                     onChange={(e) => setNoteSearch(e.target.value)}
-                    className="w-40 sm:w-48 text-xs bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-1.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full text-xs bg-white border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 shadow-2xs"
                   />
                   <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
                 </div>
 
                 <button
-                  onClick={openCreateNote}
-                  className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-indigo-600/20 flex items-center gap-1"
+                  onClick={handleStartNewNote}
+                  className="p-2 bg-amber-400 hover:bg-amber-500 text-slate-900 rounded-xl font-bold shadow-sm transition-all btn-action shrink-0"
+                  title="New Note"
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>New Note</span>
+                  <Plus className="w-4 h-4 stroke-[3]" />
                 </button>
               </div>
-            </div>
 
-            {/* Notes Grid */}
-            {notesLoading ? (
-              <div className="bg-white rounded-2xl p-8 border border-slate-200 text-center text-slate-400">
-                <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                <p className="text-xs">Loading notes...</p>
-              </div>
-            ) : filteredNotes.length === 0 ? (
-              <div className="bg-white rounded-2xl p-10 border border-slate-200 text-center text-slate-400">
-                <FileText className="w-10 h-10 mx-auto mb-2 opacity-40 text-slate-400" />
-                <h5 className="text-xs font-bold text-slate-700">No personal notes found</h5>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  Click &quot;New Note&quot; to jot down personal reminders or ideas.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {filteredNotes.map((note) => {
-                  const style = colorVariants[note.color || "indigo"] || colorVariants.indigo;
-                  return (
-                    <div
-                      key={note._id}
-                      className={`p-4 rounded-2xl border ${style.border} ${style.bg} transition-all hover:shadow-md flex flex-col justify-between group relative`}
-                    >
-                      <div>
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <h4 className="text-xs font-black text-slate-900 leading-snug line-clamp-1">
-                            {note.title}
-                          </h4>
-                          <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => openEditNote(note)}
-                              className="p-1 hover:bg-white/80 rounded-lg text-slate-500 hover:text-slate-800"
-                              title="Edit Note"
-                            >
-                              <Edit2 className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteNote(note._id)}
-                              className="p-1 hover:bg-white/80 rounded-lg text-slate-400 hover:text-rose-600"
-                              title="Delete Note"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-                        </div>
-
-                        <p className="text-xs text-slate-700 leading-relaxed font-medium line-clamp-5 whitespace-pre-wrap">
-                          {note.content}
-                        </p>
-                      </div>
-
-                      <div className="pt-3 mt-3 border-t border-slate-200/50 flex items-center justify-between text-[10px]">
-                        {note.tag && (
-                          <span className={`px-2 py-0.5 rounded-md font-bold uppercase tracking-wider ${style.tagBg}`}>
-                            {note.tag}
-                          </span>
-                        )}
-                        <span className="text-slate-400 font-mono ml-auto">
-                          {new Date(note.updatedAt).toLocaleDateString([], { month: "short", day: "numeric" })}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ================= TO-DO COLUMN ================= */}
-        {(activeTab === "both" || activeTab === "todos") && (
-          <div className={activeTab === "both" ? "lg:col-span-5 space-y-4" : "space-y-4"}>
-            {/* To-Do Card */}
-            <div className="glass-card p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
-              <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <CheckSquare className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900">Personal To-do List</h3>
-                    <p className="text-[11px] text-slate-500 font-medium">Daily checklists & personal items</p>
-                  </div>
-                </div>
-
-                {/* Sub-tabs: Pending vs Completed */}
-                <div className="flex items-center bg-slate-100 p-1 rounded-xl text-[11px] font-bold">
+              {/* Tag Filter Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 scrollbar-none text-[11px] font-bold">
+                {availableTags.map((tag) => (
                   <button
-                    onClick={() => setTodoTab("pending")}
-                    className={`px-2.5 py-1 rounded-lg transition-all ${
-                      todoTab === "pending"
-                        ? "bg-white text-slate-900 shadow-2xs"
-                        : "text-slate-500 hover:text-slate-900"
+                    key={tag}
+                    onClick={() => setSelectedTag(tag)}
+                    className={`px-2.5 py-1 rounded-lg transition-all shrink-0 ${
+                      selectedTag === tag
+                        ? "bg-slate-900 text-white shadow-xs"
+                        : "bg-white text-slate-600 hover:bg-slate-200 border border-slate-200/80"
                     }`}
                   >
-                    Pending ({pendingTodos.length})
+                    {tag}
                   </button>
-                  <button
-                    onClick={() => setTodoTab("completed")}
-                    className={`px-2.5 py-1 rounded-lg transition-all ${
-                      todoTab === "completed"
-                        ? "bg-white text-slate-900 shadow-2xs"
-                        : "text-slate-500 hover:text-slate-900"
-                    }`}
-                  >
-                    Done ({completedTodos.length})
-                  </button>
-                </div>
+                ))}
               </div>
 
-              {/* Add Todo Form */}
-              <form onSubmit={handleAddTodo} className="flex items-center gap-2 mb-4">
-                <input
-                  type="text"
-                  placeholder="What do you need to do? Press Enter..."
-                  value={newTodoText}
-                  onChange={(e) => setNewTodoText(e.target.value)}
-                  className="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
-                />
-                <button
-                  type="submit"
-                  disabled={todoSubmitting || !newTodoText.trim()}
-                  className="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1 shadow-sm shadow-emerald-600/20 shrink-0"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add</span>
-                </button>
-              </form>
-
-              {/* To-Do Items List */}
-              {todosLoading ? (
-                <div className="text-center py-6 text-slate-400 text-xs">Loading items...</div>
-              ) : todoTab === "pending" ? (
-                pendingTodos.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">
-                    <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-400 opacity-70" />
-                    <p className="text-xs font-bold text-slate-700">All caught up!</p>
-                    <p className="text-[11px] text-slate-400">You have no pending items on your checklist.</p>
+              {/* Notes List */}
+              <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                {notesLoading ? (
+                  <div className="py-8 text-center text-xs text-slate-400">Loading notes...</div>
+                ) : filteredNotes.length === 0 ? (
+                  <div className="py-12 text-center text-xs text-slate-400">
+                    No notes found. Click &apos;+&apos; to create your first note.
                   </div>
                 ) : (
-                  <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
-                    {pendingTodos.map((todo) => (
-                      <div
-                        key={todo._id}
-                        className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/70 hover:bg-slate-100/70 transition-colors group"
-                      >
-                        <button
-                          onClick={() => handleToggleTodo(todo._id, todo.completed)}
-                          className="flex items-center gap-2.5 text-left flex-1"
-                        >
-                          <Circle className="w-4 h-4 text-slate-400 hover:text-emerald-500 shrink-0 transition-colors" />
-                          <span className="text-xs font-semibold text-slate-800 leading-snug">
-                            {todo.text}
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => handleDeleteTodo(todo._id)}
-                          className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-500 transition-opacity"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )
-              ) : completedTodos.length === 0 ? (
-                <div className="text-center py-8 text-slate-400">
-                  <p className="text-xs font-semibold">No completed items yet</p>
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
-                  {completedTodos.map((todo) => (
-                    <div
-                      key={todo._id}
-                      className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50/50 border border-slate-200/50 group"
-                    >
-                      <button
-                        onClick={() => handleToggleTodo(todo._id, todo.completed)}
-                        className="flex items-center gap-2.5 text-left flex-1"
-                      >
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span className="text-xs font-medium text-slate-400 line-through leading-snug">
-                          {todo.text}
+                  <>
+                    {/* Pinned Section */}
+                    {pinnedNotes.length > 0 && (
+                      <div className="space-y-1.5 mb-3">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1 px-1">
+                          <Pin className="w-3 h-3 text-amber-500" />
+                          <span>Pinned</span>
                         </span>
-                      </button>
-                      {todo.completedAt && (
-                        <span className="text-[10px] text-slate-400 font-mono shrink-0">
-                          {new Date(todo.completedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {pinnedNotes.map((note) => {
+                          const isSelected = selectedNoteId === note._id;
+                          return (
+                            <div
+                              key={note._id}
+                              onClick={() => selectNote(note)}
+                              className={`p-3 rounded-2xl cursor-pointer transition-all border ${
+                                isSelected
+                                  ? "bg-amber-100/90 border-amber-300 shadow-sm"
+                                  : "bg-white hover:bg-white/80 border-slate-200/80 shadow-2xs"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <h4 className="text-xs font-black text-slate-900 truncate">
+                                  {note.title || "Untitled Note"}
+                                </h4>
+                                <Pin className="w-3 h-3 text-amber-600 shrink-0 fill-amber-500" />
+                              </div>
+                              <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                                {note.content || "No additional text"}
+                              </p>
+                              <div className="flex items-center justify-between mt-2 text-[10px] text-slate-400 font-mono">
+                                <span>{new Date(note.updatedAt).toLocaleDateString("en-IN")}</span>
+                                {note.attachments && note.attachments.length > 0 && (
+                                  <span className="flex items-center gap-1 text-indigo-600 font-bold">
+                                    <ImageIcon className="w-3 h-3" />
+                                    {note.attachments.length} media
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Other Notes */}
+                    <div className="space-y-1.5">
+                      {pinnedNotes.length > 0 && otherNotes.length > 0 && (
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-1">
+                          Notes
                         </span>
                       )}
-                      <button
-                        onClick={() => handleDeleteTodo(todo._id)}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-500 transition-opacity"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      {otherNotes.map((note) => {
+                        const isSelected = selectedNoteId === note._id;
+                        return (
+                          <div
+                            key={note._id}
+                            onClick={() => selectNote(note)}
+                            className={`p-3 rounded-2xl cursor-pointer transition-all border ${
+                              isSelected
+                                ? "bg-amber-100/90 border-amber-300 shadow-sm"
+                                : "bg-white hover:bg-white/80 border-slate-200/80 shadow-2xs"
+                            }`}
+                          >
+                            <h4 className="text-xs font-black text-slate-900 truncate">
+                              {note.title || "Untitled Note"}
+                            </h4>
+                            <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                              {note.content || "No additional text"}
+                            </p>
+                            <div className="flex items-center justify-between mt-2 text-[10px] text-slate-400 font-mono">
+                              <span>{new Date(note.updatedAt).toLocaleDateString("en-IN")}</span>
+                              {note.attachments && note.attachments.length > 0 && (
+                                <span className="flex items-center gap-1 text-indigo-600 font-bold">
+                                  <ImageIcon className="w-3 h-3" />
+                                  {note.attachments.length} media
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
-              )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-200 text-[11px] text-slate-400 text-center font-medium">
+              Strict Privacy: Only accessible to your user session
             </div>
           </div>
-        )}
-      </div>
 
-      {/* Note Creation / Edit Modal */}
-      {isNoteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-3xl p-6 max-w-lg w-full border border-slate-200 shadow-2xl relative">
-            <button
-              onClick={closeNoteModal}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100"
-            >
-              <X className="w-4 h-4" />
-            </button>
+          {/* ================= RIGHT COLUMN: MACBOOK NOTE CANVAS ================= */}
+          <div className="md:col-span-7 lg:col-span-8 p-6 sm:p-8 flex flex-col justify-between bg-amber-50/20">
+            <div>
+              {/* Note Toolbar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-amber-100">
+                <div className="flex items-center gap-2">
+                  <select
+                    value={editorTag}
+                    onChange={(e) => setEditorTag(e.target.value)}
+                    className="text-xs font-bold bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-slate-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  >
+                    <option value="Work">Category: Work</option>
+                    <option value="Productivity">Category: Productivity</option>
+                    <option value="Architecture">Category: Architecture</option>
+                    <option value="Personal">Category: Personal</option>
+                    <option value="Ideas">Category: Ideas</option>
+                  </select>
 
-            <h3 className="text-base font-black text-slate-900 mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-indigo-600" />
-              {editingNote ? "Edit Private Note" : "Create New Private Note"}
-            </h3>
+                  <button
+                    type="button"
+                    onClick={handleTogglePin}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border ${
+                      isEditorPinned
+                        ? "bg-amber-400 text-slate-900 border-amber-500 shadow-xs"
+                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                    }`}
+                  >
+                    <Pin className={`w-3.5 h-3.5 ${isEditorPinned ? "fill-slate-900" : ""}`} />
+                    <span>{isEditorPinned ? "Pinned" : "Pin Note"}</span>
+                  </button>
+                </div>
 
-            <form onSubmit={handleSaveNote} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Title
-                </label>
+                <div className="flex items-center gap-2">
+                  {/* Upload Image from Device Button */}
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleMediaUpload(e, "note")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-2xs transition-all flex items-center gap-1.5"
+                    title="Upload Media from device"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Add Media</span>
+                  </button>
+
+                  {/* Delete button (if existing note) */}
+                  {selectedNoteId && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteNote(selectedNoteId)}
+                      className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                      title="Delete Note"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+
+                  {/* Save Note Button */}
+                  <button
+                    type="button"
+                    onClick={handleSaveCurrentNote}
+                    disabled={isSavingNote || !editorTitle.trim()}
+                    className="px-4 py-1.5 rounded-xl text-xs font-black text-slate-900 bg-amber-400 hover:bg-amber-500 shadow-md shadow-amber-500/20 transition-all disabled:opacity-50 btn-action"
+                  >
+                    {isSavingNote ? "Saving..." : "Save Note"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Note Content Canvas */}
+              <div className="space-y-4">
+                {/* Note Title */}
                 <input
                   type="text"
-                  required
-                  placeholder="e.g. Sprint priorities, API credentials, Ideas..."
-                  value={noteTitle}
-                  onChange={(e) => setNoteTitle(e.target.value)}
-                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                  placeholder="Note Title (e.g. Q4 Sprint Architecture & UPI Integration)..."
+                  value={editorTitle}
+                  onChange={(e) => setEditorTitle(e.target.value)}
+                  className="w-full text-xl sm:text-2xl font-black text-slate-900 bg-transparent placeholder:text-slate-300 focus:outline-none border-b border-transparent focus:border-amber-300 pb-1"
                 />
-              </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Content
-                </label>
+                {/* Date Display */}
+                <p className="text-[11px] text-slate-400 font-mono">
+                  {new Date().toLocaleDateString("en-IN", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+
+                {/* Note Body Textarea */}
                 <textarea
-                  rows={6}
-                  placeholder="Write your private note details here..."
-                  value={noteContent}
-                  onChange={(e) => setNoteContent(e.target.value)}
-                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed font-medium"
+                  rows={10}
+                  placeholder="Start typing your private notes, technical specifications, or meeting minutes..."
+                  value={editorContent}
+                  onChange={(e) => setEditorContent(e.target.value)}
+                  className="w-full text-sm sm:text-base bg-transparent text-slate-800 placeholder:text-slate-400 focus:outline-none resize-none leading-relaxed font-sans"
                 />
+
+                {/* Media Attachments Gallery */}
+                {editorAttachments.length > 0 && (
+                  <div className="pt-4 border-t border-amber-100">
+                    <p className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
+                      <ImageIcon className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Media Attachments ({editorAttachments.length})</span>
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {editorAttachments.map((url, idx) => (
+                        <div
+                          key={idx}
+                          className="relative group rounded-2xl overflow-hidden border border-slate-200 bg-white aspect-video shadow-xs cursor-pointer"
+                        >
+                          <Image
+                            src={url}
+                            alt={`Attachment ${idx + 1}`}
+                            width={240}
+                            height={160}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            onClick={() => setPreviewMediaUrl(url)}
+                            unoptimized
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEditorAttachments((prev) => prev.filter((_, i) => i !== idx))
+                            }
+                            className="absolute top-1.5 right-1.5 p-1 rounded-full bg-rose-600 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                            title="Remove image"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Tag / Category
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Work, Ideas, Bug"
-                    value={noteTag}
-                    onChange={(e) => setNoteTag(e.target.value)}
-                    className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
+            <div className="pt-4 border-t border-amber-100/60 flex items-center justify-between text-xs text-slate-400">
+              <span>{editorContent.length} characters</span>
+              <span className="text-[11px] font-mono text-amber-700">Auto-synced with MongoDB Atlas</span>
+            </div>
+          </div>
+        </div>
+      )}
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Card Accent Color
-                  </label>
-                  <select
-                    value={noteColor}
-                    onChange={(e) => setNoteColor(e.target.value)}
-                    className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      {/* ================= TO-DO & REMINDERS VIEW ================= */}
+      {activeTab === "todos" && (
+        <div className="bg-white rounded-[32px] border border-slate-200 shadow-xl p-6 sm:p-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100">
+            <div>
+              <h3 className="text-lg font-black text-slate-900 tracking-tight">
+                Personal Task Checklist & Media Reminders
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Maintain confidential to-do items and attach screenshots or reference specs
+              </p>
+            </div>
+
+            <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
+              <button
+                onClick={() => setTodoTab("pending")}
+                className={`px-3.5 py-1.5 rounded-lg transition-all ${
+                  todoTab === "pending"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Pending ({todos.filter((t) => !t.completed).length})
+              </button>
+              <button
+                onClick={() => setTodoTab("completed")}
+                className={`px-3.5 py-1.5 rounded-lg transition-all ${
+                  todoTab === "completed"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Completed ({todos.filter((t) => t.completed).length})
+              </button>
+            </div>
+          </div>
+
+          {/* New Todo Form with Media Attachment */}
+          <form onSubmit={handleAddTodo} className="space-y-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                required
+                placeholder="What needs to be done? (e.g. Verify Razorpay webhook logs for Bangalore merchants)..."
+                value={newTodoText}
+                onChange={(e) => setNewTodoText(e.target.value)}
+                className="flex-1 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 font-medium transition-all"
+              />
+
+              <input
+                type="file"
+                ref={todoFileInputRef}
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleMediaUpload(e, "todo")}
+              />
+              <button
+                type="button"
+                onClick={() => todoFileInputRef.current?.click()}
+                className="p-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                title="Attach image to to-do"
+              >
+                <Paperclip className="w-5 h-5" />
+              </button>
+
+              <button
+                type="submit"
+                disabled={todoSubmitting || !newTodoText.trim()}
+                className="px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs sm:text-sm font-bold shadow-md transition-all flex items-center gap-2 shrink-0 disabled:opacity-50 btn-action"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Item</span>
+              </button>
+            </div>
+
+            {/* Todo attachment preview */}
+            {todoAttachments.length > 0 && (
+              <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-200 w-fit">
+                {todoAttachments.map((url, i) => (
+                  <div key={i} className="relative w-12 h-12 rounded-lg overflow-hidden border border-slate-300">
+                    <Image
+                      src={url}
+                      alt="Preview"
+                      width={48}
+                      height={48}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setTodoAttachments((prev) => prev.filter((_, idx) => idx !== i))}
+                      className="absolute top-0.5 right-0.5 p-0.5 bg-black/60 rounded-full text-white"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </form>
+
+          {/* Todo List */}
+          <div className="space-y-2.5">
+            {todosLoading ? (
+              <div className="py-8 text-center text-xs text-slate-400">Loading checklist...</div>
+            ) : todos.filter((t) => (todoTab === "completed" ? t.completed : !t.completed)).length === 0 ? (
+              <div className="py-12 text-center text-xs text-slate-400 font-medium">
+                {todoTab === "pending"
+                  ? "All caught up! No pending to-do items."
+                  : "No completed items yet."}
+              </div>
+            ) : (
+              todos
+                .filter((t) => (todoTab === "completed" ? t.completed : !t.completed))
+                .map((todo) => (
+                  <div
+                    key={todo._id}
+                    className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:border-amber-300 flex items-start justify-between gap-3 transition-all"
                   >
-                    <option value="indigo">Indigo Accent</option>
-                    <option value="emerald">Emerald Accent</option>
-                    <option value="amber">Amber Accent</option>
-                    <option value="rose">Rose Accent</option>
-                    <option value="violet">Violet Accent</option>
-                    <option value="slate">Neutral Slate</option>
-                  </select>
-                </div>
-              </div>
+                    <div className="flex items-start gap-3 min-w-0">
+                      <button
+                        onClick={() => handleToggleTodo(todo._id, todo.completed)}
+                        className="mt-0.5 text-slate-400 hover:text-amber-500 transition-colors shrink-0"
+                      >
+                        {todo.completed ? (
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500 fill-emerald-100" />
+                        ) : (
+                          <Circle className="w-5 h-5 text-slate-300 hover:text-amber-500" />
+                        )}
+                      </button>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={closeNoteModal}
-                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={noteSaving || !noteTitle.trim()}
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 transition-all disabled:opacity-50"
-                >
-                  {noteSaving ? "Saving..." : editingNote ? "Update Note" : "Save Note"}
-                </button>
-              </div>
-            </form>
+                      <div className="min-w-0">
+                        <p
+                          className={`text-xs sm:text-sm font-medium ${
+                            todo.completed ? "line-through text-slate-400" : "text-slate-800"
+                          }`}
+                        >
+                          {todo.text}
+                        </p>
+
+                        {/* Attachments if any */}
+                        {todo.attachments && todo.attachments.length > 0 && (
+                          <div className="flex items-center gap-2 mt-2">
+                            {todo.attachments.map((url, i) => (
+                              <div
+                                key={i}
+                                onClick={() => setPreviewMediaUrl(url)}
+                                className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 cursor-pointer hover:opacity-80 transition-opacity"
+                              >
+                                <Image
+                                  src={url}
+                                  alt="Attachment"
+                                  width={40}
+                                  height={40}
+                                  className="w-full h-full object-cover"
+                                  unoptimized
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <span className="text-[10px] text-slate-400 font-mono mt-1 block">
+                          {new Date(todo.createdAt).toLocaleDateString("en-IN", {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleDeleteTodo(todo._id)}
+                      className="p-1.5 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))
+            )}
           </div>
         </div>
       )}

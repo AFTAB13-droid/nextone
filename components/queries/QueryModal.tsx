@@ -15,6 +15,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { IQuery, QueryStatus, AuthSession } from "@/lib/types";
+import { getUserAvatar } from "@/lib/avatarHelper";
 import Image from "next/image";
 
 interface QueryModalProps {
@@ -344,29 +345,24 @@ export function QueryModal({
         <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
           <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full overflow-hidden bg-slate-100 border border-slate-200">
+              <div className="w-8 h-8 rounded-xl overflow-hidden bg-slate-100 ring-1 ring-slate-200 shrink-0">
                 <Image
-                  src={
-                    query.raisedBy?.avatar ||
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                      query.raisedBy?.name || "User"
-                    )}&background=6366f1&color=fff`
-                  }
+                  src={getUserAvatar(query.raisedBy)}
                   alt={query.raisedBy?.name || "Author"}
-                  width={28}
-                  height={28}
-                  className="object-cover"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover"
                   unoptimized
                 />
               </div>
-              <span className="text-xs font-bold text-slate-900">{query.raisedBy?.name}</span>
+              <span className="text-xs font-black text-slate-900">{query.raisedBy?.name}</span>
               <RoleBadge role={query.raisedBy?.role} />
             </div>
             <span className="text-[10px] text-slate-400 font-mono">
-              {new Date(query.createdAt).toLocaleString()}
+              {new Date(query.createdAt).toLocaleString("en-IN")}
             </span>
           </div>
-          <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap font-medium">
+          <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-wrap font-medium">
             {query.description}
           </p>
         </div>
@@ -380,16 +376,16 @@ export function QueryModal({
 
           {query.responses?.length === 0 ? (
             <div className="py-6 text-center text-slate-400 text-xs bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-              No responses yet. Write a response below.
+              No responses yet. Enter your resolution feedback below.
             </div>
           ) : (
             <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
               {query.responses.map((resp, idx) => (
                 <div
                   key={idx}
-                  className={`p-3.5 rounded-2xl border text-xs ${
+                  className={`p-4 rounded-2xl border text-xs ${
                     resp.sender._id === currentUser.userId
-                      ? "bg-indigo-50/60 border-indigo-200 ml-6"
+                      ? "bg-indigo-50/70 border-indigo-200 ml-6"
                       : "bg-slate-50 border-slate-200 mr-6"
                   }`}
                 >
@@ -399,7 +395,7 @@ export function QueryModal({
                       <RoleBadge role={resp.sender.role} />
                     </div>
                     <span className="text-[10px] text-slate-400 font-mono">
-                      {new Date(resp.createdAt).toLocaleString([], {
+                      {new Date(resp.createdAt).toLocaleString("en-IN", {
                         month: "short",
                         day: "numeric",
                         hour: "2-digit",
@@ -418,18 +414,22 @@ export function QueryModal({
         <form onSubmit={handleReply} className="flex gap-2 pt-2 border-t border-slate-100">
           <input
             type="text"
-            placeholder={isResolved ? "Reply to reopened discussion..." : "Write a clear response or follow-up note..."}
+            placeholder={
+              isResolved
+                ? "Reply to reopened discussion..."
+                : "Write a guidance response (e.g. Approved deployment on Mumbai cluster / Credentials dispatched)..."
+            }
             value={replyMessage}
             onChange={(e) => setReplyMessage(e.target.value)}
-            className="flex-1 text-xs bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+            className="flex-1 text-xs sm:text-sm bg-white border border-slate-200 rounded-2xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 font-medium"
           />
           <button
             type="submit"
             disabled={isSubmitting || !replyMessage.trim()}
-            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-sm shadow-indigo-600/20"
+            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all disabled:opacity-50 shadow-md shadow-indigo-600/20 btn-action"
           >
-            <Send className="w-3.5 h-3.5" />
-            Reply
+            <Send className="w-4 h-4" />
+            <span>Reply</span>
           </button>
         </form>
       </div>

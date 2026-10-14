@@ -16,13 +16,13 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const actor = await requireAuth();
-    const { text } = await req.json();
+    const { text, attachments } = await req.json();
 
     if (!text || !text.trim()) {
       return NextResponse.json({ error: "To-do text is required" }, { status: 400 });
     }
 
-    const todo = await TodoService.createTodo(actor.userId, text);
+    const todo = await TodoService.createTodo(actor.userId, text, attachments || []);
     return NextResponse.json({ success: true, todo }, { status: 201 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Error creating to-do";

@@ -16,13 +16,20 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const actor = await requireAuth();
-    const { title, content, tag, color } = await req.json();
+    const { title, content, tag, color, attachments } = await req.json();
 
     if (!title || !title.trim()) {
       return NextResponse.json({ error: "Note title is required" }, { status: 400 });
     }
 
-    const note = await NoteService.createNote(actor.userId, title, content, tag, color);
+    const note = await NoteService.createNote(
+      actor.userId,
+      title,
+      content,
+      tag,
+      color,
+      attachments || []
+    );
     return NextResponse.json({ success: true, note }, { status: 201 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Error creating note";

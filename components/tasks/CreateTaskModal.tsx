@@ -3,7 +3,21 @@
 import React, { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { AuthSession, IUser, TaskPriority } from "@/lib/types";
-import { Plus, Calendar, Tag, AlertTriangle } from "lucide-react";
+import { CustomSelect, CustomSelectOption } from "@/components/ui/CustomSelect";
+import { getUserAvatar } from "@/lib/avatarHelper";
+import {
+  Plus,
+  Calendar,
+  Tag,
+  AlertTriangle,
+  Briefcase,
+  Clock,
+  Flame,
+  AlertCircle,
+  FileText,
+  User,
+} from "lucide-react";
+import Image from "next/image";
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -41,7 +55,6 @@ export function CreateTaskModal({
       try {
         let url = "/api/users";
         if (currentUser.role === "manager") {
-          // Managers assign to their team
           url = "/api/users?team=true";
         }
         const res = await fetch(url);
@@ -64,7 +77,7 @@ export function CreateTaskModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !assignedTo || !dueDate) {
-      setError("Please fill in the required fields");
+      setError("Please fill in task title, designated assignee, and due date");
       return;
     }
 
@@ -109,131 +122,189 @@ export function CreateTaskModal({
     }
   };
 
+  const priorityOptions: CustomSelectOption[] = [
+    {
+      value: "urgent",
+      label: "Urgent Priority",
+      badge: "Critical",
+      description: "Highest escalation, immediate execution required",
+      icon: <Flame className="w-4 h-4 text-rose-500" />,
+    },
+    {
+      value: "high",
+      label: "High Priority",
+      badge: "High",
+      description: "Priority deliverable with close executive review",
+      icon: <AlertCircle className="w-4 h-4 text-amber-500" />,
+    },
+    {
+      value: "medium",
+      label: "Medium Priority",
+      badge: "Standard",
+      description: "Normal sprint timeline and deliverables",
+      icon: <Clock className="w-4 h-4 text-sky-500" />,
+    },
+    {
+      value: "low",
+      label: "Low Priority",
+      badge: "Backlog",
+      description: "Secondary initiatives or exploratory scope",
+      icon: <span className="w-2 h-2 rounded-full bg-slate-400" />,
+    },
+  ];
+
+  const assigneeOptions: CustomSelectOption[] = eligibleUsers.map((u) => ({
+    value: u._id,
+    label: u.name,
+    badge: u.role === "manager" ? "Manager" : "Associate",
+    description: `${u.designation || "Specialist"} • ${u.department || "Operations"} (${u.email})`,
+    icon: (
+      <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-200 shrink-0">
+        <Image
+          src={getUserAvatar(u)}
+          alt={u.name}
+          width={24}
+          height={24}
+          className="w-full h-full object-cover"
+          unoptimized
+        />
+      </div>
+    ),
+  }));
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Create New Task"
+      title="Assign Enterprise Task"
       description={
         currentUser.role === "admin"
-          ? "Assign company task to any Manager or Employee"
-          : "Delegate task to your team member"
+          ? "Executive delegation: Assign organization initiatives to any Manager or Associate"
+          : "Supervisory delegation: Assign tasks to team members under your reporting line"
       }
-      maxWidth="lg"
+      maxWidth="xl"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
+          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs sm:text-sm font-bold text-rose-700 flex items-center gap-2.5 animate-in fade-in">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
             <span>{error}</span>
           </div>
         )}
 
+        {/* Task Title */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1">
-            Task Title <span className="text-rose-500">*</span>
+          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            Task Initiative Title <span className="text-rose-500">*</span>
           </label>
-          <input
-            type="text"
-            required
-            placeholder="e.g. Implement Payment Gateway Integration"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              required
+              placeholder="e.g. Implement Razorpay Payment Gateway & Webhook Reconciliation"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-slate-900 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 font-bold transition-all shadow-inner"
+            />
+            <Briefcase className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
+          </div>
         </div>
 
+        {/* Assignee Custom Dropdown */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1">
-            Assign To <span className="text-rose-500">*</span>
-          </label>
-          <select
+          <CustomSelect
+            label="Designate Assignee (Responsible Owner)"
+            required
             value={assignedTo}
-            onChange={(e) => setAssignedTo(e.target.value)}
-            className="w-full text-xs font-medium bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {eligibleUsers.map((u) => (
-              <option key={u._id} value={u._id}>
-                {u.name} — {u.designation || u.role.toUpperCase()} ({u.email})
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setAssignedTo(val)}
+            options={assigneeOptions}
+            placeholder="Select a designated team member..."
+            searchable
+          />
           {eligibleUsers.length === 0 && (
-            <p className="text-[11px] text-amber-600 mt-1">
-              No eligible team members found to assign. Please ensure employees are assigned under your management.
+            <p className="text-[11px] text-amber-600 font-medium mt-1">
+              No eligible team members found to assign. Ensure users have been provisioned.
             </p>
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        {/* Priority & Due Date */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Priority</label>
-            <select
+            <CustomSelect
+              label="Priority Level"
               value={priority}
-              onChange={(e) => setPriority(e.target.value as TaskPriority)}
-              className="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="low">Low Priority</option>
-              <option value="medium">Medium Priority</option>
-              <option value="high">High Priority</option>
-              <option value="urgent">Urgent</option>
-            </select>
+              onChange={(val) => setPriority(val as TaskPriority)}
+              options={priorityOptions}
+            />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
               Due Date <span className="text-rose-500">*</span>
             </label>
-            <input
-              type="date"
-              required
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+            <div className="relative">
+              <input
+                type="date"
+                required
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-slate-900 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 font-medium transition-all"
+              />
+              <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
+            </div>
           </div>
         </div>
 
+        {/* Tags */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1">Tags (Comma-separated)</label>
+          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            Category Tags (Comma-separated)
+          </label>
           <div className="relative">
             <input
               type="text"
-              placeholder="Frontend, API, Milestone-1, Bug"
+              placeholder="e.g. Backend, UPI-Gateway, Sprint-4, High-Priority"
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
-              className="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3.5 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-slate-900 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 font-medium transition-all"
             />
-            <Tag className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <Tag className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
           </div>
         </div>
 
+        {/* Description */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1">Description / Guidelines</label>
-          <textarea
-            rows={4}
-            placeholder="Provide context, acceptance criteria, deliverables, and references..."
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"
-          />
+          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            Task Description & Guidelines
+          </label>
+          <div className="relative">
+            <textarea
+              rows={4}
+              placeholder="Outline project objectives, acceptance criteria, deliverables, and architecture links..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-900 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 font-medium transition-all leading-relaxed"
+            />
+          </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+            className="px-5 py-3 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-2xl transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
+            className="px-6 py-3 text-xs sm:text-sm font-extrabold text-white bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 rounded-2xl shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2 disabled:opacity-50 btn-action"
           >
             <Plus className="w-4 h-4" />
-            {loading ? "Creating..." : "Assign Task"}
+            <span>{loading ? "Assigning..." : "Assign Task Initiative"}</span>
           </button>
         </div>
       </form>

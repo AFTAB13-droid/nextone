@@ -3,12 +3,14 @@ import User from "@/models/User";
 import AuthService from "@/services/authService";
 import NotificationService from "@/services/notificationService";
 import { IUser, UserRole } from "@/lib/types";
+import { getUserAvatar } from "@/lib/avatarHelper";
 
 export interface CreateUserInput {
   name: string;
   email: string;
   password?: string;
   role: UserRole;
+  gender?: "male" | "female" | "other";
   managerId?: string | null;
   department?: string;
   designation?: string;
@@ -29,16 +31,23 @@ export class UserService {
     const rawPassword = input.password || "NextOne@2025";
     const hashedPassword = await AuthService.hashPassword(rawPassword);
 
+    const defaultAvatar = getUserAvatar({
+      avatar: input.avatar,
+      gender: input.gender || "male",
+      name: input.name,
+    });
+
     const user = await User.create({
       name: input.name.trim(),
       email: normalizedEmail,
       password: hashedPassword,
       role: input.role,
+      gender: input.gender || "male",
       managerId: input.role === "employee" && input.managerId ? input.managerId : null,
       department: input.department || "General",
       designation: input.designation || (input.role === "manager" ? "Team Lead" : "Associate"),
       phone: input.phone || "",
-      avatar: input.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(input.name)}&background=6366f1&color=fff`,
+      avatar: input.avatar || defaultAvatar,
       isActive: true,
     });
 

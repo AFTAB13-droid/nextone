@@ -17,7 +17,8 @@ export class NoteService {
     title: string,
     content: string = "",
     tag: string = "General",
-    color: string = "#6366f1"
+    color: string = "#6366f1",
+    attachments: string[] = []
   ): Promise<INote> {
     await connectDB();
 
@@ -28,6 +29,7 @@ export class NoteService {
       tag: tag.trim(),
       color,
       isPinned: false,
+      attachments,
     });
 
     return note.toObject() as unknown as INote;

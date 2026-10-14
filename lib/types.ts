@@ -6,6 +6,7 @@ export interface IUser {
   email: string;
   password?: string;
   role: UserRole;
+  gender?: "male" | "female" | "other";
   managerId?: string | IUser;
   department?: string;
   designation?: string;
@@ -149,6 +150,7 @@ export interface INote {
   tag?: string;
   color?: string;
   isPinned?: boolean;
+  attachments?: string[];
   createdAt: string | Date;
   updatedAt: string | Date;
 }
@@ -160,6 +162,7 @@ export interface ITodo {
   text: string;
   completed: boolean;
   completedAt?: string | Date;
+  attachments?: string[];
   createdAt: string | Date;
   updatedAt: string | Date;
 }

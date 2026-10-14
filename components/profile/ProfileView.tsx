@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PortalShell from "@/components/layout/PortalShell";
 import { RoleBadge } from "@/components/ui/Badge";
+import { getUserAvatar } from "@/lib/avatarHelper";
 import {
   UserCircle2,
   Mail,
@@ -22,6 +23,7 @@ import {
   Database,
   ArrowRight,
   TrendingUp,
+  Upload,
 } from "lucide-react";
 import { AuthSession, IUser } from "@/lib/types";
 import Image from "next/image";
@@ -58,6 +60,8 @@ export function ProfileView() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [savingInfo, setSavingInfo] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Password states
   const [currentPassword, setCurrentPassword] = useState("");
@@ -126,6 +130,45 @@ export function ProfileView() {
     }
   };
 
+  const handleAvatarDeviceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingAvatar(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result as string;
+      try {
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ file: base64, folder: "user_avatars" }),
+        });
+        const uploadData = await uploadRes.json();
+        const finalUrl = uploadData.url || base64;
+
+        // Save to user profile
+        const profRes = await fetch("/api/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ avatar: finalUrl }),
+        });
+        if (profRes.ok) {
+          const pd = await profRes.json();
+          setProfileData(pd.user);
+          setAvatarUrl(finalUrl);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error uploading avatar image from device");
+      } finally {
+        setUploadingAvatar(false);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPassMessage(null);
@@ -182,6 +225,15 @@ export function ProfileView() {
       title="User Identity & Command Profile"
       subtitle="Executive credentials, organizational hierarchy, and live performance metrics"
     >
+      {/* Hidden Device File Picker */}
+      <input
+        type="file"
+        ref={avatarInputRef}
+        accept="image/*"
+        className="hidden"
+        onChange={handleAvatarDeviceUpload}
+      />
+
       {/* Hero Profile Banner */}
       <div className="relative rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 shadow-xl mb-8">
         {/* Decorative Header Art */}
@@ -206,21 +258,24 @@ export function ProfileView() {
         {/* User Card Content */}
         <div className="px-6 pb-6 pt-0 relative flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 -mt-16 sm:-mt-20">
           <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5">
-            {/* Avatar */}
-            <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden bg-slate-800 border-4 border-slate-900 shadow-2xl shrink-0 group">
+            {/* Avatar with click-to-upload from device */}
+            <div
+              onClick={() => avatarInputRef.current?.click()}
+              className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden bg-slate-800 border-4 border-slate-900 shadow-2xl shrink-0 group cursor-pointer"
+              title="Click to upload profile photo from your device"
+            >
               <Image
-                src={
-                  profileData.avatar ||
-                  `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                    profileData.name
-                  )}&background=6366f1&color=fff&size=256&bold=true`
-                }
+                src={getUserAvatar(profileData)}
                 alt={profileData.name}
                 width={128}
                 height={128}
-                className="object-cover w-full h-full"
+                className="object-cover w-full h-full group-hover:scale-105 transition-transform"
                 unoptimized
               />
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[11px] font-black gap-1 text-center p-2">
+                <Camera className="w-5 h-5 text-cyan-300" />
+                <span>{uploadingAvatar ? "Uploading..." : "Change Picture"}</span>
+              </div>
             </div>
 
             <div className="mb-2">
@@ -237,7 +292,17 @@ export function ProfileView() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mb-2 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 mb-2 w-full sm:w-auto">
+            {/* Direct Device Upload Button */}
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={uploadingAvatar}
+              className="flex-1 sm:flex-initial px-4 py-2 text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-colors flex items-center justify-center gap-1.5 btn-action disabled:opacity-50"
+            >
+              <Upload className="w-3.5 h-3.5 text-cyan-400" />
+              <span>{uploadingAvatar ? "Uploading..." : "Upload Photo"}</span>
+            </button>
+
             <button
               onClick={() => setActiveTab("security")}
               className="flex-1 sm:flex-initial px-4 py-2 text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-colors flex items-center justify-center gap-1.5"
@@ -261,26 +326,27 @@ export function ProfileView() {
             className="p-6 bg-slate-950 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4"
           >
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-1">Full Name</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Full Legal Name</label>
               <input
                 type="text"
                 value={name}
+                placeholder="e.g. Aarav Sharma"
                 onChange={(e) => setName(e.target.value)}
                 className="w-full text-xs bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-1">Phone Number</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Phone Number (India)</label>
               <input
                 type="text"
-                placeholder="+1 800-555-0199"
+                placeholder="+91 98765 43210"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="w-full text-xs bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-1">Avatar Image URL</label>
+              <label className="block text-xs font-bold text-slate-400 mb-1">Custom Photo URL</label>
               <input
                 type="url"
                 placeholder="https://..."

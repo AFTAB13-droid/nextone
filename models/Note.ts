@@ -30,6 +30,10 @@ const NoteSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    attachments: {
+      type: [String],
+      default: [],
+    },
   },
   {
     timestamps: true,

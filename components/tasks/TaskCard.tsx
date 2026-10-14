@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
-import { Calendar, MessageSquare, Paperclip, Clock, GitFork } from "lucide-react";
+import { Calendar, MessageSquare, Paperclip, Clock, GitFork, ChevronRight } from "lucide-react";
 import { ITask } from "@/lib/types";
 import { PriorityBadge, StatusBadge } from "@/components/ui/Badge";
+import { getUserAvatar } from "@/lib/avatarHelper";
 import Image from "next/image";
 
 interface TaskCardProps {
@@ -18,17 +19,28 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
   return (
     <div
       onClick={() => onClick(task)}
-      className="glass-card rounded-2xl p-5 border border-slate-200/90 shadow-2xs hover:shadow-xl hover:-translate-y-1 hover:border-indigo-300 transition-all duration-300 cursor-pointer group flex flex-col justify-between relative overflow-hidden"
+      className="rounded-[26px] bg-white p-5 sm:p-6 border border-slate-200/90 shadow-2xs hover:shadow-xl hover:-translate-y-1 hover:border-indigo-300 transition-all duration-300 cursor-pointer group flex flex-col justify-between relative overflow-hidden"
     >
+      {/* Top accent line */}
+      <div
+        className={`absolute top-0 inset-x-0 h-1.5 ${
+          task.priority === "urgent"
+            ? "bg-rose-500"
+            : task.priority === "high"
+            ? "bg-amber-500"
+            : "bg-indigo-600"
+        }`}
+      />
+
       <div>
         {/* Top Badges */}
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200">
+            <span className="text-[10px] font-mono font-black bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-lg border border-slate-200">
               {task.taskId || `#${task._id.slice(-6)}`}
             </span>
             {task.parentTaskId && (
-              <span className="text-[10px] font-bold bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded-md border border-cyan-200 flex items-center gap-1">
+              <span className="text-[10px] font-bold bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded-lg border border-cyan-200 flex items-center gap-1">
                 <GitFork className="w-2.5 h-2.5" />
                 Subtask
               </span>
@@ -41,13 +53,13 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
         </div>
 
         {/* Title */}
-        <h3 className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">
+        <h3 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">
           {task.title}
         </h3>
 
         {/* Description snippet */}
         {task.description && (
-          <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed font-medium">
+          <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed font-medium">
             {task.description}
           </p>
         )}
@@ -58,7 +70,7 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
             {task.tags.map((tag, idx) => (
               <span
                 key={idx}
-                className="text-[10px] font-semibold bg-slate-100/80 text-slate-600 px-2 py-0.5 rounded-md border border-slate-200/50"
+                className="text-[10px] font-bold bg-slate-50 text-slate-600 px-2.5 py-0.5 rounded-lg border border-slate-200/80"
               >
                 #{tag}
               </span>
@@ -67,14 +79,16 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
         )}
       </div>
 
-      <div className="mt-4 pt-3 border-t border-slate-100/90">
+      <div className="mt-5 pt-3.5 border-t border-slate-100/90">
         {/* Progress Bar with Cyan-to-Indigo Gradient */}
-        <div className="mb-3">
-          <div className="flex justify-between text-[11px] font-medium text-slate-500 mb-1">
-            <span className="text-[10px] uppercase font-bold text-slate-400">Progress</span>
-            <span className="font-bold text-slate-800">{task.progressPercentage}%</span>
+        <div className="mb-3.5">
+          <div className="flex justify-between text-[11px] font-medium text-slate-500 mb-1.5">
+            <span className="text-[10px] uppercase font-black tracking-wider text-slate-400">
+              Progress
+            </span>
+            <span className="font-extrabold text-slate-800">{task.progressPercentage}%</span>
           </div>
-          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-300 ${
                 task.status === "completed"
@@ -90,45 +104,42 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
 
         {/* Bottom Metadata: Assignee, Due Date, Comments */}
         <div className="flex items-center justify-between text-xs text-slate-500">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0 pr-2">
             <div
-              className="w-6 h-6 rounded-full overflow-hidden bg-indigo-50 border border-slate-200 shadow-2xs"
+              className="w-7 h-7 rounded-full overflow-hidden bg-indigo-50 border border-slate-200 shadow-2xs shrink-0"
               title={`Assigned to: ${task.assignedTo?.name || "Unknown"}`}
             >
               <Image
-                src={
-                  task.assignedTo?.avatar ||
-                  `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                    task.assignedTo?.name || "User"
-                  )}&background=6366f1&color=fff`
-                }
+                src={getUserAvatar(task.assignedTo)}
                 alt={task.assignedTo?.name || "User"}
-                width={24}
-                height={24}
-                className="object-cover"
+                width={28}
+                height={28}
+                className="object-cover w-full h-full"
                 unoptimized
               />
             </div>
-            <span className="text-[11px] font-bold text-slate-700 truncate max-w-[100px]">
-              {task.assignedTo?.name}
+            <span className="text-xs font-bold text-slate-800 truncate max-w-[110px]">
+              {task.assignedTo?.name || "Assigned"}
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 shrink-0">
             {task.comments && task.comments.length > 0 && (
-              <span className="flex items-center gap-1 text-[11px] text-slate-400 font-medium">
+              <span className="flex items-center gap-1 text-[11px] text-slate-400 font-bold">
                 <MessageSquare className="w-3.5 h-3.5" />
                 {task.comments.length}
               </span>
             )}
 
             <span
-              className={`flex items-center gap-1 text-[11px] font-bold ${
-                isOverdue ? "text-rose-600 font-bold" : "text-slate-600"
+              className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg ${
+                isOverdue
+                  ? "text-rose-700 bg-rose-50 border border-rose-200"
+                  : "text-slate-600 bg-slate-50 border border-slate-200/80"
               }`}
             >
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
-              {new Date(task.dueDate).toLocaleDateString([], {
+              <Calendar className="w-3 h-3 text-slate-400" />
+              {new Date(task.dueDate).toLocaleDateString("en-IN", {
                 month: "short",
                 day: "numeric",
               })}

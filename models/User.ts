@@ -28,6 +28,11 @@ const UserSchema = new Schema(
       required: true,
       index: true,
     },
+    gender: {
+      type: String,
+      enum: ["male", "female", "other"],
+      default: "male",
+    },
     managerId: {
       type: Schema.Types.ObjectId,
       ref: "User",

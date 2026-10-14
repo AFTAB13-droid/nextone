@@ -12,13 +12,18 @@ export class TodoService {
     return todos as unknown as ITodo[];
   }
 
-  static async createTodo(userId: string, text: string): Promise<ITodo> {
+  static async createTodo(
+    userId: string,
+    text: string,
+    attachments: string[] = []
+  ): Promise<ITodo> {
     await connectDB();
 
     const todo = await Todo.create({
       user: userId,
       text: text.trim(),
       completed: false,
+      attachments,
     });
 
     return todo.toObject() as unknown as ITodo;

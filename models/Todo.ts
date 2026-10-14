@@ -23,6 +23,10 @@ const TodoSchema = new Schema(
       type: Date,
       default: null,
     },
+    attachments: {
+      type: [String],
+      default: [],
+    },
   },
   {
     timestamps: true,

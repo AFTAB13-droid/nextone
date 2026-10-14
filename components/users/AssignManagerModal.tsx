@@ -3,7 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { IUser } from "@/lib/types";
-import { Users, AlertTriangle } from "lucide-react";
+import { CustomSelect, CustomSelectOption } from "@/components/ui/CustomSelect";
+import { getUserAvatar } from "@/lib/avatarHelper";
+import { Users, AlertTriangle, ShieldCheck } from "lucide-react";
+import Image from "next/image";
 
 interface AssignManagerModalProps {
   employee: IUser | null;
@@ -25,7 +28,10 @@ export function AssignManagerModal({
 
   useEffect(() => {
     if (!isOpen || !employee) return;
-    const initialManager = typeof employee.managerId === "object" && employee.managerId ? employee.managerId._id : employee.managerId || "";
+    const initialManager =
+      typeof employee.managerId === "object" && employee.managerId
+        ? employee.managerId._id
+        : employee.managerId || "";
     setManagerId(initialManager);
 
     const fetchManagers = async () => {
@@ -74,61 +80,93 @@ export function AssignManagerModal({
     }
   };
 
+  const managerOptions: CustomSelectOption[] = [
+    {
+      value: "",
+      label: "-- Direct to Executive Admin (No Manager) --",
+      description: "Reports directly to company command",
+    },
+    ...managers.map((m) => ({
+      value: m._id,
+      label: m.name,
+      badge: m.department || "Operations",
+      description: `${m.designation || "Lead"} • ${m.email}`,
+      icon: (
+        <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-200 shrink-0">
+          <Image
+            src={getUserAvatar(m)}
+            alt={m.name}
+            width={20}
+            height={20}
+            className="w-full h-full object-cover"
+            unoptimized
+          />
+        </div>
+      ),
+    })),
+  ];
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title="Assign Reporting Manager"
-      description={`Update reporting supervisor for employee: ${employee.name}`}
+      description={`Update supervisory hierarchy for associate: ${employee.name}`}
       maxWidth="md"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
+          <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-700 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
             <span>{error}</span>
           </div>
         )}
 
-        <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/60 text-xs">
-          <p className="font-bold text-slate-800">{employee.name}</p>
-          <p className="text-slate-500">{employee.designation} • {employee.department}</p>
-          <p className="text-[11px] text-slate-400 mt-1">{employee.email}</p>
+        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl overflow-hidden bg-slate-200 ring-2 ring-indigo-500/20 shrink-0">
+            <Image
+              src={getUserAvatar(employee)}
+              alt={employee.name}
+              width={44}
+              height={44}
+              className="w-full h-full object-cover"
+              unoptimized
+            />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-black text-slate-900 truncate">{employee.name}</p>
+            <p className="text-xs text-slate-500 truncate">
+              {employee.designation} • {employee.department}
+            </p>
+            <p className="text-[11px] text-indigo-600 font-mono mt-0.5 truncate">{employee.email}</p>
+          </div>
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1">
-            Select Manager in Charge
-          </label>
-          <select
+          <CustomSelect
+            label="Designate Operations Manager"
             value={managerId}
-            onChange={(e) => setManagerId(e.target.value)}
-            className="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="">-- Unassigned (Direct to Admin) --</option>
-            {managers.map((m) => (
-              <option key={m._id} value={m._id}>
-                {m.name} — {m.department} ({m.email})
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setManagerId(val)}
+            options={managerOptions}
+            searchable
+          />
         </div>
 
-        <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+        <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+            className="px-5 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-2xl transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
+            className="px-6 py-2.5 text-xs font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-md shadow-indigo-600/25 transition-all flex items-center gap-2 disabled:opacity-50 btn-action"
           >
             <Users className="w-4 h-4" />
-            {loading ? "Saving..." : "Update Hierarchy"}
+            <span>{loading ? "Reassigning..." : "Update Hierarchy"}</span>
           </button>
         </div>
       </form>

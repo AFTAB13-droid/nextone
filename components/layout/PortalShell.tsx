@@ -22,11 +22,10 @@ export function PortalShell({ user, title, subtitle, children }: PortalShellProp
       {/* Sidebar Navigation */}
       <Sidebar role={user.role} />
 
-      {/* Main Content Area */}
+      {/* Main Content Area - 100% Fluid Edge-to-Edge (Zero Dead Margins) */}
       <div className="flex-1 flex flex-col min-w-0">
         <Header user={user} title={title} subtitle={subtitle} />
-        {/* Seamless fluid responsive container: removes the artificial max-w-7xl dead gap */}
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-10 py-6 max-w-[1720px] w-full">
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 w-full">
           {children}
         </main>
       </div>

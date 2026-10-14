@@ -46,7 +46,7 @@ export function Header({ user, title, subtitle }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 lg:px-8 xl:px-10 py-3.5 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-2xs">
+      <header className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3.5 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-2xs">
         <div>
           {title && (
             <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">

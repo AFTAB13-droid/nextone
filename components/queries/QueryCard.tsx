@@ -22,6 +22,9 @@ export function QueryCard({ query, onClick }: QueryCardProps) {
       <div>
         <div className="flex items-center justify-between gap-2 mb-2.5">
           <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
+              {query.queryId || `#${query._id.slice(-6)}`}
+            </span>
             <StatusBadge status={query.status} />
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
               {query.category}

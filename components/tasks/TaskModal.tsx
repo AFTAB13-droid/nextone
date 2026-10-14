@@ -14,9 +14,11 @@ import {
   AlertCircle,
   Paperclip,
   ArrowRight,
+  GitFork,
 } from "lucide-react";
 import { ITask, TaskStatus, AuthSession } from "@/lib/types";
 import Image from "next/image";
+import SplitTaskModal from "./SplitTaskModal";
 
 interface TaskModalProps {
   task: ITask | null;
@@ -34,12 +36,13 @@ export function TaskModal({
   onTaskUpdated,
 }: TaskModalProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "comments">("overview");
-  const [newStatus, setNewStatus] = useState<TaskStatus>(task?.status || "pending");
+  const [newStatus, setNewStatus] = useState<TaskStatus>(task?.status || "assigned");
   const [statusNote, setStatusNote] = useState<string>("");
   const [progress, setProgress] = useState<number>(task?.progressPercentage || 0);
   const [newComment, setNewComment] = useState<string>("");
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
   const [isCommenting, setIsCommenting] = useState<boolean>(false);
+  const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
 
   // Sync state if task prop changes
   React.useEffect(() => {
@@ -102,150 +105,172 @@ export function TaskModal({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={task.title}
-      description={`Task ID: #${task._id.slice(-6)}`}
-      maxWidth="2xl"
-    >
-      <div className="space-y-6">
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-slate-200">
-          <button
-            onClick={() => setActiveTab("overview")}
-            className={`pb-3 px-4 text-xs font-bold transition-colors border-b-2 flex items-center gap-1.5 ${
-              activeTab === "overview"
-                ? "border-indigo-600 text-indigo-600"
-                : "border-transparent text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            <CheckCircle className="w-4 h-4" />
-            Task Lifecycle & Details
-          </button>
-          <button
-            onClick={() => setActiveTab("timeline")}
-            className={`pb-3 px-4 text-xs font-bold transition-colors border-b-2 flex items-center gap-1.5 ${
-              activeTab === "timeline"
-                ? "border-indigo-600 text-indigo-600"
-                : "border-transparent text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            <History className="w-4 h-4" />
-            Activity Timeline ({task.activityLogs?.length || 0})
-          </button>
-          <button
-            onClick={() => setActiveTab("comments")}
-            className={`pb-3 px-4 text-xs font-bold transition-colors border-b-2 flex items-center gap-1.5 ${
-              activeTab === "comments"
-                ? "border-indigo-600 text-indigo-600"
-                : "border-transparent text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" />
-            Comments ({task.comments?.length || 0})
-          </button>
-        </div>
-
-        {/* TAB 1: OVERVIEW & STATUS CONTROL */}
-        {activeTab === "overview" && (
-          <div className="space-y-6">
-            {/* Meta Row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200/60 text-xs">
-              <div>
-                <p className="text-slate-400 font-semibold mb-1">Status</p>
-                <StatusBadge status={task.status} />
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={task.title}
+        description={`Task ID: ${task.taskId || `#${task._id.slice(-6)}`}${task.parentTaskId ? " (Delegated Subtask)" : ""}`}
+        maxWidth="2xl"
+      >
+        <div className="space-y-6">
+          {/* Action Header for Managers / Admin to Split Task */}
+          {(currentUser.role === "manager" || currentUser.role === "admin") && (
+            <div className="flex items-center justify-between p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+              <div className="flex items-center gap-2">
+                <GitFork className="w-4 h-4 text-indigo-600" />
+                <span className="text-xs font-bold text-slate-800">
+                  Divide Initiative into Sub-deliverables
+                </span>
               </div>
-              <div>
-                <p className="text-slate-400 font-semibold mb-1">Priority</p>
-                <PriorityBadge priority={task.priority} />
-              </div>
-              <div>
-                <p className="text-slate-400 font-semibold mb-1">Due Date</p>
-                <p className="font-bold text-slate-800 flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-indigo-500" />
-                  {new Date(task.dueDate).toLocaleDateString([], {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
-              <div>
-                <p className="text-slate-400 font-semibold mb-1">Progress</p>
-                <p className="font-bold text-indigo-600">{task.progressPercentage}% Complete</p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsSplitModalOpen(true)}
+                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5"
+              >
+                <GitFork className="w-3.5 h-3.5" />
+                <span>Split Task</span>
+              </button>
             </div>
+          )}
 
-            {/* People Involved */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-3 bg-white border border-slate-200 rounded-xl flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 shrink-0">
-                  <Image
-                    src={task.assignedBy?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(task.assignedBy?.name || "A")}&background=4f46e5&color=fff`}
-                    alt={task.assignedBy?.name || "Assigner"}
-                    width={32}
-                    height={32}
-                    className="object-cover"
-                    unoptimized
-                  />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Assigned By</p>
-                  <p className="text-xs font-bold text-slate-900 truncate">{task.assignedBy?.name}</p>
-                  <p className="text-[10px] text-slate-500">{task.assignedBy?.designation || task.assignedBy?.role}</p>
-                </div>
-              </div>
+          {/* Navigation Tabs */}
+          <div className="flex border-b border-slate-200">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`pb-3 px-4 text-xs font-bold transition-colors border-b-2 flex items-center gap-1.5 ${
+                activeTab === "overview"
+                  ? "border-indigo-600 text-indigo-600"
+                  : "border-transparent text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <CheckCircle className="w-4 h-4" />
+              Task Lifecycle & Details
+            </button>
+            <button
+              onClick={() => setActiveTab("timeline")}
+              className={`pb-3 px-4 text-xs font-bold transition-colors border-b-2 flex items-center gap-1.5 ${
+                activeTab === "timeline"
+                  ? "border-indigo-600 text-indigo-600"
+                  : "border-transparent text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <History className="w-4 h-4" />
+              Activity Timeline ({task.activityLogs?.length || 0})
+            </button>
+            <button
+              onClick={() => setActiveTab("comments")}
+              className={`pb-3 px-4 text-xs font-bold transition-colors border-b-2 flex items-center gap-1.5 ${
+                activeTab === "comments"
+                  ? "border-indigo-600 text-indigo-600"
+                  : "border-transparent text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              Comments ({task.comments?.length || 0})
+            </button>
+          </div>
 
-              <div className="p-3 bg-white border border-slate-200 rounded-xl flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 shrink-0">
-                  <Image
-                    src={task.assignedTo?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(task.assignedTo?.name || "U")}&background=059669&color=fff`}
-                    alt={task.assignedTo?.name || "Assignee"}
-                    width={32}
-                    height={32}
-                    className="object-cover"
-                    unoptimized
-                  />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Assignee (Working)</p>
-                  <p className="text-xs font-bold text-slate-900 truncate">{task.assignedTo?.name}</p>
-                  <p className="text-[10px] text-slate-500">{task.assignedTo?.designation || task.assignedTo?.role}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Description */}
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Description</h4>
-              <div className="p-4 bg-slate-50 rounded-xl text-xs text-slate-700 leading-relaxed border border-slate-200/50 whitespace-pre-wrap">
-                {task.description || "No description provided."}
-              </div>
-            </div>
-
-            {/* UPDATE LIFECYCLE FORM */}
-            <form onSubmit={handleStatusSubmit} className="p-5 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-4">
-              <h4 className="text-xs font-bold text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
-                <ArrowRight className="w-4 h-4 text-indigo-600" />
-                Update Lifecycle Stage
-              </h4>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* TAB 1: OVERVIEW & STATUS CONTROL */}
+          {activeTab === "overview" && (
+            <div className="space-y-6">
+              {/* Meta Row */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200/60 text-xs">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Status Transition</label>
-                  <select
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value as TaskStatus)}
-                    className="w-full text-xs font-semibold bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="pending">Pending (Not Started)</option>
-                    <option value="in_progress">In Progress (Active Work)</option>
-                    <option value="in_review">In Review (Submit for Approval)</option>
-                    <option value="completed">Completed (Approved)</option>
-                    <option value="blocked">Blocked (Facing Issue)</option>
-                  </select>
+                  <p className="text-slate-400 font-semibold mb-1">Status</p>
+                  <StatusBadge status={task.status} />
                 </div>
+                <div>
+                  <p className="text-slate-400 font-semibold mb-1">Priority</p>
+                  <PriorityBadge priority={task.priority} />
+                </div>
+                <div>
+                  <p className="text-slate-400 font-semibold mb-1">Due Date</p>
+                  <p className="font-bold text-slate-800 flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                    {new Date(task.dueDate).toLocaleDateString([], {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-semibold mb-1">Progress</p>
+                  <p className="font-bold text-indigo-600">{task.progressPercentage}% Complete</p>
+                </div>
+              </div>
+
+              {/* People Involved */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-3 bg-white border border-slate-200 rounded-xl flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 shrink-0">
+                    <Image
+                      src={task.assignedBy?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(task.assignedBy?.name || "A")}&background=4f46e5&color=fff`}
+                      alt={task.assignedBy?.name || "Assigner"}
+                      width={32}
+                      height={32}
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase">Assigned By</p>
+                    <p className="text-xs font-bold text-slate-900 truncate">{task.assignedBy?.name}</p>
+                    <p className="text-[10px] text-slate-500">{task.assignedBy?.designation || task.assignedBy?.role}</p>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-white border border-slate-200 rounded-xl flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-100 shrink-0">
+                    <Image
+                      src={task.assignedTo?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(task.assignedTo?.name || "U")}&background=059669&color=fff`}
+                      alt={task.assignedTo?.name || "Assignee"}
+                      width={32}
+                      height={32}
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase">Assignee (Working)</p>
+                    <p className="text-xs font-bold text-slate-900 truncate">{task.assignedTo?.name}</p>
+                    <p className="text-[10px] text-slate-500">{task.assignedTo?.designation || task.assignedTo?.role}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Description & Instructions</h4>
+                <div className="p-4 bg-slate-50 rounded-xl text-xs text-slate-700 leading-relaxed border border-slate-200/50 whitespace-pre-wrap">
+                  {task.description || "No description provided."}
+                </div>
+              </div>
+
+              {/* UPDATE LIFECYCLE FORM */}
+              <form onSubmit={handleStatusSubmit} className="p-5 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-4">
+                <h4 className="text-xs font-bold text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
+                  <ArrowRight className="w-4 h-4 text-indigo-600" />
+                  Update Lifecycle Stage
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Status Transition</label>
+                    <select
+                      value={newStatus}
+                      onChange={(e) => setNewStatus(e.target.value as TaskStatus)}
+                      className="w-full text-xs font-semibold bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="assigned">Assigned (Not Started)</option>
+                      <option value="in_progress">In Progress (Active Work)</option>
+                      <option value="on_hold">On Hold (Pending Dependency)</option>
+                      <option value="in_review">In Review (Submitted for Verification)</option>
+                      <option value="completed">Completed (Finished & Approved)</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -384,8 +409,22 @@ export function TaskModal({
             </form>
           </div>
         )}
-      </div>
-    </Modal>
+        </div>
+      </Modal>
+
+      {/* Split Subtask Modal */}
+      {isSplitModalOpen && (
+        <SplitTaskModal
+          isOpen={isSplitModalOpen}
+          onClose={() => setIsSplitModalOpen(false)}
+          parentTask={task}
+          currentUser={currentUser}
+          onSubtaskCreated={(subtask) => {
+            onTaskUpdated(task);
+          }}
+        />
+      )}
+    </>
   );
 }
 

@@ -18,6 +18,12 @@ const QueryResponseSchema = new Schema(
 
 const QuerySchema = new Schema(
   {
+    queryId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
     title: {
       type: String,
       required: [true, "Query title is required"],
@@ -59,9 +65,22 @@ const QuerySchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["open", "in_progress", "resolved", "closed"],
+      enum: ["open", "in_progress", "resolved", "reopened", "closed"],
       default: "open",
       index: true,
+    },
+    resolvedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    resolvedAt: {
+      type: Date,
+      default: null,
+    },
+    resolutionNotes: {
+      type: String,
+      default: "",
     },
     responses: {
       type: [QueryResponseSchema],

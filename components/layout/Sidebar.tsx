@@ -14,6 +14,8 @@ import {
   UserCircle2,
   Database,
   Radio,
+  Target,
+  FileText,
 } from "lucide-react";
 import { UserRole } from "@/lib/types";
 
@@ -28,22 +30,28 @@ export function Sidebar({ role }: SidebarProps) {
     { href: "/admin", label: "Executive Dashboard", icon: LayoutDashboard },
     { href: "/admin/users", label: "Team & Hierarchy", icon: Users },
     { href: "/admin/tasks", label: "Master Task Board", icon: CheckSquare },
+    { href: "/admin/targets", label: "Today's Targets", icon: Target },
     { href: "/admin/queries", label: "Query Resolution", icon: HelpCircle },
+    { href: "/admin/productivity", label: "Notes & To-dos", icon: FileText },
     { href: "/admin/profile", label: "My Executive Profile", icon: UserCircle2 },
   ];
 
   const managerLinks = [
     { href: "/manager", label: "Manager Overview", icon: LayoutDashboard },
     { href: "/manager/tasks", label: "Tasks & Delegation", icon: CheckSquare },
+    { href: "/manager/targets", label: "Team Daily Targets", icon: Target },
     { href: "/manager/team", label: "My Team Roster", icon: Users },
     { href: "/manager/queries", label: "Team Queries", icon: HelpCircle },
+    { href: "/manager/productivity", label: "Notes & To-dos", icon: FileText },
     { href: "/manager/profile", label: "My Profile & Lead Desk", icon: UserCircle2 },
   ];
 
   const employeeLinks = [
     { href: "/employee", label: "My Workspace", icon: LayoutDashboard },
     { href: "/employee/tasks", label: "My Assigned Tasks", icon: CheckSquare },
+    { href: "/employee/targets", label: "Today's Target", icon: Target },
     { href: "/employee/queries", label: "Ask Manager (Queries)", icon: HelpCircle },
+    { href: "/employee/productivity", label: "Notes & To-dos", icon: FileText },
     { href: "/employee/profile", label: "My Contributor Profile", icon: UserCircle2 },
   ];
 

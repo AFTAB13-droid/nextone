@@ -2,6 +2,7 @@ import connectDB from "@/lib/mongodb";
 import Task from "@/models/Task";
 import User from "@/models/User";
 import NotificationService from "@/services/notificationService";
+import EmailService from "@/services/emailService";
 import { AuthSession, ITask, TaskPriority, TaskStatus } from "@/lib/types";
 
 export interface CreateTaskInput {
@@ -12,9 +13,16 @@ export interface CreateTaskInput {
   dueDate: string | Date;
   tags?: string[];
   attachments?: string[];
+  parentTaskId?: string;
 }
 
 export class TaskService {
+  private static async generateTaskId(): Promise<string> {
+    const count = await Task.countDocuments();
+    const randomSuffix = Math.floor(100 + Math.random() * 900);
+    return `TSK-${1000 + count + 1}`;
+  }
+
   static async createTask(actor: AuthSession, input: CreateTaskInput): Promise<ITask> {
     await connectDB();
 
@@ -35,14 +43,18 @@ export class TaskService {
       throw new Error("Employees cannot create or assign tasks.");
     }
 
+    const taskIdFormatted = await this.generateTaskId();
+
     const task = await Task.create({
+      taskId: taskIdFormatted,
       title: input.title.trim(),
       description: input.description || "",
       assignedBy: actor.userId,
       assignedTo: input.assignedTo,
       managerInCharge: assignee.managerId || (actor.role === "manager" ? actor.userId : null),
+      parentTaskId: input.parentTaskId || null,
       priority: input.priority || "medium",
-      status: "pending",
+      status: "assigned",
       dueDate: new Date(input.dueDate),
       progressPercentage: 0,
       tags: input.tags || [],
@@ -51,11 +63,11 @@ export class TaskService {
         {
           action: "Task Created",
           by: {
-            _id: actor.userId,
+            _id: actor.userId as any,
             name: actor.name,
             role: actor.role,
           },
-          note: `Assigned to ${assignee.name} by ${actor.name}`,
+          note: `Assigned to ${assignee.name} by ${actor.name} (${taskIdFormatted})`,
           timestamp: new Date(),
         },
       ],
@@ -66,19 +78,64 @@ export class TaskService {
     const dashboardLink = assignee.role === "manager" ? "/manager/tasks" : "/employee/tasks";
     await NotificationService.createNotification(
       input.assignedTo,
-      "New Task Assigned",
+      `New Task Assigned [${taskIdFormatted}]`,
       `"${task.title}" was assigned to you by ${actor.name} (${actor.role.toUpperCase()}). Due: ${new Date(task.dueDate).toLocaleDateString()}`,
       dashboardLink,
       "task"
     );
 
+    // Email notification (Section 9: non-blocking)
+    EmailService.sendNotificationEmail({
+      to: assignee.email,
+      subject: `[NextOne] New Task Assigned: ${task.title} (${taskIdFormatted})`,
+      htmlContent: `<p>Hello ${assignee.name},</p><p>${actor.name} has assigned you task <strong>${task.title}</strong> (${taskIdFormatted}).</p>`,
+    });
+
     const populated = await Task.findById(task._id)
       .populate("assignedBy", "name email role designation avatar")
       .populate("assignedTo", "name email role designation avatar")
       .populate("managerInCharge", "name email role designation avatar")
+      .populate("parentTaskId", "taskId title status")
       .lean();
 
     return populated as unknown as ITask;
+  }
+
+  // Section 4.A: Manager splits Admin-assigned task into subordinate tasks
+  static async splitTask(
+    actor: AuthSession,
+    parentTaskId: string,
+    subtaskInput: CreateTaskInput
+  ): Promise<ITask> {
+    await connectDB();
+
+    const parentTask = await Task.findById(parentTaskId);
+    if (!parentTask) {
+      throw new Error("Parent task not found");
+    }
+
+    if (actor.role === "manager" && parentTask.assignedTo.toString() !== actor.userId) {
+      throw new Error("You can only split tasks assigned directly to you by Admin");
+    }
+
+    // Append activity log to parent task
+    parentTask.activityLogs.push({
+      action: "Work Distributed / Split",
+      by: {
+        _id: actor.userId as any,
+        name: actor.name,
+        role: actor.role,
+      },
+      note: `Manager split this initiative and delegated work: "${subtaskInput.title}"`,
+      timestamp: new Date(),
+    });
+    await parentTask.save();
+
+    // Create subtask linked to parent
+    return this.createTask(actor, {
+      ...subtaskInput,
+      parentTaskId,
+    });
   }
 
   static async getTasks(
@@ -89,6 +146,7 @@ export class TaskService {
       assignedTo?: string;
       assignedBy?: string;
       search?: string;
+      parentTaskId?: string;
     }
   ): Promise<ITask[]> {
     await connectDB();
@@ -125,14 +183,23 @@ export class TaskService {
       query.priority = filter.priority;
     }
 
+    if (filter?.parentTaskId) {
+      query.parentTaskId = filter.parentTaskId;
+    }
+
     if (filter?.search) {
-      query.title = { $regex: filter.search, $options: "i" };
+      query.$or = [
+        { title: { $regex: filter.search, $options: "i" } },
+        { taskId: { $regex: filter.search, $options: "i" } },
+        { description: { $regex: filter.search, $options: "i" } },
+      ];
     }
 
     const tasks = await Task.find(query)
       .populate("assignedBy", "name email role designation avatar")
       .populate("assignedTo", "name email role designation avatar")
       .populate("managerInCharge", "name email role designation avatar")
+      .populate("parentTaskId", "taskId title status")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -146,6 +213,7 @@ export class TaskService {
       .populate("assignedBy", "name email role designation avatar")
       .populate("assignedTo", "name email role designation avatar")
       .populate("managerInCharge", "name email role designation avatar")
+      .populate("parentTaskId", "taskId title status")
       .lean();
 
     return task as unknown as ITask;
@@ -175,6 +243,7 @@ export class TaskService {
       task.progressPercentage = Math.min(100, Math.max(0, progressPercentage));
     } else if (newStatus === "completed") {
       task.progressPercentage = 100;
+      task.completionDate = new Date();
     } else if (newStatus === "in_review" && task.progressPercentage < 80) {
       task.progressPercentage = 90;
     }
@@ -187,7 +256,7 @@ export class TaskService {
         name: actor.name,
         role: actor.role,
       },
-      note: note || `Updated by ${actor.name}`,
+      note: note || `Status updated by ${actor.name}`,
       timestamp: new Date(),
     });
 
@@ -199,14 +268,14 @@ export class TaskService {
         ? task.assignedBy._id.toString()
         : task.assignedTo._id.toString();
 
-    let notifTitle = `Task Status: ${newStatus.toUpperCase()}`;
+    let notifTitle = `Task Status: ${newStatus.toUpperCase()} [${task.taskId || ""}]`;
     let notifMessage = `${actor.name} moved "${task.title}" to ${newStatus.replace("_", " ").toUpperCase()}`;
 
     if (newStatus === "in_review") {
-      notifTitle = "Task Submitted for Review";
+      notifTitle = `Task Submitted for Review [${task.taskId || ""}]`;
       notifMessage = `${actor.name} submitted "${task.title}" for your approval/review.`;
     } else if (newStatus === "completed") {
-      notifTitle = "Task Completed & Approved";
+      notifTitle = `Task Completed & Approved [${task.taskId || ""}]`;
       notifMessage = `"${task.title}" has been marked as COMPLETED.`;
     }
 
@@ -222,6 +291,7 @@ export class TaskService {
       .populate("assignedBy", "name email role designation avatar")
       .populate("assignedTo", "name email role designation avatar")
       .populate("managerInCharge", "name email role designation avatar")
+      .populate("parentTaskId", "taskId title status")
       .lean();
 
     return updated as unknown as ITask;
@@ -275,7 +345,7 @@ export class TaskService {
 
     await NotificationService.createNotification(
       recipientId,
-      "New Comment on Task",
+      `New Comment on Task [${task.taskId || ""}]`,
       `${actor.name} commented on "${task.title}": "${message.slice(0, 50)}"`,
       actor.role === "employee" ? "/manager/tasks" : "/employee/tasks",
       "task"
@@ -285,6 +355,7 @@ export class TaskService {
       .populate("assignedBy", "name email role designation avatar")
       .populate("assignedTo", "name email role designation avatar")
       .populate("managerInCharge", "name email role designation avatar")
+      .populate("parentTaskId", "taskId title status")
       .lean();
 
     return updated as unknown as ITask;
@@ -307,11 +378,12 @@ export class TaskService {
 
   static async getTaskMetrics(actor: AuthSession): Promise<{
     total: number;
-    pending: number;
+    assigned: number;
     in_progress: number;
+    on_hold: number;
     in_review: number;
     completed: number;
-    blocked: number;
+    cancelled: number;
     overdue: number;
     completionRate: number;
   }> {
@@ -320,21 +392,23 @@ export class TaskService {
     const allTasks = await this.getTasks(actor);
 
     const now = new Date();
-    let pending = 0;
+    let assigned = 0;
     let in_progress = 0;
+    let on_hold = 0;
     let in_review = 0;
     let completed = 0;
-    let blocked = 0;
+    let cancelled = 0;
     let overdue = 0;
 
     for (const t of allTasks) {
-      if (t.status === "pending") pending++;
+      if (t.status === "assigned" || t.status === "pending") assigned++;
       else if (t.status === "in_progress") in_progress++;
+      else if (t.status === "on_hold" || t.status === "blocked") on_hold++;
       else if (t.status === "in_review") in_review++;
       else if (t.status === "completed") completed++;
-      else if (t.status === "blocked") blocked++;
+      else if (t.status === "cancelled") cancelled++;
 
-      if (t.status !== "completed" && new Date(t.dueDate) < now) {
+      if (t.status !== "completed" && t.status !== "cancelled" && new Date(t.dueDate) < now) {
         overdue++;
       }
     }
@@ -344,11 +418,12 @@ export class TaskService {
 
     return {
       total,
-      pending,
+      assigned,
       in_progress,
+      on_hold,
       in_review,
       completed,
-      blocked,
+      cancelled,
       overdue,
       completionRate,
     };

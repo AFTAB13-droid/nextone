@@ -13,6 +13,11 @@ export interface CreateQueryInput {
 }
 
 export class QueryService {
+  private static async generateQueryId(): Promise<string> {
+    const count = await Query.countDocuments();
+    return `QRY-${1000 + count + 1}`;
+  }
+
   static async createQuery(actor: AuthSession, input: CreateQueryInput): Promise<IQuery> {
     await connectDB();
 
@@ -39,7 +44,10 @@ export class QueryService {
       assignedToId = actor.userId;
     }
 
+    const queryIdFormatted = await this.generateQueryId();
+
     const query = await Query.create({
+      queryId: queryIdFormatted,
       title: input.title.trim(),
       description: input.description.trim(),
       category: input.category || "clarification",
@@ -47,7 +55,18 @@ export class QueryService {
       raisedBy: actor.userId,
       assignedTo: assignedToId,
       status: "open",
-      responses: [],
+      responses: input.attachments && input.attachments.length > 0 ? [
+        {
+          sender: {
+            _id: actor.userId as any,
+            name: actor.name,
+            role: actor.role,
+          },
+          message: "Attached reference images to this inquiry.",
+          attachments: input.attachments,
+          createdAt: new Date(),
+        }
+      ] : [],
     });
 
     // Notify assigned manager or admin
@@ -56,8 +75,8 @@ export class QueryService {
 
     await NotificationService.createNotification(
       assignedToId,
-      `New Query: ${input.title}`,
-      `${actor.name} (${actor.role.toUpperCase()}) raised a query: "${input.title}"`,
+      `New Query [${queryIdFormatted}]: ${input.title}`,
+      `${actor.name} (${actor.role.toUpperCase()}) raised query ${queryIdFormatted}: "${input.title}"`,
       targetLink,
       "query"
     );
@@ -84,12 +103,11 @@ export class QueryService {
     const query: Record<string, unknown> = {};
 
     if (actor.role === "admin") {
-      // Admin sees all queries or queries assigned/escalated to them
-      // No filter restriction: Admin has master visibility
+      // Admin sees all queries across the company
     } else if (actor.role === "manager") {
       // Manager sees:
       // 1. Queries they raised to Admin
-      // 2. Queries assigned to them by their employees
+      // 2. Queries assigned to them by their team
       query.$or = [{ raisedBy: actor.userId }, { assignedTo: actor.userId }];
     } else {
       // Employee sees only queries raised by them
@@ -110,6 +128,7 @@ export class QueryService {
       .populate("raisedBy", "name email role designation avatar")
       .populate("assignedTo", "name email role designation avatar")
       .populate("escalatedTo", "name email role designation avatar")
+      .populate("resolvedBy", "name email role designation avatar")
       .sort({ updatedAt: -1 })
       .lean();
 
@@ -123,6 +142,7 @@ export class QueryService {
       .populate("raisedBy", "name email role designation avatar")
       .populate("assignedTo", "name email role designation avatar")
       .populate("escalatedTo", "name email role designation avatar")
+      .populate("resolvedBy", "name email role designation avatar")
       .lean();
 
     return q as unknown as IQuery;
@@ -176,8 +196,8 @@ export class QueryService {
 
     await NotificationService.createNotification(
       targetUserId,
-      `Response on Query: ${queryDoc.title}`,
-      `${actor.name} replied to your query: "${message.slice(0, 50)}"`,
+      `Reply on Query [${queryDoc.queryId || ""}]`,
+      `${actor.name} replied to query: "${message.slice(0, 50)}"`,
       targetLink,
       "query"
     );
@@ -186,6 +206,7 @@ export class QueryService {
       .populate("raisedBy", "name email role designation avatar")
       .populate("assignedTo", "name email role designation avatar")
       .populate("escalatedTo", "name email role designation avatar")
+      .populate("resolvedBy", "name email role designation avatar")
       .lean();
 
     return updated as unknown as IQuery;
@@ -228,7 +249,7 @@ export class QueryService {
     // Notify Admin
     await NotificationService.createNotification(
       adminUser._id.toString(),
-      "Query Escalated to Admin",
+      `Query Escalated to Admin [${queryDoc.queryId || ""}]`,
       `${actor.name} escalated query "${queryDoc.title}" to Admin.`,
       "/admin/queries",
       "query"
@@ -238,6 +259,112 @@ export class QueryService {
       .populate("raisedBy", "name email role designation avatar")
       .populate("assignedTo", "name email role designation avatar")
       .populate("escalatedTo", "name email role designation avatar")
+      .populate("resolvedBy", "name email role designation avatar")
+      .lean();
+
+    return updated as unknown as IQuery;
+  }
+
+  // Section 5.C: Resolve query with resolution details
+  static async resolveQuery(
+    actor: AuthSession,
+    queryId: string,
+    resolutionNotes?: string
+  ): Promise<IQuery> {
+    await connectDB();
+
+    const queryDoc = await Query.findById(queryId).populate("raisedBy", "name email role");
+    if (!queryDoc) {
+      throw new Error("Query not found");
+    }
+
+    queryDoc.status = "resolved";
+    queryDoc.resolvedBy = actor.userId as any;
+    queryDoc.resolvedAt = new Date();
+    if (resolutionNotes) {
+      queryDoc.resolutionNotes = resolutionNotes.trim();
+      queryDoc.responses.push({
+        sender: {
+          _id: actor.userId as any,
+          name: actor.name,
+          role: actor.role,
+        },
+        message: `[RESOLVED] ${resolutionNotes}`,
+        attachments: [],
+        createdAt: new Date(),
+      });
+    }
+
+    await queryDoc.save();
+
+    // Notify query author
+    await NotificationService.createNotification(
+      queryDoc.raisedBy._id.toString(),
+      `Query Resolved [${queryDoc.queryId || ""}]`,
+      `Your query "${queryDoc.title}" was marked as RESOLVED by ${actor.name}.`,
+      queryDoc.raisedBy.role === "manager" ? "/manager/queries" : "/employee/queries",
+      "query"
+    );
+
+    const updated = await Query.findById(queryId)
+      .populate("raisedBy", "name email role designation avatar")
+      .populate("assignedTo", "name email role designation avatar")
+      .populate("escalatedTo", "name email role designation avatar")
+      .populate("resolvedBy", "name email role designation avatar")
+      .lean();
+
+    return updated as unknown as IQuery;
+  }
+
+  // Section 5.C: Ability to reopen a query if issue is not fully addressed
+  static async reopenQuery(
+    actor: AuthSession,
+    queryId: string,
+    reopenReason: string
+  ): Promise<IQuery> {
+    await connectDB();
+
+    const queryDoc = await Query.findById(queryId)
+      .populate("raisedBy", "name email role")
+      .populate("assignedTo", "name email role");
+
+    if (!queryDoc) {
+      throw new Error("Query not found");
+    }
+
+    queryDoc.status = "reopened";
+    queryDoc.responses.push({
+      sender: {
+        _id: actor.userId as any,
+        name: actor.name,
+        role: actor.role,
+      },
+      message: `[REOPENED] Issue not fully resolved: ${reopenReason.trim()}`,
+      attachments: [],
+      createdAt: new Date(),
+    });
+
+    await queryDoc.save();
+
+    // Notify assigned manager/admin
+    const targetUserId =
+      actor.userId === queryDoc.raisedBy._id.toString()
+        ? queryDoc.assignedTo._id.toString()
+        : queryDoc.raisedBy._id.toString();
+
+    await NotificationService.createNotification(
+      targetUserId,
+      `Query Reopened [${queryDoc.queryId || ""}]`,
+      `${actor.name} reopened query "${queryDoc.title}": "${reopenReason.slice(0, 40)}"`,
+      actor.role === "employee" ? "/manager/queries" : "/admin/queries",
+      "query"
+    );
+
+    const updated = await Query.findById(queryId)
+      .populate("raisedBy", "name email role designation avatar")
+      .populate("assignedTo", "name email role designation avatar")
+      .populate("escalatedTo", "name email role designation avatar")
+      .populate("resolvedBy", "name email role designation avatar")
       .lean();
 
     return updated as unknown as IQuery;
@@ -248,6 +375,10 @@ export class QueryService {
     queryId: string,
     status: QueryStatus
   ): Promise<IQuery> {
+    if (status === "resolved") {
+      return this.resolveQuery(actor, queryId);
+    }
+
     await connectDB();
 
     const queryDoc = await Query.findById(queryId).populate("raisedBy", "name email role");
@@ -258,19 +389,11 @@ export class QueryService {
     queryDoc.status = status;
     await queryDoc.save();
 
-    // Notify query author
-    await NotificationService.createNotification(
-      queryDoc.raisedBy._id.toString(),
-      `Query Marked ${status.toUpperCase()}`,
-      `Your query "${queryDoc.title}" status has been updated to ${status.toUpperCase()} by ${actor.name}.`,
-      queryDoc.raisedBy.role === "manager" ? "/manager/queries" : "/employee/queries",
-      "query"
-    );
-
     const updated = await Query.findById(queryId)
       .populate("raisedBy", "name email role designation avatar")
       .populate("assignedTo", "name email role designation avatar")
       .populate("escalatedTo", "name email role designation avatar")
+      .populate("resolvedBy", "name email role designation avatar")
       .lean();
 
     return updated as unknown as IQuery;

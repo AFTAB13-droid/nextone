@@ -8,7 +8,7 @@ export class NotificationService {
     title: string,
     message: string,
     link: string = "",
-    type: "task" | "query" | "system" | "hierarchy" = "system"
+    type: "task" | "query" | "target" | "system" | "hierarchy" = "system"
   ): Promise<INotification> {
     await connectDB();
 

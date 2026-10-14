@@ -23,7 +23,7 @@ const NotificationSchema = new Schema(
     },
     type: {
       type: String,
-      enum: ["task", "query", "system", "hierarchy"],
+      enum: ["task", "query", "target", "system", "hierarchy"],
       default: "system",
       index: true,
     },

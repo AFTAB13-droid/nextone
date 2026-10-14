@@ -10,6 +10,9 @@ import {
   AlertCircle,
   HelpCircle,
   MessageSquare,
+  RotateCcw,
+  ShieldCheck,
+  Image as ImageIcon,
 } from "lucide-react";
 import { IQuery, QueryStatus, AuthSession } from "@/lib/types";
 import Image from "next/image";
@@ -35,11 +38,24 @@ export function QueryModal({
   const [escalationNote, setEscalationNote] = useState("");
   const [showEscalateBox, setShowEscalateBox] = useState(false);
 
+  // Resolution & Reopen States
+  const [showResolveBox, setShowResolveBox] = useState(false);
+  const [resolutionNotes, setResolutionNotes] = useState("");
+  const [isResolving, setIsResolving] = useState(false);
+
+  const [showReopenBox, setShowReopenBox] = useState(false);
+  const [reopenReason, setReopenReason] = useState("");
+  const [isReopening, setIsReopening] = useState(false);
+
   if (!query) return null;
 
   const isEscalated = Boolean(query.escalatedTo);
+  const isResolved = query.status === "resolved";
   const canEscalate =
-    currentUser.role === "manager" && !isEscalated && query.status !== "resolved";
+    currentUser.role === "manager" && !isEscalated && !isResolved;
+  const canResolve =
+    (currentUser.role === "admin" || currentUser.role === "manager") && !isResolved;
+  const canReopen = isResolved;
 
   const handleReply = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,34 +100,69 @@ export function QueryModal({
     }
   };
 
-  const handleStatusChange = async (newStatus: QueryStatus) => {
+  const handleConfirmResolve = async () => {
+    setIsResolving(true);
     try {
       const res = await fetch(`/api/queries/${query._id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({
+          status: "resolved",
+          resolutionNotes: resolutionNotes.trim() || undefined,
+        }),
       });
       if (res.ok) {
         const data = await res.json();
         onQueryUpdated(data.query);
+        setShowResolveBox(false);
+        setResolutionNotes("");
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsResolving(false);
     }
   };
+
+  const handleConfirmReopen = async () => {
+    if (!reopenReason.trim()) return;
+    setIsReopening(true);
+    try {
+      const res = await fetch(`/api/queries/${query._id}/reopen`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reopenReason }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        onQueryUpdated(data.query);
+        setShowReopenBox(false);
+        setReopenReason("");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsReopening(false);
+    }
+  };
+
+  const queryIdFormatted = query.queryId || `#${query._id.slice(-6)}`;
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={query.title}
-      description={`Raised by ${query.raisedBy?.name} • Category: ${query.category.toUpperCase()}`}
+      description={`Query ID: ${queryIdFormatted} • Raised by ${query.raisedBy?.name} (${query.raisedBy?.role?.toUpperCase()}) • Category: ${query.category?.toUpperCase()}`}
       maxWidth="2xl"
     >
-      <div className="space-y-6">
+      <div className="space-y-5">
         {/* Header Badges & Actions */}
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200/60">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-200/60">
           <div className="flex items-center gap-2">
+            <span className="text-xs font-mono font-bold bg-white text-slate-800 px-2.5 py-1 rounded-lg border border-slate-200">
+              {queryIdFormatted}
+            </span>
             <StatusBadge status={query.status} />
             <PriorityBadge priority={query.priority} />
             {isEscalated && (
@@ -122,34 +173,141 @@ export function QueryModal({
             )}
           </div>
 
-          {/* Quick status actions for Admin & Manager */}
-          {(currentUser.role === "admin" || currentUser.role === "manager") && (
-            <div className="flex items-center gap-2">
-              {query.status !== "resolved" && (
-                <button
-                  onClick={() => handleStatusChange("resolved")}
-                  className="px-3 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors flex items-center gap-1"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Mark Resolved
-                </button>
-              )}
-              {canEscalate && !showEscalateBox && (
-                <button
-                  onClick={() => setShowEscalateBox(true)}
-                  className="px-3 py-1.5 text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-1"
-                >
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                  Escalate to Admin
-                </button>
-              )}
-            </div>
-          )}
+          {/* Action buttons */}
+          <div className="flex items-center gap-2">
+            {canResolve && !showResolveBox && (
+              <button
+                onClick={() => setShowResolveBox(true)}
+                className="px-3.5 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors flex items-center gap-1.5 shadow-sm shadow-emerald-600/20"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Mark Resolved
+              </button>
+            )}
+
+            {canReopen && !showReopenBox && (
+              <button
+                onClick={() => setShowReopenBox(true)}
+                className="px-3.5 py-1.5 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl transition-colors flex items-center gap-1.5 shadow-sm shadow-amber-600/20"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reopen Query
+              </button>
+            )}
+
+            {canEscalate && !showEscalateBox && (
+              <button
+                onClick={() => setShowEscalateBox(true)}
+                className="px-3.5 py-1.5 text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors flex items-center gap-1.5 shadow-sm shadow-purple-600/20"
+              >
+                <ArrowUpRight className="w-3.5 h-3.5" />
+                Escalate to Admin
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Escalation Box */}
+        {/* RESOLUTION DETAILS BANNER (if resolved) */}
+        {isResolved && (
+          <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl flex items-start gap-3">
+            <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <h4 className="text-xs font-black text-emerald-950 uppercase tracking-wide">
+                  Query Formally Resolved
+                </h4>
+                {query.resolvedAt && (
+                  <span className="text-[10px] text-emerald-700 font-medium">
+                    at {new Date(query.resolvedAt).toLocaleString()}
+                  </span>
+                )}
+              </div>
+              {query.resolvedBy && (
+                <p className="text-xs text-emerald-800">
+                  Resolved by: <span className="font-bold">{query.resolvedBy.name}</span> ({query.resolvedBy.role})
+                </p>
+              )}
+              {query.resolutionNotes && (
+                <p className="text-xs text-emerald-900 bg-white/70 p-2.5 rounded-xl border border-emerald-200/70 mt-1.5 font-medium leading-relaxed">
+                  {query.resolutionNotes}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* RESOLUTION INPUT BOX */}
+        {showResolveBox && (
+          <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 space-y-3">
+            <h4 className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              Provide Resolution Summary & Details
+            </h4>
+            <textarea
+              rows={2}
+              value={resolutionNotes}
+              onChange={(e) => setResolutionNotes(e.target.value)}
+              placeholder="State how the inquiry was resolved or next action points..."
+              className="w-full text-xs bg-white border border-emerald-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowResolveBox(false)}
+                className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmResolve}
+                disabled={isResolving}
+                className="px-4 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs transition-colors"
+              >
+                {isResolving ? "Resolving..." : "Confirm Resolution"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* REOPEN INPUT BOX */}
+        {showReopenBox && (
+          <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 space-y-3">
+            <h4 className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+              <RotateCcw className="w-4 h-4 text-amber-600" />
+              Reopen Query - Reason & Unresolved Points
+            </h4>
+            <p className="text-xs text-amber-700">
+              Explain why this issue is not fully resolved or what further action is required:
+            </p>
+            <textarea
+              rows={2}
+              value={reopenReason}
+              onChange={(e) => setReopenReason(e.target.value)}
+              placeholder="e.g. The database migration worked on dev but is throwing permission errors on test..."
+              className="w-full text-xs bg-white border border-amber-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowReopenBox(false)}
+                className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmReopen}
+                disabled={isReopening || !reopenReason.trim()}
+                className="px-4 py-1.5 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow-xs transition-colors disabled:opacity-50"
+              >
+                {isReopening ? "Reopening..." : "Submit & Reopen Query"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ESCALATION BOX */}
         {showEscalateBox && (
-          <div className="p-4 bg-purple-50 rounded-xl border border-purple-200 space-y-3">
+          <div className="p-4 bg-purple-50 rounded-2xl border border-purple-200 space-y-3">
             <h4 className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
               <ArrowUpRight className="w-4 h-4 text-purple-600" />
               Escalate this inquiry to Executive Admin
@@ -162,7 +320,7 @@ export function QueryModal({
               value={escalationNote}
               onChange={(e) => setEscalationNote(e.target.value)}
               placeholder="e.g. Requires approval for extra budget or cross-departmental coordination..."
-              className="w-full text-xs bg-white border border-purple-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full text-xs bg-white border border-purple-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium"
             />
             <div className="flex justify-end gap-2">
               <button
@@ -174,7 +332,7 @@ export function QueryModal({
               <button
                 onClick={handleEscalate}
                 disabled={escalating}
-                className="px-4 py-1.5 text-xs font-bold bg-purple-700 hover:bg-purple-800 text-white rounded-lg transition-colors"
+                className="px-4 py-1.5 text-xs font-bold bg-purple-700 hover:bg-purple-800 text-white rounded-xl transition-colors"
               >
                 {escalating ? "Escalating..." : "Confirm Escalation"}
               </button>
@@ -183,10 +341,10 @@ export function QueryModal({
         )}
 
         {/* Initial Query Body */}
-        <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
-          <div className="flex items-center justify-between mb-2">
+        <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
+          <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full overflow-hidden bg-slate-100">
+              <div className="w-7 h-7 rounded-full overflow-hidden bg-slate-100 border border-slate-200">
                 <Image
                   src={
                     query.raisedBy?.avatar ||
@@ -195,8 +353,8 @@ export function QueryModal({
                     )}&background=6366f1&color=fff`
                   }
                   alt={query.raisedBy?.name || "Author"}
-                  width={24}
-                  height={24}
+                  width={28}
+                  height={28}
                   className="object-cover"
                   unoptimized
                 />
@@ -204,11 +362,11 @@ export function QueryModal({
               <span className="text-xs font-bold text-slate-900">{query.raisedBy?.name}</span>
               <RoleBadge role={query.raisedBy?.role} />
             </div>
-            <span className="text-[10px] text-slate-400">
+            <span className="text-[10px] text-slate-400 font-mono">
               {new Date(query.createdAt).toLocaleString()}
             </span>
           </div>
-          <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">
+          <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap font-medium">
             {query.description}
           </p>
         </div>
@@ -221,7 +379,7 @@ export function QueryModal({
           </h4>
 
           {query.responses?.length === 0 ? (
-            <div className="py-6 text-center text-slate-400 text-xs bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <div className="py-6 text-center text-slate-400 text-xs bg-slate-50 rounded-2xl border border-dashed border-slate-200">
               No responses yet. Write a response below.
             </div>
           ) : (
@@ -229,7 +387,7 @@ export function QueryModal({
               {query.responses.map((resp, idx) => (
                 <div
                   key={idx}
-                  className={`p-3.5 rounded-xl border text-xs ${
+                  className={`p-3.5 rounded-2xl border text-xs ${
                     resp.sender._id === currentUser.userId
                       ? "bg-indigo-50/60 border-indigo-200 ml-6"
                       : "bg-slate-50 border-slate-200 mr-6"
@@ -240,7 +398,7 @@ export function QueryModal({
                       <span className="font-bold text-slate-900">{resp.sender.name}</span>
                       <RoleBadge role={resp.sender.role} />
                     </div>
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-[10px] text-slate-400 font-mono">
                       {new Date(resp.createdAt).toLocaleString([], {
                         month: "short",
                         day: "numeric",
@@ -249,7 +407,7 @@ export function QueryModal({
                       })}
                     </span>
                   </div>
-                  <p className="text-slate-800 leading-relaxed">{resp.message}</p>
+                  <p className="text-slate-800 leading-relaxed whitespace-pre-wrap font-medium">{resp.message}</p>
                 </div>
               ))}
             </div>
@@ -260,15 +418,15 @@ export function QueryModal({
         <form onSubmit={handleReply} className="flex gap-2 pt-2 border-t border-slate-100">
           <input
             type="text"
-            placeholder="Write a clear resolution or follow-up response..."
+            placeholder={isResolved ? "Reply to reopened discussion..." : "Write a clear response or follow-up note..."}
             value={replyMessage}
             onChange={(e) => setReplyMessage(e.target.value)}
-            className="flex-1 text-xs bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 text-xs bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
           />
           <button
             type="submit"
             disabled={isSubmitting || !replyMessage.trim()}
-            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors disabled:opacity-50"
+            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-sm shadow-indigo-600/20"
           >
             <Send className="w-3.5 h-3.5" />
             Reply

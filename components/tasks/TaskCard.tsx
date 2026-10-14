@@ -23,8 +23,20 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
       <div>
         {/* Top Badges */}
         <div className="flex items-center justify-between gap-2 mb-3">
-          <PriorityBadge priority={task.priority} />
-          <StatusBadge status={task.status} />
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200">
+              {task.taskId || `#${task._id.slice(-6)}`}
+            </span>
+            {task.parentTaskId && (
+              <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200">
+                Subtask
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <PriorityBadge priority={task.priority} />
+            <StatusBadge status={task.status} />
+          </div>
         </div>
 
         {/* Title */}

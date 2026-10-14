@@ -33,6 +33,12 @@ const TaskCommentSchema = new Schema(
 
 const TaskSchema = new Schema(
   {
+    taskId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
     title: {
       type: String,
       required: [true, "Task title is required"],
@@ -60,6 +66,12 @@ const TaskSchema = new Schema(
       default: null,
       index: true,
     },
+    parentTaskId: {
+      type: Schema.Types.ObjectId,
+      ref: "Task",
+      default: null,
+      index: true,
+    },
     priority: {
       type: String,
       enum: ["low", "medium", "high", "urgent"],
@@ -68,14 +80,27 @@ const TaskSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "in_progress", "in_review", "completed", "blocked"],
-      default: "pending",
+      enum: [
+        "assigned",
+        "in_progress",
+        "on_hold",
+        "in_review",
+        "completed",
+        "cancelled",
+        "pending",
+        "blocked",
+      ],
+      default: "assigned",
       index: true,
     },
     dueDate: {
       type: Date,
       required: true,
       index: true,
+    },
+    completionDate: {
+      type: Date,
+      default: null,
     },
     progressPercentage: {
       type: Number,

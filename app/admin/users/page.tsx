@@ -5,6 +5,7 @@ import PortalShell from "@/components/layout/PortalShell";
 import { RoleBadge } from "@/components/ui/Badge";
 import CreateUserModal from "@/components/users/CreateUserModal";
 import AssignManagerModal from "@/components/users/AssignManagerModal";
+import EditUserModal from "@/components/users/EditUserModal";
 import {
   Users,
   UserPlus,
@@ -16,6 +17,10 @@ import {
   Mail,
   Phone,
   Building,
+  Edit2,
+  Power,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import { AuthSession, IUser } from "@/lib/types";
 import Image from "next/image";
@@ -28,6 +33,8 @@ export default function AdminUsersPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedEmployeeForAssign, setSelectedEmployeeForAssign] = useState<IUser | null>(null);
   const [isAssignOpen, setIsAssignOpen] = useState(false);
+  const [selectedUserForEdit, setSelectedUserForEdit] = useState<IUser | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -62,6 +69,28 @@ export default function AdminUsersPage() {
       </div>
     );
   }
+
+  const handleToggleStatus = async (user: IUser) => {
+    const action = user.isActive ? "deactivate" : "activate";
+    if (!confirm(`Are you sure you want to ${action} ${user.name}'s account?`)) return;
+
+    try {
+      const res = await fetch(`/api/users/${user._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !user.isActive }),
+      });
+      if (res.ok) {
+        fetchData();
+      } else {
+        const d = await res.json();
+        alert(d.error || "Failed to update user status");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Error updating account status");
+    }
+  };
 
   const filteredUsers = users.filter((u) => {
     const matchesRole = filterRole === "all" || u.role === filterRole;
@@ -259,6 +288,7 @@ export default function AdminUsersPage() {
                 <th className="px-6 py-3.5">Department</th>
                 <th className="px-6 py-3.5">Designation</th>
                 <th className="px-6 py-3.5">Reports To (Manager)</th>
+                <th className="px-6 py-3.5">Account Status</th>
                 <th className="px-6 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
@@ -266,6 +296,7 @@ export default function AdminUsersPage() {
               {filteredUsers.map((u) => {
                 const managerObj =
                   typeof u.managerId === "object" && u.managerId ? (u.managerId as IUser) : null;
+                const isUserActive = u.isActive !== false;
 
                 return (
                   <tr key={u._id} className="hover:bg-slate-50/50 transition-colors">
@@ -323,21 +354,62 @@ export default function AdminUsersPage() {
                       )}
                     </td>
 
+                    {/* Account Status */}
+                    <td className="px-6 py-4">
+                      {isUserActive ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                          Suspended
+                        </span>
+                      )}
+                    </td>
+
                     {/* Actions */}
                     <td className="px-6 py-4 text-right">
-                      {u.role === "employee" ? (
+                      <div className="flex items-center justify-end gap-2">
+                        {u.role === "employee" && (
+                          <button
+                            onClick={() => {
+                              setSelectedEmployeeForAssign(u);
+                              setIsAssignOpen(true);
+                            }}
+                            className="px-2.5 py-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors"
+                            title="Assign Manager"
+                          >
+                            Assign
+                          </button>
+                        )}
+
                         <button
                           onClick={() => {
-                            setSelectedEmployeeForAssign(u);
-                            setIsAssignOpen(true);
+                            setSelectedUserForEdit(u);
+                            setIsEditOpen(true);
                           }}
-                          className="px-3 py-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors"
+                          className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
+                          title="Edit Account Details"
                         >
-                          Assign Manager
+                          <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                      ) : (
-                        <span className="text-[11px] text-slate-400">Direct Report</span>
-                      )}
+
+                        {u._id !== currentUser.userId && (
+                          <button
+                            onClick={() => handleToggleStatus(u)}
+                            className={`p-1.5 rounded-lg transition-colors ${
+                              isUserActive
+                                ? "text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                                : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                            }`}
+                            title={isUserActive ? "Deactivate Account" : "Activate Account"}
+                          >
+                            <Power className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -359,6 +431,16 @@ export default function AdminUsersPage() {
         isOpen={isAssignOpen}
         onClose={() => setIsAssignOpen(false)}
         onAssigned={() => fetchData()}
+      />
+
+      <EditUserModal
+        user={selectedUserForEdit}
+        isOpen={isEditOpen}
+        onClose={() => {
+          setIsEditOpen(false);
+          setSelectedUserForEdit(null);
+        }}
+        onUserUpdated={() => fetchData()}
       />
     </PortalShell>
   );

@@ -305,7 +305,7 @@ export function ProductivityView({ currentUser }: ProductivityViewProps) {
         {(activeTab === "both" || activeTab === "notes") && (
           <div className={activeTab === "both" ? "lg:col-span-7 space-y-4" : "space-y-4"}>
             {/* Header & Controls */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+            <div className="glass-card p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
                   <FileText className="w-4 h-4" />
@@ -411,7 +411,7 @@ export function ProductivityView({ currentUser }: ProductivityViewProps) {
         {(activeTab === "both" || activeTab === "todos") && (
           <div className={activeTab === "both" ? "lg:col-span-5 space-y-4" : "space-y-4"}>
             {/* To-Do Card */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <div className="glass-card p-5 rounded-2xl border border-slate-200/90 shadow-2xs">
               <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">

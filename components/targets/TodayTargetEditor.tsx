@@ -77,7 +77,7 @@ export function TodayTargetEditor({ onTargetSaved }: TodayTargetEditorProps) {
   });
 
   return (
-    <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm relative overflow-hidden">
+    <div className="glass-card rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-2xs relative overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center">

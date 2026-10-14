@@ -93,7 +93,7 @@ export function TargetCard({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col justify-between">
+    <div className="glass-card rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between">
       {/* Header */}
       <div className="p-5 border-b border-slate-100 bg-slate-50/50">
         <div className="flex flex-wrap items-center justify-between gap-3">

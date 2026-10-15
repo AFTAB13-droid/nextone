@@ -274,7 +274,7 @@ export function Sidebar({ role, user }: SidebarProps) {
             </div>
           </button>
         ) : (
-          <div className="flex items-center justify-between w-full">
+          <div className="flex items-center w-full">
             <Link
               href={`/${role}`}
               className="flex items-center gap-3 min-w-0 group"
@@ -299,14 +299,6 @@ export function Sidebar({ role, user }: SidebarProps) {
                 </p>
               </div>
             </Link>
-
-            <button
-              onClick={toggleCollapse}
-              className="p-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700 transition-all duration-200 shadow-sm"
-              title="Collapse Sidebar (Ctrl+B)"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
           </div>
         )}
       </div>

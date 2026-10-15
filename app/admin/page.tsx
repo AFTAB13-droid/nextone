@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import PortalShell from "@/components/layout/PortalShell";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import StatCard from "@/components/ui/StatCard";
 import TaskCard from "@/components/tasks/TaskCard";
 import TaskModal from "@/components/tasks/TaskModal";
@@ -87,13 +88,8 @@ export default function AdminDashboardPage() {
 
   if (loading || !currentUser) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            Loading NextOne Executive Hub...
-          </p>
-        </div>
+      <div className="min-h-screen bg-portal-pattern flex items-center justify-center">
+        <LoadingSpinner fullscreen message="Loading Executive Dashboard" subtext="Aggregating company metrics, operational KPIs, and active sprints" />
       </div>
     );
   }

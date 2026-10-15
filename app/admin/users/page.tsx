@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import PortalShell from "@/components/layout/PortalShell";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { RoleBadge } from "@/components/ui/Badge";
 import CreateUserModal from "@/components/users/CreateUserModal";
 import AssignManagerModal from "@/components/users/AssignManagerModal";
@@ -87,8 +88,8 @@ export default function AdminUsersPage() {
 
   if (loading || !currentUser) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-portal-pattern flex items-center justify-center">
+        <LoadingSpinner fullscreen message="Loading Organization & Hierarchy" subtext="Synchronizing company rosters and supervisory teams" />
       </div>
     );
   }

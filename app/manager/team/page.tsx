@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import PortalShell from "@/components/layout/PortalShell";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import CreateTaskModal from "@/components/tasks/CreateTaskModal";
 import { Users, Mail, Phone, Briefcase, Plus, CheckCircle2 } from "lucide-react";
 import { AuthSession, IUser, ITask } from "@/lib/types";
@@ -46,8 +47,8 @@ export default function ManagerTeamPage() {
 
   if (loading || !currentUser) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-portal-pattern flex items-center justify-center">
+        <LoadingSpinner fullscreen message="Loading Team Roster" subtext="Fetching assigned team members, profiles, and delegated workloads" />
       </div>
     );
   }

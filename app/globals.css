@@ -140,3 +140,39 @@ body {
 .animate-float-slow {
   animation: float 5.5s ease-in-out infinite 0.75s;
 }
+
+@keyframes shimmerWave {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.35; transform: scale(0.96); }
+  50% { opacity: 0.85; transform: scale(1.04); }
+}
+
+@keyframes orbitRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes orbitRotateReverse {
+  0% { transform: rotate(360deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.animate-shimmer-wave {
+  animation: shimmerWave 2s infinite ease-in-out;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s infinite ease-in-out;
+}
+
+.animate-orbit {
+  animation: orbitRotate 10s linear infinite;
+}
+
+.animate-orbit-reverse {
+  animation: orbitRotateReverse 8s linear infinite;
+}

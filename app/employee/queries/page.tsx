@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import PortalShell from "@/components/layout/PortalShell";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import QueryCard from "@/components/queries/QueryCard";
 import QueryModal from "@/components/queries/QueryModal";
 import CreateQueryModal from "@/components/queries/CreateQueryModal";
@@ -45,8 +46,8 @@ export default function EmployeeQueriesPage() {
 
   if (loading || !currentUser) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-portal-pattern flex items-center justify-center">
+        <LoadingSpinner fullscreen message="Loading Queries & Support" subtext="Fetching question thread history, escalations, and manager answers" />
       </div>
     );
   }

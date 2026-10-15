@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import PortalShell from "@/components/layout/PortalShell";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import StatCard from "@/components/ui/StatCard";
 import TaskCard from "@/components/tasks/TaskCard";
 import TaskModal from "@/components/tasks/TaskModal";
@@ -71,8 +72,8 @@ export default function EmployeeDashboardPage() {
 
   if (loading || !currentUser) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-portal-pattern flex items-center justify-center">
+        <LoadingSpinner fullscreen message="Loading Workspace" subtext="Syncing personal mission tasks, daily goals, and supervisor communications" />
       </div>
     );
   }

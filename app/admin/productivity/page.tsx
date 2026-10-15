@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import PortalShell from "@/components/layout/PortalShell";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import ProductivityView from "@/components/productivity/ProductivityView";
 import { AuthSession } from "@/lib/types";
 
@@ -21,8 +22,8 @@ export default function AdminProductivityPage() {
 
   if (loading || !currentUser) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-portal-pattern flex items-center justify-center">
+        <LoadingSpinner fullscreen message="Loading Notes & Workspace" subtext="Accessing encrypted personal scratchpad and checklist storage" />
       </div>
     );
   }

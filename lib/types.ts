@@ -184,4 +184,33 @@ export interface AuthSession {
   name: string;
   role: UserRole;
   managerId?: string;
+  avatar?: string;
+  gender?: string;
+}
+
+export interface IInteraction {
+  _id: string;
+  sender: {
+    _id: string;
+    name: string;
+    email: string;
+    role: UserRole;
+    avatar?: string;
+    gender?: string;
+    designation?: string;
+  };
+  senderRole: UserRole;
+  targetType: "all" | "managers" | "team" | "custom_users";
+  targetManagerId?: string;
+  targetManagerName?: string;
+  recipientIds: string[];
+  subject: string;
+  content: string;
+  priority: "normal" | "important" | "urgent";
+  mediaUrl?: string;
+  mediaType?: "image" | "document" | "none";
+  mediaName?: string;
+  readBy: string[];
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }

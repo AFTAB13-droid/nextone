@@ -22,6 +22,8 @@ import {
   Power,
   Edit2,
   UserPlus,
+  AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -42,57 +44,114 @@ export function UserProfileDrawer({
   onToggleStatus,
   onAssignTeam,
 }: UserProfileDrawerProps) {
+  const [detailedUser, setDetailedUser] = useState<IUser | null>(user);
+  const [resolvedManager, setResolvedManager] = useState<IUser | null>(null);
   const [userTasks, setUserTasks] = useState<ITask[]>([]);
   const [userQueries, setUserQueries] = useState<IQuery[]>([]);
   const [subordinates, setSubordinates] = useState<IUser[]>([]);
   const [loadingMetrics, setLoadingMetrics] = useState(false);
+  const [loadingHierarchy, setLoadingHierarchy] = useState(false);
+
+  // Sync initial state when drawer opens or user prop changes
+  useEffect(() => {
+    if (!isOpen || !user) {
+      setDetailedUser(null);
+      setResolvedManager(null);
+      return;
+    }
+
+    setDetailedUser(user);
+
+    // If managerId is already an object with a name, immediately use it
+    if (typeof user.managerId === "object" && user.managerId && (user.managerId as any).name) {
+      setResolvedManager(user.managerId as IUser);
+    } else {
+      setResolvedManager(null);
+    }
+  }, [isOpen, user]);
 
   useEffect(() => {
     if (!isOpen || !user) return;
 
     const fetchUserDetails = async () => {
       setLoadingMetrics(true);
+      setLoadingHierarchy(true);
+
       try {
-        // Fetch user tasks
-        const tasksRes = await fetch("/api/tasks");
-        if (tasksRes.ok) {
-          const d = await tasksRes.json();
-          const allTasks: ITask[] = d.tasks || [];
-          setUserTasks(
-            allTasks.filter((t) => {
-              const aid = typeof t.assignedTo === "object" && t.assignedTo ? t.assignedTo._id : t.assignedTo;
-              return aid === user._id;
-            })
-          );
-        }
+        // 1. Fetch complete, fresh user record to ensure populated hierarchy
+        const userFetchPromise = fetch(`/api/users/${user._id}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then(async (data) => {
+            if (data?.user) {
+              setDetailedUser(data.user);
+              const mId = data.user.managerId;
+              if (typeof mId === "object" && mId && mId.name) {
+                setResolvedManager(mId as IUser);
+              } else if (typeof mId === "string" && mId) {
+                // If it came back as a raw ID string, fetch the manager directly
+                try {
+                  const mgrRes = await fetch(`/api/users/${mId}`);
+                  if (mgrRes.ok) {
+                    const mgrData = await mgrRes.json();
+                    if (mgrData.user) setResolvedManager(mgrData.user);
+                  }
+                } catch {
+                  // ignore
+                }
+              } else {
+                setResolvedManager(null);
+              }
+            }
+          })
+          .catch((err) => console.error("Error fetching user details:", err))
+          .finally(() => setLoadingHierarchy(false));
 
-        // Fetch user queries
-        const queriesRes = await fetch("/api/queries");
-        if (queriesRes.ok) {
-          const qd = await queriesRes.json();
-          const allQueries: IQuery[] = qd.queries || [];
-          setUserQueries(
-            allQueries.filter((q) => {
-              const rid = typeof q.raisedBy === "object" && q.raisedBy ? q.raisedBy._id : q.raisedBy;
-              return rid === user._id;
-            })
-          );
-        }
-
-        // If manager, fetch team members
-        if (user.role === "manager") {
-          const usersRes = await fetch("/api/users");
-          if (usersRes.ok) {
-            const ud = await usersRes.json();
-            const allUsers: IUser[] = ud.users || [];
-            setSubordinates(
-              allUsers.filter((u) => {
-                const mid = typeof u.managerId === "object" && u.managerId ? u.managerId._id : u.managerId;
-                return mid === user._id;
+        // 2. Fetch user tasks
+        const tasksPromise = fetch("/api/tasks")
+          .then((res) => (res.ok ? res.json() : null))
+          .then((d) => {
+            const allTasks: ITask[] = d?.tasks || [];
+            setUserTasks(
+              allTasks.filter((t) => {
+                const aid =
+                  typeof t.assignedTo === "object" && t.assignedTo
+                    ? t.assignedTo._id
+                    : t.assignedTo;
+                return aid === user._id;
               })
             );
-          }
-        }
+          })
+          .catch((e) => console.error(e));
+
+        // 3. Fetch user queries
+        const queriesPromise = fetch("/api/queries")
+          .then((res) => (res.ok ? res.json() : null))
+          .then((qd) => {
+            const allQueries: IQuery[] = qd?.queries || [];
+            setUserQueries(
+              allQueries.filter((q) => {
+                const rid =
+                  typeof q.raisedBy === "object" && q.raisedBy
+                    ? q.raisedBy._id
+                    : q.raisedBy;
+                return rid === user._id;
+              })
+            );
+          })
+          .catch((e) => console.error(e));
+
+        // 4. If manager, fetch their supervised team
+        const subordinatesPromise =
+          user.role === "manager"
+            ? fetch(`/api/users?managerId=${user._id}`)
+                .then((res) => (res.ok ? res.json() : null))
+                .then((ud) => {
+                  setSubordinates(ud?.users || []);
+                })
+                .catch((e) => console.error(e))
+            : Promise.resolve();
+
+        await Promise.all([userFetchPromise, tasksPromise, queriesPromise, subordinatesPromise]);
       } catch (e) {
         console.error(e);
       } finally {
@@ -105,9 +164,16 @@ export function UserProfileDrawer({
 
   if (!isOpen || !user) return null;
 
+  const currentUserData = detailedUser || user;
   const managerObj =
-    typeof user.managerId === "object" && user.managerId ? (user.managerId as IUser) : null;
-  const isUserActive = user.isActive !== false;
+    resolvedManager ||
+    (typeof currentUserData.managerId === "object" &&
+    currentUserData.managerId &&
+    (currentUserData.managerId as any).name
+      ? (currentUserData.managerId as IUser)
+      : null);
+
+  const isUserActive = currentUserData.isActive !== false;
   const completedTasks = userTasks.filter((t) => t.status === "completed").length;
   const pendingTasks = userTasks.filter((t) => t.status !== "completed").length;
 
@@ -149,8 +215,8 @@ export function UserProfileDrawer({
             <div className="flex items-center gap-5">
               <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-3xl overflow-hidden bg-slate-800 ring-4 ring-indigo-500/30 shadow-2xl shrink-0">
                 <Image
-                  src={getUserAvatar(user)}
-                  alt={user.name}
+                  src={getUserAvatar(currentUserData)}
+                  alt={currentUserData.name}
                   width={96}
                   height={96}
                   className="w-full h-full object-cover"
@@ -161,22 +227,22 @@ export function UserProfileDrawer({
               <div>
                 <div className="flex flex-wrap items-center gap-2.5 mb-1.5">
                   <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                    {user.name}
+                    {currentUserData.name}
                   </h2>
-                  <RoleBadge role={user.role} />
+                  <RoleBadge role={currentUserData.role} />
                 </div>
                 <p className="text-xs sm:text-sm font-semibold text-indigo-300">
-                  {user.designation} • {user.department}
+                  {currentUserData.designation} • {currentUserData.department}
                 </p>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 font-mono mt-2">
                   <span className="flex items-center gap-1">
                     <Mail className="w-3.5 h-3.5 text-cyan-400" />
-                    {user.email}
+                    {currentUserData.email}
                   </span>
-                  {user.phone && (
+                  {currentUserData.phone && (
                     <span className="flex items-center gap-1">
                       <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                      {user.phone}
+                      {currentUserData.phone}
                     </span>
                   )}
                 </div>
@@ -189,7 +255,7 @@ export function UserProfileDrawer({
                 <button
                   onClick={() => {
                     onClose();
-                    onEditUser(user);
+                    onEditUser(currentUserData);
                   }}
                   className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all flex items-center gap-1.5 btn-action"
                 >
@@ -200,7 +266,7 @@ export function UserProfileDrawer({
 
               {onToggleStatus && (
                 <button
-                  onClick={() => onToggleStatus(user)}
+                  onClick={() => onToggleStatus(currentUserData)}
                   className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 btn-action ${
                     isUserActive
                       ? "bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30"
@@ -267,35 +333,50 @@ export function UserProfileDrawer({
               <span>Reporting Line & Organizational Hierarchy</span>
             </h4>
 
-            {user.role === "employee" ? (
+            {currentUserData.role === "employee" ? (
               managerObj ? (
-                <div className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-200 ring-2 ring-indigo-500/20 shrink-0">
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:shadow-sm transition-all">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl overflow-hidden bg-slate-200 ring-2 ring-indigo-500/20 shrink-0">
                       <Image
                         src={getUserAvatar(managerObj)}
                         alt={managerObj.name}
-                        width={40}
-                        height={40}
+                        width={48}
+                        height={48}
                         className="w-full h-full object-cover"
                         unoptimized
                       />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-slate-900">{managerObj.name}</p>
-                      <p className="text-[11px] text-slate-500">
-                        Assigned Manager • {managerObj.department}
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-black text-slate-900">{managerObj.name}</p>
+                        <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-2 py-0.5 rounded-full">
+                          Assigned Operations Manager
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">
+                        {managerObj.designation || "Lead"} • {managerObj.department || "Operations"}
                       </p>
+                      <div className="flex items-center gap-3 text-[11px] text-slate-400 font-mono mt-1">
+                        <span>{managerObj.email}</span>
+                        {managerObj.phone && <span>• {managerObj.phone}</span>}
+                      </div>
                     </div>
                   </div>
                   <RoleBadge role="manager" />
                 </div>
+              ) : loadingHierarchy ? (
+                <div className="p-4 rounded-xl bg-slate-100 border border-slate-200 flex items-center gap-2 text-xs text-slate-500 animate-pulse">
+                  <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />
+                  <span>Loading supervisor hierarchy details...</span>
+                </div>
               ) : (
-                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs font-medium text-amber-800">
-                  ⚠️ Currently unassigned to any manager. Reports directly to Executive Admin.
+                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs font-medium text-amber-800 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Currently unassigned to any manager. Reports directly to Executive Admin.</span>
                 </div>
               )
-            ) : user.role === "manager" ? (
+            ) : currentUserData.role === "manager" ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-slate-700 font-bold">
@@ -304,7 +385,7 @@ export function UserProfileDrawer({
                   {onAssignTeam && (
                     <button
                       type="button"
-                      onClick={() => onAssignTeam(user)}
+                      onClick={() => onAssignTeam(currentUserData)}
                       className="text-[11px] font-extrabold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-xl border border-indigo-200 transition-all flex items-center gap-1 shadow-2xs"
                     >
                       <UserPlus className="w-3 h-3 text-indigo-600" />
@@ -381,7 +462,7 @@ export function UserProfileDrawer({
 
         {/* Footer */}
         <div className="px-6 sm:px-8 py-4 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between text-xs text-slate-500">
-          <span>User ID: #{user._id}</span>
+          <span>User ID: #{currentUserData._id}</span>
           <button
             onClick={onClose}
             className="px-5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 rounded-xl transition-colors"

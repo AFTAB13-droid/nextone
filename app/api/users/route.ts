@@ -18,6 +18,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ users: employees });
     }
 
+    const managerIdParam = searchParams.get("managerId");
+    if (managerIdParam) {
+      const team = await UserService.getEmployeesByManager(managerIdParam);
+      return NextResponse.json({ users: team });
+    }
+
     // If manager requests their team members
     if (actor.role === "manager" && searchParams.get("team") === "true") {
       const team = await UserService.getEmployeesByManager(actor.userId);

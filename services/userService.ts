@@ -18,6 +18,8 @@ export interface CreateUserInput {
   avatar?: string;
 }
 
+const MANAGER_POPULATE_FIELDS = "name email role designation department avatar phone";
+
 export class UserService {
   static async createUser(input: CreateUserInput): Promise<IUser> {
     await connectDB();
@@ -70,7 +72,7 @@ export class UserService {
   static async getAllUsers(): Promise<IUser[]> {
     await connectDB();
     const users = await User.find({})
-      .populate("managerId", "name email role designation department")
+      .populate("managerId", MANAGER_POPULATE_FIELDS)
       .select("-password")
       .sort({ createdAt: -1 })
       .lean();
@@ -81,7 +83,7 @@ export class UserService {
   static async getUserById(userId: string): Promise<IUser | null> {
     await connectDB();
     const user = await User.findById(userId)
-      .populate("managerId", "name email role designation department")
+      .populate("managerId", MANAGER_POPULATE_FIELDS)
       .select("-password")
       .lean();
 
@@ -101,7 +103,7 @@ export class UserService {
   static async getEmployees(): Promise<IUser[]> {
     await connectDB();
     const employees = await User.find({ role: "employee", isActive: true })
-      .populate("managerId", "name email role")
+      .populate("managerId", MANAGER_POPULATE_FIELDS)
       .select("-password")
       .sort({ name: 1 })
       .lean();
@@ -112,6 +114,7 @@ export class UserService {
   static async getEmployeesByManager(managerId: string): Promise<IUser[]> {
     await connectDB();
     const subordinates = await User.find({ managerId, role: "employee", isActive: true })
+      .populate("managerId", MANAGER_POPULATE_FIELDS)
       .select("-password")
       .sort({ name: 1 })
       .lean();
@@ -164,7 +167,7 @@ export class UserService {
     }
 
     const updated = await User.findById(employeeId)
-      .populate("managerId", "name email role designation department")
+      .populate("managerId", MANAGER_POPULATE_FIELDS)
       .select("-password")
       .lean();
 
@@ -196,7 +199,7 @@ export class UserService {
     }
 
     const updated = await User.findByIdAndUpdate(userId, { $set: payload }, { new: true })
-      .populate("managerId", "name email role designation department")
+      .populate("managerId", MANAGER_POPULATE_FIELDS)
       .select("-password")
       .lean();
 

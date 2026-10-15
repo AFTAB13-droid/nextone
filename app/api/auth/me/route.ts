@@ -10,7 +10,10 @@ export async function GET() {
     }
 
     const fullUser = await UserService.getUserById(session.userId);
-    return NextResponse.json({ user: fullUser || session });
+    const userPayload = fullUser
+      ? { ...fullUser, userId: fullUser._id.toString() }
+      : { ...session, _id: session.userId };
+    return NextResponse.json({ user: userPayload });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Auth check failed";
     return NextResponse.json({ error: message }, { status: 500 });

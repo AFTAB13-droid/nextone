@@ -171,6 +171,18 @@ export class UserService {
     return updated as unknown as IUser;
   }
 
+  static async assignEmployeesToManager(managerId: string, employeeIds: string[]): Promise<void> {
+    await connectDB();
+    const manager = await User.findById(managerId);
+    if (!manager || manager.role !== "manager") {
+      throw new Error("Target manager is invalid or does not have manager role");
+    }
+
+    for (const empId of employeeIds) {
+      await this.assignEmployeeToManager(empId, managerId);
+    }
+  }
+
   static async updateUser(
     userId: string,
     updates: Partial<IUser> & { newPassword?: string }

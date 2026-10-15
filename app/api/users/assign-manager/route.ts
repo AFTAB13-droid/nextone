@@ -7,10 +7,20 @@ export async function PUT(req: Request) {
     // Only Admin can assign/reassign employees to managers
     await requireAuth(["admin"]);
 
-    const { employeeId, managerId } = await req.json();
+    const body = await req.json();
+    const { employeeId, employeeIds, managerId } = body;
+
+    // Batch assignment
+    if (Array.isArray(employeeIds) && managerId) {
+      await UserService.assignEmployeesToManager(managerId, employeeIds);
+      return NextResponse.json({
+        success: true,
+        message: `${employeeIds.length} employee(s) assigned to manager successfully`,
+      });
+    }
 
     if (!employeeId) {
-      return NextResponse.json({ error: "employeeId is required" }, { status: 400 });
+      return NextResponse.json({ error: "employeeId or employeeIds is required" }, { status: 400 });
     }
 
     const updatedEmployee = await UserService.assignEmployeeToManager(

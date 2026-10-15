@@ -113,15 +113,15 @@ export function CreateUserModal({
   const roleOptions: CustomSelectOption[] = [
     {
       value: "employee",
-      label: "Associate Specialist (Employee)",
-      badge: "Contributor",
+      label: "Employee",
+      badge: "Employee",
       description: "Direct contributor reporting to an assigned operations manager",
       icon: <Users className="w-4 h-4 text-cyan-600" />,
     },
     {
       value: "manager",
-      label: "Operations Team Manager",
-      badge: "Team Lead",
+      label: "Manager",
+      badge: "Manager",
       description: "Delegates tasks, oversees direct reports, and manages query resolutions",
       icon: <Shield className="w-4 h-4 text-indigo-600" />,
     },

@@ -7,6 +7,7 @@ import CreateUserModal from "@/components/users/CreateUserModal";
 import AssignManagerModal from "@/components/users/AssignManagerModal";
 import EditUserModal from "@/components/users/EditUserModal";
 import UserProfileDrawer from "@/components/users/UserProfileDrawer";
+import { AssignEmployeesToManagerModal } from "@/components/users/AssignEmployeesToManagerModal";
 import { getUserAvatar } from "@/lib/avatarHelper";
 import {
   Users,
@@ -48,6 +49,13 @@ export default function AdminUsersPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedUserForProfile, setSelectedUserForProfile] = useState<IUser | null>(null);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
+  const [selectedManagerForTeamAssign, setSelectedManagerForTeamAssign] = useState<IUser | null>(null);
+  const [isManagerTeamAssignOpen, setIsManagerTeamAssignOpen] = useState(false);
+
+  const openManagerTeamAssign = (mgr: IUser) => {
+    setSelectedManagerForTeamAssign(mgr);
+    setIsManagerTeamAssignOpen(true);
+  };
 
   const [loading, setLoading] = useState(true);
 
@@ -297,9 +305,23 @@ export default function AdminUsersPage() {
                           <Users className="w-3.5 h-3.5 text-indigo-600" />
                           <span>Direct Reports ({team.length})</span>
                         </p>
-                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
-                          {team.length} Active
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                            {team.length} Active
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openManagerTeamAssign(mgr);
+                            }}
+                            className="text-[11px] font-extrabold text-indigo-700 hover:text-indigo-900 bg-indigo-100/80 hover:bg-indigo-200 px-2.5 py-1 rounded-xl transition-all flex items-center gap-1 shadow-2xs"
+                            title="Assign unassigned employees to this manager"
+                          >
+                            <UserPlus className="w-3 h-3 text-indigo-600" />
+                            <span>Assign</span>
+                          </button>
+                        </div>
                       </div>
 
                       {team.length === 0 ? (
@@ -354,13 +376,24 @@ export default function AdminUsersPage() {
                   {/* Card bottom footer */}
                   <div className="pt-3 mt-4 border-t border-indigo-100/60 flex items-center justify-between text-[11px] text-slate-400 font-mono">
                     <span>Supervisor ID: #{mgr._id.slice(-6)}</span>
-                    <button
-                      onClick={() => openUserProfile(mgr)}
-                      className="font-bold text-indigo-600 hover:underline flex items-center gap-1"
-                    >
-                      <span>Full Profile</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openManagerTeamAssign(mgr)}
+                        className="font-bold text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg border border-indigo-200 transition-colors flex items-center gap-1"
+                        title="Manage team members for this manager"
+                      >
+                        <UserPlus className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Assign Team</span>
+                      </button>
+                      <button
+                        onClick={() => openUserProfile(mgr)}
+                        className="font-bold text-indigo-600 hover:underline flex items-center gap-1"
+                      >
+                        <span>Full Profile</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -496,6 +529,19 @@ export default function AdminUsersPage() {
                                 + Assign Manager
                               </button>
                             )
+                          ) : u.role === "manager" ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openManagerTeamAssign(u);
+                              }}
+                              className="text-[11px] font-extrabold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-xl border border-indigo-200 transition-all flex items-center gap-1.5 shadow-2xs"
+                              title="Assign employees to this manager"
+                            >
+                              <UserPlus className="w-3.5 h-3.5 text-indigo-600" />
+                              <span>Assign Employees</span>
+                            </button>
                           ) : (
                             <span className="text-slate-400 text-xs font-mono">— Executive Node</span>
                           )}
@@ -522,6 +568,17 @@ export default function AdminUsersPage() {
                         {/* Actions Column */}
                         <td className="px-6 py-4.5 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1.5">
+                            {/* Assign Employees (if manager) */}
+                            {u.role === "manager" && (
+                              <button
+                                onClick={() => openManagerTeamAssign(u)}
+                                className="p-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-xl transition-colors"
+                                title="Assign Employees to this Manager"
+                              >
+                                <UserPlus className="w-4 h-4" />
+                              </button>
+                            )}
+
                             {/* Reassign (if employee) */}
                             {u.role === "employee" && (
                               <button
@@ -662,9 +719,24 @@ export default function AdminUsersPage() {
                             ⚠️ No Manager Assigned
                           </div>
                         )
+                      ) : u.role === "manager" ? (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-indigo-700">Team Manager</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openManagerTeamAssign(u);
+                            }}
+                            className="text-[11px] font-extrabold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-xl border border-indigo-200 transition-colors flex items-center gap-1 shadow-2xs"
+                          >
+                            <UserPlus className="w-3 h-3 text-indigo-600" />
+                            <span>Assign Employees</span>
+                          </button>
+                        </div>
                       ) : (
                         <div className="text-xs text-indigo-600 font-bold">
-                          {u.role === "manager" ? "Team Leader" : "Executive Command"}
+                          Executive Command
                         </div>
                       )}
                     </div>
@@ -684,6 +756,16 @@ export default function AdminUsersPage() {
                     </button>
 
                     <div className="flex items-center gap-1">
+                      {/* Assign Employees button if manager */}
+                      {u.role === "manager" && (
+                        <button
+                          onClick={() => openManagerTeamAssign(u)}
+                          className="p-1.5 rounded-lg text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
+                          title="Assign Employees"
+                        >
+                          <UserPlus className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           setSelectedUserForEdit(u);
@@ -728,6 +810,14 @@ export default function AdminUsersPage() {
         onAssigned={() => fetchData()}
       />
 
+      <AssignEmployeesToManagerModal
+        manager={selectedManagerForTeamAssign}
+        employees={employees}
+        isOpen={isManagerTeamAssignOpen}
+        onClose={() => setIsManagerTeamAssignOpen(false)}
+        onAssigned={() => fetchData()}
+      />
+
       <EditUserModal
         user={selectedUserForEdit}
         isOpen={isEditOpen}
@@ -744,6 +834,7 @@ export default function AdminUsersPage() {
           setIsEditOpen(true);
         }}
         onToggleStatus={(u) => handleToggleStatus(u)}
+        onAssignTeam={(mgr) => openManagerTeamAssign(mgr)}
       />
     </PortalShell>
   );

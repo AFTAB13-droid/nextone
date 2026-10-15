@@ -8,7 +8,7 @@ export function RoleBadge({ role }: { role: UserRole }) {
     { label: string; bg: string; text: string; border: string; glow: string; icon: React.ReactNode }
   > = {
     admin: {
-      label: "Executive Admin",
+      label: "Admin",
       bg: "bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-900",
       text: "text-indigo-200",
       border: "border-indigo-500/40 shadow-[0_0_12px_rgba(99,102,241,0.25)]",
@@ -16,7 +16,7 @@ export function RoleBadge({ role }: { role: UserRole }) {
       icon: <Shield className="w-3 h-3 text-cyan-300 stroke-[2.5]" />,
     },
     manager: {
-      label: "Operations Manager",
+      label: "Manager",
       bg: "bg-gradient-to-r from-blue-900 via-indigo-900 to-cyan-950",
       text: "text-cyan-200",
       border: "border-cyan-500/35 shadow-[0_0_10px_rgba(6,182,212,0.2)]",
@@ -24,7 +24,7 @@ export function RoleBadge({ role }: { role: UserRole }) {
       icon: <GitBranch className="w-3 h-3 text-cyan-400 stroke-[2.5]" />,
     },
     employee: {
-      label: "Associate Specialist",
+      label: "Employee",
       bg: "bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900",
       text: "text-slate-200",
       border: "border-slate-700 shadow-sm",

@@ -21,6 +21,7 @@ import {
   ArrowUpRight,
   Power,
   Edit2,
+  UserPlus,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -30,6 +31,7 @@ interface UserProfileDrawerProps {
   onClose: () => void;
   onEditUser?: (user: IUser) => void;
   onToggleStatus?: (user: IUser) => void;
+  onAssignTeam?: (manager: IUser) => void;
 }
 
 export function UserProfileDrawer({
@@ -38,6 +40,7 @@ export function UserProfileDrawer({
   onClose,
   onEditUser,
   onToggleStatus,
+  onAssignTeam,
 }: UserProfileDrawerProps) {
   const [userTasks, setUserTasks] = useState<ITask[]>([]);
   const [userQueries, setUserQueries] = useState<IQuery[]>([]);
@@ -293,10 +296,22 @@ export function UserProfileDrawer({
                 </div>
               )
             ) : user.role === "manager" ? (
-              <div className="space-y-2">
-                <p className="text-xs text-slate-600 font-medium">
-                  Supervised Direct Reports ({subordinates.length} Employees):
-                </p>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-slate-700 font-bold">
+                    Supervised Direct Reports ({subordinates.length} Employees):
+                  </p>
+                  {onAssignTeam && (
+                    <button
+                      type="button"
+                      onClick={() => onAssignTeam(user)}
+                      className="text-[11px] font-extrabold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-xl border border-indigo-200 transition-all flex items-center gap-1 shadow-2xs"
+                    >
+                      <UserPlus className="w-3 h-3 text-indigo-600" />
+                      <span>Assign Employees</span>
+                    </button>
+                  )}
+                </div>
                 {subordinates.length === 0 ? (
                   <p className="text-xs text-slate-400 italic">No employees assigned under this manager yet.</p>
                 ) : (

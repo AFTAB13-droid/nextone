@@ -340,10 +340,10 @@ export function ProductivityView({ currentUser }: ProductivityViewProps) {
         </div>
       )}
 
-      {/* Top MacBook Title & Tab Switcher */}
+      {/* Top Notes & Workspace Title & Tab Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
-          {/* macOS window traffic lights */}
+          {/* Status indicators */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-200/80 border border-slate-300">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" />
@@ -351,13 +351,13 @@ export function ProductivityView({ currentUser }: ProductivityViewProps) {
           </div>
           <div>
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <span>MacBook Notes & Workspace</span>
+              <span>Personal Notes & Workspace</span>
               <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
                 Encrypted & Private
               </span>
             </h2>
             <p className="text-xs text-slate-500 font-medium">
-              Apple macOS inspired note-taking canvas with media uploads and isolated to-do list
+              High-performance private note-taking workspace with media uploads and isolated to-do list
             </p>
           </div>
         </div>
@@ -373,7 +373,7 @@ export function ProductivityView({ currentUser }: ProductivityViewProps) {
             }`}
           >
             <FileText className="w-4 h-4" />
-            <span>MacBook Notes ({notes.length})</span>
+            <span>Personal Notes ({notes.length})</span>
           </button>
           <button
             onClick={() => setActiveTab("todos")}
@@ -389,7 +389,7 @@ export function ProductivityView({ currentUser }: ProductivityViewProps) {
         </div>
       </div>
 
-      {/* ================= MACBOOK NOTES VIEW ================= */}
+      {/* ================= NOTES VIEW ================= */}
       {activeTab === "notes" && (
         <div className="bg-white rounded-[32px] border border-slate-200 shadow-xl overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[640px]">
           {/* ================= LEFT COLUMN: NOTES LIST ================= */}
@@ -535,7 +535,7 @@ export function ProductivityView({ currentUser }: ProductivityViewProps) {
             </div>
           </div>
 
-          {/* ================= RIGHT COLUMN: MACBOOK NOTE CANVAS ================= */}
+          {/* ================= RIGHT COLUMN: NOTE CANVAS ================= */}
           <div className="md:col-span-7 lg:col-span-8 p-6 sm:p-8 flex flex-col justify-between bg-amber-50/20">
             <div>
               {/* Note Toolbar */}

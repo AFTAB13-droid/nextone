@@ -20,7 +20,7 @@ export function PortalShell({ user, title, subtitle, children }: PortalShellProp
       <OfflineScreen />
 
       {/* Sidebar Navigation - Fixed and Stationary */}
-      <Sidebar role={user.role} />
+      <Sidebar role={user.role} user={user} />
 
       {/* Main Content Area - Independently Scrollable */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import PortalShell from "@/components/layout/PortalShell";
 import { RoleBadge } from "@/components/ui/Badge";
 import { getUserAvatar } from "@/lib/avatarHelper";
+import { ImageCropperModal } from "@/components/profile/ImageCropperModal";
 import {
   UserCircle2,
   Mail,
@@ -62,6 +63,11 @@ export function ProfileView() {
   const [savingInfo, setSavingInfo] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  // Photo Cropper & Resizer States
+  const [selectedRawImage, setSelectedRawImage] = useState<string | null>(null);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
+  const [isSavingCroppedAvatar, setIsSavingCroppedAvatar] = useState(false);
 
   // Password states
   const [currentPassword, setCurrentPassword] = useState("");
@@ -130,43 +136,58 @@ export function ProfileView() {
     }
   };
 
-  const handleAvatarDeviceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarDeviceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploadingAvatar(true);
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const base64 = reader.result as string;
-      try {
-        const uploadRes = await fetch("/api/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ file: base64, folder: "user_avatars" }),
-        });
-        const uploadData = await uploadRes.json();
-        const finalUrl = uploadData.url || base64;
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file (PNG, JPG, JPEG, WEBP)");
+      return;
+    }
 
-        // Save to user profile
-        const profRes = await fetch("/api/profile", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ avatar: finalUrl }),
-        });
-        if (profRes.ok) {
-          const pd = await profRes.json();
-          setProfileData(pd.user);
-          setAvatarUrl(finalUrl);
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Error uploading avatar image from device");
-      } finally {
-        setUploadingAvatar(false);
-      }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      setSelectedRawImage(base64);
+      setIsCropperOpen(true);
     };
     reader.readAsDataURL(file);
     e.target.value = "";
+  };
+
+  const handleCroppedAvatarComplete = async (croppedBase64: string) => {
+    setIsSavingCroppedAvatar(true);
+    try {
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ file: croppedBase64, folder: "user_avatars" }),
+      });
+      const uploadData = await uploadRes.json();
+      const finalUrl = uploadData.url || croppedBase64;
+
+      // Save to user profile
+      const profRes = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatar: finalUrl }),
+      });
+      if (profRes.ok) {
+        const pd = await profRes.json();
+        setProfileData(pd.user);
+        setAvatarUrl(finalUrl);
+        setIsCropperOpen(false);
+        setSelectedRawImage(null);
+      } else {
+        const errJson = await profRes.json();
+        alert(errJson.error || "Failed to update profile avatar");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error uploading and saving cropped avatar");
+    } finally {
+      setIsSavingCroppedAvatar(false);
+    }
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -713,6 +734,18 @@ export function ProfileView() {
           )}
         </div>
       )}
+
+      {/* Profile Photo Cropper & Resizer Modal */}
+      <ImageCropperModal
+        imageSrc={selectedRawImage}
+        isOpen={isCropperOpen}
+        onClose={() => {
+          setIsCropperOpen(false);
+          setSelectedRawImage(null);
+        }}
+        onCropComplete={handleCroppedAvatarComplete}
+        isSaving={isSavingCroppedAvatar}
+      />
     </PortalShell>
   );
 }

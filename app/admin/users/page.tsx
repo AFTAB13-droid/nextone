@@ -30,6 +30,7 @@ import {
   ArrowRight,
   GitBranch,
   User,
+  Eye,
 } from "lucide-react";
 import { AuthSession, IUser } from "@/lib/types";
 import Image from "next/image";
@@ -404,40 +405,57 @@ export default function AdminUsersPage() {
 
       {/* ================= ALL USERS: TABLE VIEW OR CARDS VIEW ================= */}
       {viewMode === "table" ? (
-        /* TABLE VIEW */
-        <div className="bg-white rounded-[32px] border border-slate-200/90 shadow-sm overflow-hidden">
-          <div className="px-6 sm:px-8 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        /* UPGRADED ENTERPRISE TABLE VIEW */
+        <div className="bg-white rounded-[32px] sm:rounded-[36px] border border-slate-200/90 shadow-sm overflow-hidden mb-8">
+          {/* Table Header Bar */}
+          <div className="px-6 sm:px-8 py-5 sm:py-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-gradient-to-r from-slate-50/80 via-white to-slate-50/50">
             <div>
-              <h3 className="text-base font-black text-slate-900">
-                All Enterprise Accounts ({filteredUsers.length})
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Click any user profile or photo to launch full-screen telemetry & activity audit
+              <div className="flex items-center gap-2.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse" />
+                <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                  Enterprise Accounts Directory
+                </h3>
+                <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                  {filteredUsers.length} Total
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1 font-medium">
+                Comprehensive directory with role classifications, reporting hierarchy, and full profile inspection
               </p>
             </div>
-            <span className="text-xs font-mono font-bold text-slate-400 bg-white px-3 py-1 rounded-xl border border-slate-200">
-              Live Database Active
-            </span>
+
+            {/* Quick stats pills */}
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-bold border border-slate-200/70">
+                {managers.length} Managers
+              </span>
+              <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-bold border border-slate-200/70">
+                {employees.length} Employees
+              </span>
+              <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 font-bold border border-emerald-200/70">
+                {users.filter((u) => u.isActive !== false).length} Active
+              </span>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50/80 border-b border-slate-100 text-slate-500 uppercase tracking-wider text-[10px] font-black">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-slate-50/90 border-b border-slate-200/90 text-slate-500 uppercase tracking-wider text-[11px] font-black select-none">
                 <tr>
-                  <th className="px-6 py-4">User Identity</th>
-                  <th className="px-6 py-4">Role Classification</th>
-                  <th className="px-6 py-4">Department</th>
-                  <th className="px-6 py-4">Designation</th>
-                  <th className="px-6 py-4">Direct Manager</th>
-                  <th className="px-6 py-4">Account Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-6 sm:px-8 py-4.5 min-w-[300px]">User & Contact Identity</th>
+                  <th className="px-6 py-4.5 min-w-[130px]">Role</th>
+                  <th className="px-6 py-4.5 min-w-[170px]">Department</th>
+                  <th className="px-6 py-4.5 min-w-[180px]">Designation</th>
+                  <th className="px-6 py-4.5 min-w-[220px]">Supervisory Line</th>
+                  <th className="px-6 py-4.5 min-w-[140px]">Account Status</th>
+                  <th className="px-6 sm:px-8 py-4.5 text-right min-w-[160px]">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 text-xs">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400 font-medium">
-                      No accounts found matching the filter criteria.
+                    <td colSpan={7} className="px-6 py-16 text-center text-slate-400 font-medium">
+                      No enterprise accounts found matching your filters.
                     </td>
                   </tr>
                 ) : (
@@ -446,56 +464,82 @@ export default function AdminUsersPage() {
                       typeof u.managerId === "object" && u.managerId ? (u.managerId as IUser) : null;
                     const isUserActive = u.isActive !== false;
 
+                    // Direct reports count if manager
+                    const directReports =
+                      u.role === "manager"
+                        ? employees.filter((e) => {
+                            const mid =
+                              typeof e.managerId === "object" && e.managerId
+                                ? e.managerId._id
+                                : e.managerId;
+                            return mid === u._id;
+                          }).length
+                        : 0;
+
                     return (
                       <tr
                         key={u._id}
-                        className="hover:bg-slate-50/70 transition-colors group cursor-pointer"
+                        className="hover:bg-indigo-50/40 transition-all duration-150 group cursor-pointer"
                         onClick={() => openUserProfile(u)}
                       >
-                        {/* User Identity Column */}
-                        <td className="px-6 py-4.5">
-                          <div className="flex items-center gap-3.5">
-                            <div className="relative w-11 h-11 rounded-2xl overflow-hidden bg-slate-100 ring-2 ring-indigo-500/20 shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+                        {/* 1. User Identity Column */}
+                        <td className="px-6 sm:px-8 py-5">
+                          <div className="flex items-center gap-4">
+                            <div className="relative w-12 h-12 rounded-2xl overflow-hidden bg-slate-100 ring-2 ring-indigo-500/20 shadow-sm shrink-0 group-hover:scale-105 transition-transform">
                               <Image
                                 src={getUserAvatar(u)}
                                 alt={u.name}
-                                width={44}
-                                height={44}
+                                width={48}
+                                height={48}
                                 className="w-full h-full object-cover"
                                 unoptimized
                               />
                             </div>
                             <div className="min-w-0">
-                              <p className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors text-sm truncate">
-                                {u.name}
-                              </p>
-                              <div className="flex items-center gap-2 text-slate-400 font-mono text-[11px] mt-0.5">
-                                <Mail className="w-3 h-3 text-slate-400" />
-                                <span className="truncate">{u.email}</span>
+                              <div className="flex items-center gap-2">
+                                <p className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors text-sm sm:text-base truncate">
+                                  {u.name}
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-slate-400 font-mono text-[11px] mt-1">
+                                <div className="flex items-center gap-1.5 truncate">
+                                  <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                  <span className="truncate">{u.email}</span>
+                                </div>
+                                {u.phone && (
+                                  <div className="flex items-center gap-1 text-slate-500 font-medium">
+                                    <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                                    <span>{u.phone}</span>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
                         </td>
 
-                        {/* Role Column */}
-                        <td className="px-6 py-4.5">
+                        {/* 2. Role Column */}
+                        <td className="px-6 py-5">
                           <RoleBadge role={u.role} />
                         </td>
 
-                        {/* Department Column */}
-                        <td className="px-6 py-4.5">
-                          <span className="font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg">
-                            {u.department || "Operations"}
+                        {/* 3. Department Column */}
+                        <td className="px-6 py-5">
+                          <span className="inline-flex items-center gap-1.5 font-bold text-slate-700 bg-slate-100/80 px-3 py-1.5 rounded-xl border border-slate-200/60 text-xs">
+                            <Building className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                            <span>{u.department || "Operations"}</span>
                           </span>
                         </td>
 
-                        {/* Designation Column */}
-                        <td className="px-6 py-4.5 text-slate-600 font-medium">
-                          {u.designation || "Associate"}
+                        {/* 4. Designation Column */}
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-1.5 text-slate-700 font-bold text-xs">
+                            <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span className="truncate max-w-[170px]">{u.designation || "Executive Associate"}</span>
+                          </div>
                         </td>
 
-                        {/* Reporting Manager Column */}
-                        <td className="px-6 py-4.5">
+                        {/* 5. Reporting Line / Supervisor Column */}
+                        <td className="px-6 py-5">
                           {u.role === "employee" ? (
                             managerObj ? (
                               <div
@@ -503,77 +547,107 @@ export default function AdminUsersPage() {
                                   e.stopPropagation();
                                   openUserProfile(managerObj);
                                 }}
-                                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-indigo-50/60 border border-indigo-100 text-indigo-900 font-bold hover:bg-indigo-100 transition-colors w-fit"
+                                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-indigo-50/70 border border-indigo-200/80 text-indigo-900 font-bold hover:bg-indigo-100 hover:border-indigo-300 transition-all w-fit shadow-2xs"
+                                title={`Reports to ${managerObj.name} (Click to inspect manager)`}
                               >
-                                <div className="w-5 h-5 rounded-full overflow-hidden bg-slate-200 shrink-0">
+                                <div className="w-6 h-6 rounded-lg overflow-hidden bg-slate-200 shrink-0 ring-1 ring-indigo-400/30">
                                   <Image
                                     src={getUserAvatar(managerObj)}
                                     alt={managerObj.name}
-                                    width={20}
-                                    height={20}
+                                    width={24}
+                                    height={24}
                                     className="w-full h-full object-cover"
                                     unoptimized
                                   />
                                 </div>
-                                <span className="text-xs truncate max-w-[130px]">{managerObj.name}</span>
+                                <div className="min-w-0">
+                                  <span className="text-xs truncate max-w-[120px] block leading-tight">
+                                    {managerObj.name}
+                                  </span>
+                                  <span className="text-[10px] text-indigo-500 font-semibold block leading-tight">
+                                    Manager
+                                  </span>
+                                </div>
                               </div>
                             ) : (
                               <button
+                                type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setSelectedEmployeeForAssign(u);
                                   setIsAssignOpen(true);
                                 }}
-                                className="text-[11px] font-bold text-amber-600 hover:text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200"
+                                className="text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-xl border border-amber-200 transition-colors flex items-center gap-1.5 shadow-2xs"
+                                title="No manager assigned yet"
                               >
-                                + Assign Manager
+                                <UserPlus className="w-3.5 h-3.5 text-amber-600" />
+                                <span>+ Assign Manager</span>
                               </button>
                             )
                           ) : u.role === "manager" ? (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openManagerTeamAssign(u);
-                              }}
-                              className="text-[11px] font-extrabold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-xl border border-indigo-200 transition-all flex items-center gap-1.5 shadow-2xs"
-                              title="Assign employees to this manager"
-                            >
-                              <UserPlus className="w-3.5 h-3.5 text-indigo-600" />
-                              <span>Assign Employees</span>
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openManagerTeamAssign(u);
+                                }}
+                                className="text-xs font-extrabold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl border border-indigo-200 transition-all flex items-center gap-1.5 shadow-2xs"
+                                title="Manage employee assignments for this manager"
+                              >
+                                <UserPlus className="w-3.5 h-3.5 text-indigo-600" />
+                                <span>Assign Team ({directReports})</span>
+                              </button>
+                            </div>
                           ) : (
-                            <span className="text-slate-400 text-xs font-mono">— Executive Node</span>
+                            <div className="flex items-center gap-1.5 text-slate-400 text-xs font-mono font-bold">
+                              <Shield className="w-3.5 h-3.5 text-indigo-500" />
+                              <span>Executive Command</span>
+                            </div>
                           )}
                         </td>
 
-                        {/* Account Status Column */}
-                        <td className="px-6 py-4.5">
+                        {/* 6. Account Status Column */}
+                        <td className="px-6 py-5">
                           <span
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${
+                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-extrabold border ${
                               isUserActive
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : "bg-rose-50 text-rose-700 border border-rose-200"
+                                ? "bg-emerald-50 text-emerald-800 border-emerald-200 shadow-2xs"
+                                : "bg-rose-50 text-rose-800 border-rose-200 shadow-2xs"
                             }`}
                           >
-                            <span
-                              className={`w-1.5 h-1.5 rounded-full ${
-                                isUserActive ? "bg-emerald-500 animate-pulse" : "bg-rose-500"
-                              }`}
-                            />
-                            {isUserActive ? "Active" : "Deactivated"}
+                            <span className="relative flex h-2 w-2">
+                              {isUserActive && (
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                              )}
+                              <span
+                                className={`relative inline-flex rounded-full h-2 w-2 ${
+                                  isUserActive ? "bg-emerald-500" : "bg-rose-500"
+                                }`}
+                              />
+                            </span>
+                            <span>{isUserActive ? "Active" : "Deactivated"}</span>
                           </span>
                         </td>
 
-                        {/* Actions Column */}
-                        <td className="px-6 py-4.5 text-right" onClick={(e) => e.stopPropagation()}>
+                        {/* 7. Actions Column */}
+                        <td className="px-6 sm:px-8 py-5 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1.5">
+                            {/* Inspect Full Profile */}
+                            <button
+                              onClick={() => openUserProfile(u)}
+                              className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
+                              title="Inspect Full Profile Console"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+
                             {/* Assign Employees (if manager) */}
                             {u.role === "manager" && (
                               <button
                                 onClick={() => openManagerTeamAssign(u)}
-                                className="p-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-xl transition-colors"
-                                title="Assign Employees to this Manager"
+                                className="p-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-100 rounded-xl transition-colors"
+                                title="Manage Team Members"
                               >
                                 <UserPlus className="w-4 h-4" />
                               </button>
@@ -625,6 +699,19 @@ export default function AdminUsersPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Table Bottom Summary Bar */}
+          <div className="px-6 sm:px-8 py-4 border-t border-slate-100 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500 font-medium">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-800">{filteredUsers.length}</span>
+              <span>of {users.length} total enterprise accounts displayed</span>
+            </div>
+            <div className="flex items-center gap-4 text-[11px] text-slate-400 font-mono">
+              <span>NextOne Security Layer Active</span>
+              <span>•</span>
+              <span>Role-Based Access Control</span>
+            </div>
           </div>
         </div>
       ) : (

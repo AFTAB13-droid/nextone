@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import PortalShell from "@/components/layout/PortalShell";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import TargetCard from "@/components/targets/TargetCard";
+import SetEmployeeTargetModal from "@/components/targets/SetEmployeeTargetModal";
 import {
   Target as TargetIcon,
   Calendar,
@@ -13,6 +14,7 @@ import {
   CheckCircle2,
   Clock,
   Sparkles,
+  Plus,
 } from "lucide-react";
 import { AuthSession, ITarget, IUser } from "@/lib/types";
 
@@ -24,6 +26,7 @@ export default function ManagerTargetsPage() {
     new Date().toISOString().split("T")[0]
   );
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("all");
+  const [isSetTargetOpen, setIsSetTargetOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -32,7 +35,7 @@ export default function ManagerTargetsPage() {
       setRefreshing(true);
       const [meRes, teamRes, targetsRes] = await Promise.all([
         fetch("/api/auth/me"),
-        fetch("/api/users?role=employee"),
+        fetch("/api/users?team=true"),
         fetch(`/api/targets?date=${selectedDate}${selectedEmployeeId !== "all" ? `&employeeId=${selectedEmployeeId}` : ""}`),
       ]);
 
@@ -46,7 +49,6 @@ export default function ManagerTargetsPage() {
       }
       if (targetsRes.ok) {
         const d = await targetsRes.json();
-        // If employeeId is specified, the endpoint might return { target } instead of { targets }
         if (d.targets) {
           setTargets(d.targets);
         } else if (d.target) {
@@ -70,7 +72,11 @@ export default function ManagerTargetsPage() {
   if (loading || !currentUser) {
     return (
       <div className="min-h-screen bg-portal-pattern flex items-center justify-center">
-        <LoadingSpinner fullscreen message="Loading Team Daily Targets" subtext="Aggregating performance quotas and team completion milestones" />
+        <LoadingSpinner
+          fullscreen
+          message="Loading Team Daily Targets"
+          subtext="Aggregating performance quotas and team completion milestones"
+        />
       </div>
     );
   }
@@ -83,37 +89,45 @@ export default function ManagerTargetsPage() {
     <PortalShell
       user={currentUser}
       title="Team Daily Targets & Feedback"
-      subtitle="Review today's commitments from your assigned direct reports, review progress updates, and give feedback"
+      subtitle="Review today's commitments from your direct reports, give feedback, or prescribe operational target goals"
     >
       {/* Overview Metric Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-            <Users className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xl font-black text-slate-900">{targets.length}</div>
-            <div className="text-[11px] font-semibold text-slate-500">Targets Submitted on {selectedDate}</div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xl font-black text-slate-900">{achievedCount}</div>
-            <div className="text-[11px] font-semibold text-slate-500">Marked Achieved</div>
+        <div className="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-2xl font-black text-slate-900">{targets.length}</div>
+              <div className="text-[11px] font-semibold text-slate-500">
+                Targets Recorded for {selectedDate}
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-            <Clock className="w-5 h-5" />
+        <div className="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-2xl font-black text-slate-900">{achievedCount}</div>
+              <div className="text-[11px] font-semibold text-slate-500">Marked Achieved</div>
+            </div>
           </div>
-          <div>
-            <div className="text-xl font-black text-slate-900">{inProgressCount}</div>
-            <div className="text-[11px] font-semibold text-slate-500">Currently In Progress</div>
+        </div>
+
+        <div className="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-2xl font-black text-slate-900">{inProgressCount}</div>
+              <div className="text-[11px] font-semibold text-slate-500">Currently In Progress</div>
+            </div>
           </div>
         </div>
       </div>
@@ -163,19 +177,41 @@ export default function ManagerTargetsPage() {
           </div>
         </div>
 
-        <div className="text-xs font-bold text-slate-500">
-          {refreshing ? "Refreshing..." : `${targets.length} employee commitments`}
+        {/* Action Button: Set Target */}
+        <div className="flex items-center gap-3">
+          <div className="text-xs font-bold text-slate-500 hidden sm:block">
+            {refreshing ? "Refreshing..." : `${targets.length} employee commitments`}
+          </div>
+
+          <button
+            onClick={() => setIsSetTargetOpen(true)}
+            className="px-4 py-2 text-xs font-extrabold bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-xl shadow-md shadow-indigo-600/25 transition-all flex items-center gap-1.5 btn-action"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Set Employee Target</span>
+          </button>
         </div>
       </div>
 
       {/* Target Cards Grid */}
       {targets.length === 0 ? (
-        <div className="bg-white rounded-3xl p-12 border border-slate-200 text-center text-slate-400">
-          <TargetIcon className="w-12 h-12 mx-auto mb-3 opacity-40 text-slate-400" />
-          <h4 className="text-sm font-bold text-slate-700 mb-1">No commitments recorded for {selectedDate}</h4>
-          <p className="text-xs text-slate-500 max-w-md mx-auto">
-            Team members will submit their targets at the start of their shift. You can leave feedback or guidance once they post.
+        <div className="bg-white rounded-3xl p-12 border border-slate-200/90 text-center text-slate-400">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-3">
+            <TargetIcon className="w-7 h-7" />
+          </div>
+          <h4 className="text-sm font-bold text-slate-800 mb-1">
+            No commitments recorded for {selectedDate}
+          </h4>
+          <p className="text-xs text-slate-500 max-w-md mx-auto mb-5 leading-relaxed">
+            Team members submit their targets at the start of their workday. You can also proactively prescribe a target goal or sprint milestone for any direct report right now.
           </p>
+          <button
+            onClick={() => setIsSetTargetOpen(true)}
+            className="px-5 py-2.5 text-xs font-extrabold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md shadow-indigo-600/25 transition-all inline-flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Set Target for Direct Report</span>
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -193,6 +229,15 @@ export default function ManagerTargetsPage() {
           ))}
         </div>
       )}
+
+      {/* Set Target Modal */}
+      <SetEmployeeTargetModal
+        isOpen={isSetTargetOpen}
+        onClose={() => setIsSetTargetOpen(false)}
+        team={team}
+        preselectedEmployeeId={selectedEmployeeId !== "all" ? selectedEmployeeId : undefined}
+        onTargetSet={() => fetchData()}
+      />
     </PortalShell>
   );
 }

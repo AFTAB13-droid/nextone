@@ -31,21 +31,40 @@ export async function GET(req: Request) {
   }
 }
 
+import NotificationService from "@/services/notificationService";
+
 export async function POST(req: Request) {
   try {
-    const actor = await requireAuth(["employee"]);
+    const actor = await requireAuth();
     const body = await req.json();
 
     if (!body.targetText || !body.targetText.trim()) {
       return NextResponse.json({ error: "Target commitment text is required" }, { status: 400 });
     }
 
+    // Determine target employee: either specified by manager/admin or default to current user
+    let targetEmployeeId = actor.userId;
+    if (body.employeeId && (actor.role === "manager" || actor.role === "admin")) {
+      targetEmployeeId = body.employeeId;
+    }
+
     const savedTarget = await TargetService.saveTodayTarget(
-      actor.userId,
+      targetEmployeeId,
       body.targetText,
       body.progressNotes,
-      body.status
+      body.status || "in_progress"
     );
+
+    // If assigned by manager or admin to a direct report, send instant notification
+    if (targetEmployeeId !== actor.userId) {
+      await NotificationService.createNotification(
+        targetEmployeeId,
+        "Daily Target Assigned",
+        `${actor.name} (${actor.role.toUpperCase()}) set your daily target for today: "${body.targetText.slice(0, 45)}"`,
+        "/employee/targets",
+        "target"
+      );
+    }
 
     return NextResponse.json({ success: true, target: savedTarget });
   } catch (err: unknown) {

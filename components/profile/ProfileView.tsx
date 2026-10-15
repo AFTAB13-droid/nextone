@@ -126,6 +126,9 @@ export function ProfileView() {
       if (res.ok) {
         setProfileData(data.user);
         setIsEditingInfo(false);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("profile-updated", { detail: data.user }));
+        }
       } else {
         alert(data.error || "Failed to update profile");
       }
@@ -178,6 +181,9 @@ export function ProfileView() {
         setAvatarUrl(finalUrl);
         setIsCropperOpen(false);
         setSelectedRawImage(null);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("profile-updated", { detail: pd.user }));
+        }
       } else {
         const errJson = await profRes.json();
         alert(errJson.error || "Failed to update profile avatar");
@@ -519,12 +525,7 @@ export function ProfileView() {
                   <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-white ring-2 ring-indigo-200 shrink-0">
                       <Image
-                        src={
-                          managerObj.avatar ||
-                          `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                            managerObj.name
-                          )}&background=4f46e5&color=fff`
-                        }
+                        src={getUserAvatar(managerObj)}
                         alt={managerObj.name}
                         width={48}
                         height={48}
@@ -699,12 +700,7 @@ export function ProfileView() {
                   >
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 shrink-0">
                       <Image
-                        src={
-                          s.avatar ||
-                          `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                            s.name
-                          )}&background=059669&color=fff`
-                        }
+                        src={getUserAvatar(s)}
                         alt={s.name}
                         width={40}
                         height={40}

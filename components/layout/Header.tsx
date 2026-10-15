@@ -7,6 +7,7 @@ import { LogOut, User as UserIcon, Bell, Sparkles, Shield, ChevronRight } from "
 import { NotificationDrawer } from "@/components/notifications/NotificationDrawer";
 import { RoleBadge } from "@/components/ui/Badge";
 import { AuthSession } from "@/lib/types";
+import { getUserAvatar } from "@/lib/avatarHelper";
 import Image from "next/image";
 
 interface HeaderProps {
@@ -17,8 +18,37 @@ interface HeaderProps {
 
 export function Header({ user, title, subtitle }: HeaderProps) {
   const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<AuthSession>(user);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  // Sync currentUser with latest profile from DB and listen to updates
+  useEffect(() => {
+    const fetchCurrentAuth = () => {
+      fetch("/api/auth/me")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.user) {
+            setCurrentUser((prev) => ({ ...prev, ...data.user }));
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchCurrentAuth();
+
+    const handleProfileUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setCurrentUser((prev) => ({ ...prev, ...customEvent.detail }));
+      } else {
+        fetchCurrentAuth();
+      }
+    };
+
+    window.addEventListener("profile-updated", handleProfileUpdated);
+    return () => window.removeEventListener("profile-updated", handleProfileUpdated);
+  }, []);
 
   // Initial unread count fetch
   useEffect(() => {
@@ -42,7 +72,8 @@ export function Header({ user, title, subtitle }: HeaderProps) {
     }
   };
 
-  const profileHref = `/${user.role}/profile`;
+  const profileHref = `/${currentUser.role}/profile`;
+  const avatarSrc = getUserAvatar(currentUser);
 
   return (
     <>
@@ -77,19 +108,17 @@ export function Header({ user, title, subtitle }: HeaderProps) {
           {/* User Profile Pill */}
           <Link
             href={profileHref}
-            title="View Executive Profile"
+            title="View Profile"
             className="flex items-center gap-3 p-1.5 pr-3 rounded-2xl hover:bg-slate-100/80 border border-transparent hover:border-slate-200 transition-all group"
           >
             <div className="relative w-9 h-9 rounded-xl overflow-hidden bg-indigo-100 ring-2 ring-indigo-500/20 shadow-xs flex items-center justify-center shrink-0">
-              {user.name ? (
+              {currentUser.name ? (
                 <Image
-                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
-                    user.name
-                  )}&background=6366f1&color=fff&bold=true`}
-                  alt={user.name}
+                  src={avatarSrc}
+                  alt={currentUser.name}
                   width={36}
                   height={36}
-                  className="object-cover"
+                  className="w-full h-full object-cover"
                   unoptimized
                 />
               ) : (
@@ -100,12 +129,12 @@ export function Header({ user, title, subtitle }: HeaderProps) {
             <div className="hidden sm:block text-left">
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                  {user.name}
+                  {currentUser.name}
                 </span>
-                <RoleBadge role={user.role} />
+                <RoleBadge role={currentUser.role} />
               </div>
               <p className="text-[10px] text-slate-400 font-medium truncate max-w-[140px]">
-                {user.email}
+                {currentUser.email}
               </p>
             </div>
           </Link>

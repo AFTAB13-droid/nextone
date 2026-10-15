@@ -12,9 +12,10 @@ import {
   AlertCircle,
   UserCheck,
   UserX,
-  ShieldAlert,
+  AlertTriangle,
   ArrowRight,
   Filter,
+  ArrowLeftRight,
 } from "lucide-react";
 
 interface AssignEmployeesToManagerModalProps {
@@ -39,6 +40,7 @@ export function AssignEmployeesToManagerModal({
   const [unassigningId, setUnassigningId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [showReassignWarning, setShowReassignWarning] = useState(false);
 
   // Categorize employees relative to this manager
   const { unassignedEmployees, currentTeamEmployees, otherEmployees } = useMemo(() => {
@@ -70,12 +72,12 @@ export function AssignEmployeesToManagerModal({
     };
   }, [employees, manager]);
 
-  // Determine list for current tab
+  // Determine list for current tab: ALL tab MUST show ALL system employees!
   const tabList = useMemo(() => {
     let list: IUser[] = [];
     if (activeTab === "unassigned") list = unassignedEmployees;
     else if (activeTab === "current") list = currentTeamEmployees;
-    else list = [...unassignedEmployees, ...otherEmployees];
+    else list = employees; // Complete system employee directory
 
     if (!searchQuery.trim()) return list;
 
@@ -87,17 +89,37 @@ export function AssignEmployeesToManagerModal({
         (e.designation && e.designation.toLowerCase().includes(q)) ||
         (e.department && e.department.toLowerCase().includes(q))
     );
-  }, [activeTab, unassignedEmployees, currentTeamEmployees, otherEmployees, searchQuery]);
+  }, [activeTab, unassignedEmployees, currentTeamEmployees, employees, searchQuery]);
+
+  // Identify if any of the selected employees are currently under other managers
+  const selectedReassignments = useMemo(() => {
+    if (!manager) return [];
+    return employees.filter((e) => {
+      if (!selectedEmpIds.includes(e._id)) return false;
+      const mid =
+        typeof e.managerId === "object" && e.managerId ? e.managerId._id : e.managerId;
+      return mid && mid !== manager._id;
+    });
+  }, [employees, manager, selectedEmpIds]);
 
   // Toggle selection
   const handleToggleSelect = (empId: string) => {
+    // If employee is already in this manager's team, they cannot be selected for assignment
+    if (currentTeamEmployees.some((curr) => curr._id === empId)) return;
+
     setSelectedEmpIds((prev) =>
       prev.includes(empId) ? prev.filter((id) => id !== empId) : [...prev, empId]
     );
   };
 
   const handleSelectAllInTab = () => {
-    const selectable = tabList.map((e) => e._id);
+    // Only select employees who are NOT currently in this manager's team
+    const selectable = tabList
+      .filter((e) => !currentTeamEmployees.some((curr) => curr._id === e._id))
+      .map((e) => e._id);
+
+    if (selectable.length === 0) return;
+
     const allSelected = selectable.every((id) => selectedEmpIds.includes(id));
     if (allSelected) {
       setSelectedEmpIds((prev) => prev.filter((id) => !selectable.includes(id)));
@@ -106,13 +128,28 @@ export function AssignEmployeesToManagerModal({
     }
   };
 
-  // Submit batch assignment
-  const handleAssignSelected = async () => {
+  // Trigger assignment: Check if warning is required
+  const handleAssignClick = () => {
+    if (selectedEmpIds.length === 0) return;
+
+    // If any selected employee belongs to another manager, trigger warning dialog
+    if (selectedReassignments.length > 0) {
+      setShowReassignWarning(true);
+      return;
+    }
+
+    // Otherwise, assign directly
+    executeAssignment();
+  };
+
+  // Submit batch assignment to server
+  const executeAssignment = async () => {
     if (!manager || selectedEmpIds.length === 0) return;
 
     setLoading(true);
     setError(null);
     setSuccessMsg(null);
+    setShowReassignWarning(false);
 
     try {
       const res = await fetch("/api/users/assign-manager", {
@@ -129,7 +166,9 @@ export function AssignEmployeesToManagerModal({
         throw new Error(data.error || "Failed to assign employees");
       }
 
-      setSuccessMsg(`Successfully assigned ${selectedEmpIds.length} employee(s) to ${manager.name}!`);
+      setSuccessMsg(
+        `Successfully assigned ${selectedEmpIds.length} employee(s) to ${manager.name}!`
+      );
       setSelectedEmpIds([]);
       onAssigned();
       setTimeout(() => {
@@ -187,7 +226,7 @@ export function AssignEmployeesToManagerModal({
       description="Supervisory Assignment: Select employees to assign under this manager. Each employee can report to only one manager."
       maxWidth="xl"
     >
-      <div className="space-y-6">
+      <div className="space-y-6 relative">
         {/* Manager Summary Hero Card */}
         <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-50 via-cyan-50/50 to-slate-50 border border-indigo-100 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3.5 min-w-0">
@@ -310,9 +349,7 @@ export function AssignEmployeesToManagerModal({
               onClick={handleSelectAllInTab}
               className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline"
             >
-              {tabList.every((e) => selectedEmpIds.includes(e._id))
-                ? "Deselect All"
-                : "Select All in View"}
+              Select All Assignable
             </button>
           </div>
         )}
@@ -329,7 +366,7 @@ export function AssignEmployeesToManagerModal({
               ) : activeTab === "current" ? (
                 <div className="space-y-1">
                   <p className="font-bold text-slate-600">No employees currently in this team</p>
-                  <p className="text-[11px]">Select unassigned employees to build this manager's team.</p>
+                  <p className="text-[11px]">Select unassigned or other employees to build this manager's team.</p>
                 </div>
               ) : (
                 <p>No employees match your search query.</p>
@@ -342,16 +379,22 @@ export function AssignEmployeesToManagerModal({
               const managerObj =
                 typeof emp.managerId === "object" && emp.managerId ? (emp.managerId as IUser) : null;
 
+              // In "All Employees" tab or "Available" tab:
+              // Employees already in this team cannot be selected (no checkbox)
+              const isSelectable = activeTab !== "current" && !isCurrentlyInTeam;
+
               return (
                 <div
                   key={emp._id}
                   onClick={() => {
-                    if (activeTab !== "current") {
+                    if (isSelectable) {
                       handleToggleSelect(emp._id);
                     }
                   }}
                   className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
-                    activeTab !== "current"
+                    isCurrentlyInTeam
+                      ? "bg-slate-50/80 border-slate-200/60 opacity-95"
+                      : isSelectable
                       ? isSelected
                         ? "bg-indigo-50/90 border-indigo-300 shadow-sm cursor-pointer"
                         : "bg-white border-slate-200/80 hover:border-slate-300 hover:bg-slate-50/80 cursor-pointer"
@@ -359,8 +402,8 @@ export function AssignEmployeesToManagerModal({
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    {/* Checkbox for selectable views */}
-                    {activeTab !== "current" && (
+                    {/* Checkbox for selectable employees */}
+                    {isSelectable ? (
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -368,7 +411,15 @@ export function AssignEmployeesToManagerModal({
                         onClick={(e) => e.stopPropagation()}
                         className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 shrink-0 cursor-pointer"
                       />
-                    )}
+                    ) : isCurrentlyInTeam ? (
+                      /* If in current team, show a subtle check icon instead of a checkbox */
+                      <div
+                        className="w-4 h-4 flex items-center justify-center shrink-0"
+                        title="Already member of this team"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-indigo-600" />
+                      </div>
+                    ) : null}
 
                     <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 ring-1 ring-slate-200 shrink-0">
                       <Image
@@ -382,20 +433,22 @@ export function AssignEmployeesToManagerModal({
                     </div>
 
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                         <span className="text-xs sm:text-sm font-black text-slate-900 truncate">
                           {emp.name}
                         </span>
-                        {!emp.managerId ? (
+
+                        {isCurrentlyInTeam ? (
+                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200 shrink-0 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 inline-block" />
+                            <span>In This Manager's Team</span>
+                          </span>
+                        ) : !emp.managerId ? (
                           <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
                             Available / Unassigned
                           </span>
-                        ) : isCurrentlyInTeam ? (
-                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200 shrink-0">
-                            Current Team
-                          </span>
                         ) : (
-                          <span className="text-[10px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 truncate shrink-0">
+                          <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 shrink-0">
                             Reports to: {managerObj ? managerObj.name : "Another Manager"}
                           </span>
                         )}
@@ -407,7 +460,7 @@ export function AssignEmployeesToManagerModal({
                     </div>
                   </div>
 
-                  {/* Right side actions */}
+                  {/* Right side actions for Current Team Tab */}
                   {activeTab === "current" && (
                     <button
                       type="button"
@@ -433,15 +486,23 @@ export function AssignEmployeesToManagerModal({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-slate-100">
           <div className="text-xs text-slate-500 font-medium">
             {selectedEmpIds.length > 0 ? (
-              <span className="font-bold text-indigo-700">
-                {selectedEmpIds.length} employee{selectedEmpIds.length === 1 ? "" : "s"} selected to assign
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-indigo-700">
+                  {selectedEmpIds.length} employee{selectedEmpIds.length === 1 ? "" : "s"} selected
+                </span>
+                {selectedReassignments.length > 0 && (
+                  <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 text-amber-600" />
+                    <span>{selectedReassignments.length} requires manager transfer</span>
+                  </span>
+                )}
+              </div>
             ) : (
-              <span>Select unassigned employees above to add to this manager's team.</span>
+              <span>Select employees above to assign or reassign to this manager.</span>
             )}
           </div>
 
-          <div className="flex items-center justify-end gap-3">
+          <div className="flex items-center justify-end gap-3 shrink-0">
             <button
               type="button"
               onClick={onClose}
@@ -454,8 +515,8 @@ export function AssignEmployeesToManagerModal({
             <button
               type="button"
               disabled={loading || selectedEmpIds.length === 0}
-              onClick={handleAssignSelected}
-              className="px-5 py-2.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white shadow-md shadow-indigo-600/25 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleAssignClick}
+              className="px-5 py-2.5 rounded-xl text-xs font-extrabold bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white shadow-md shadow-indigo-600/25 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             >
               {loading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -466,6 +527,95 @@ export function AssignEmployeesToManagerModal({
             </button>
           </div>
         </div>
+
+        {/* ================= REASSIGNMENT WARNING CONFIRMATION MODAL OVERLAY ================= */}
+        {showReassignWarning && (
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs rounded-[28px] sm:rounded-[36px] flex items-center justify-center p-4 z-50 animate-in fade-in-0 duration-150">
+            <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full border border-amber-200 shadow-2xl space-y-4">
+              <div className="flex items-start gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0 text-amber-600">
+                  <AlertTriangle className="w-6 h-6 stroke-[2.5]" />
+                </div>
+                <div>
+                  <h4 className="text-base font-black text-slate-900 tracking-tight">
+                    Confirm Manager Transfer
+                  </h4>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                    The following <span className="font-bold text-amber-700">{selectedReassignments.length} employee(s)</span> are currently assigned to another manager. Confirming will <span className="font-bold text-rose-600">remove them</span> from their current manager's team and transfer them into <span className="font-bold text-indigo-700">{manager.name}'s</span> team:
+                  </p>
+                </div>
+              </div>
+
+              {/* List of affected reassignments */}
+              <div className="max-h-40 overflow-y-auto space-y-2 rounded-2xl bg-amber-50/70 border border-amber-200/80 p-3">
+                {selectedReassignments.map((emp) => {
+                  const currentMgr =
+                    typeof emp.managerId === "object" && emp.managerId
+                      ? (emp.managerId as IUser)
+                      : null;
+
+                  return (
+                    <div
+                      key={emp._id}
+                      className="p-2.5 rounded-xl bg-white border border-amber-200 text-xs flex items-center justify-between gap-3 shadow-2xs"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 rounded-lg overflow-hidden bg-slate-100 ring-1 ring-slate-200 shrink-0">
+                          <Image
+                            src={getUserAvatar(emp)}
+                            alt={emp.name}
+                            width={28}
+                            height={28}
+                            className="w-full h-full object-cover"
+                            unoptimized
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-black text-slate-900 truncate">{emp.name}</p>
+                          <p className="text-[10px] text-slate-500 truncate">{emp.designation}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold shrink-0">
+                        <span className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
+                          {currentMgr ? currentMgr.name : "Previous Manager"}
+                        </span>
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">
+                          {manager.name}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <p className="text-[11px] text-slate-500 font-medium">
+                Note: Per company policy, each employee can only be assigned under one manager at any time.
+              </p>
+
+              {/* Warning Actions */}
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowReassignWarning(false)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition-all"
+                >
+                  Cancel / Go Back
+                </button>
+                <button
+                  type="button"
+                  onClick={executeAssignment}
+                  disabled={loading}
+                  className="px-5 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white shadow-md shadow-amber-600/25 transition-all flex items-center gap-2"
+                >
+                  <ArrowLeftRight className="w-4 h-4" />
+                  <span>Confirm Transfer & Assign ({selectedEmpIds.length})</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Modal>
   );

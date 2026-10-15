@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { LogOut, User as UserIcon, Bell, Sparkles, Shield, ChevronRight } from "lucide-react";
+import { LogOut, User as UserIcon, Bell, Sparkles, Shield, ChevronRight, PanelLeft } from "lucide-react";
 import { NotificationDrawer } from "@/components/notifications/NotificationDrawer";
 import { RoleBadge } from "@/components/ui/Badge";
 import { AuthSession } from "@/lib/types";
@@ -78,13 +78,27 @@ export function Header({ user, title, subtitle }: HeaderProps) {
   return (
     <>
       <header className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3.5 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-2xs">
-        <div>
-          {title && (
-            <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              {title}
-            </h1>
-          )}
-          {subtitle && <p className="text-xs text-slate-500 font-medium mt-0.5">{subtitle}</p>}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(new Event("toggle-sidebar"));
+              }
+            }}
+            className="p-2 rounded-xl bg-slate-100/80 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200/80 transition-all group shrink-0"
+            aria-label="Toggle Navigation Sidebar"
+            title="Toggle Navigation Sidebar (Ctrl+B)"
+          >
+            <PanelLeft className="w-4 h-4 transition-transform group-hover:scale-110" />
+          </button>
+          <div>
+            {title && (
+              <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                {title}
+              </h1>
+            )}
+            {subtitle && <p className="text-xs text-slate-500 font-medium mt-0.5">{subtitle}</p>}
+          </div>
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">

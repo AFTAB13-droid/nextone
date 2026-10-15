@@ -22,6 +22,8 @@ import {
   Command,
   Activity,
   Zap,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { UserRole, AuthSession } from "@/lib/types";
 import { getUserAvatar } from "@/lib/avatarHelper";
@@ -49,7 +51,6 @@ export function Sidebar({ role, user }: SidebarProps) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSearchActive, setIsSearchActive] = useState(false);
   const [currentUser, setCurrentUser] = useState<AuthSession | undefined>(user);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -93,20 +94,6 @@ export function Sidebar({ role, user }: SidebarProps) {
     return () => window.removeEventListener("profile-updated", handleProfileUpdated);
   }, [user]);
 
-  // Keyboard shortcut (Cmd+K / Ctrl+K) to focus search
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        if (isCollapsed) setIsCollapsed(false);
-        setIsSearchActive(true);
-        setTimeout(() => searchInputRef.current?.focus(), 100);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isCollapsed]);
-
   const toggleCollapse = () => {
     setIsCollapsed((prev) => {
       const next = !prev;
@@ -116,6 +103,30 @@ export function Sidebar({ role, user }: SidebarProps) {
       return next;
     });
   };
+
+  // Keyboard shortcut (Cmd+K / Ctrl+K) to focus search, and (Cmd+B / Ctrl+B) to toggle sidebar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        if (isCollapsed) setIsCollapsed(false);
+        setTimeout(() => searchInputRef.current?.focus(), 100);
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        toggleCollapse();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isCollapsed]);
+
+  // Listen for global toggle-sidebar custom event (triggered from navbar header)
+  useEffect(() => {
+    const handleGlobalToggle = () => toggleCollapse();
+    window.addEventListener("toggle-sidebar", handleGlobalToggle);
+    return () => window.removeEventListener("toggle-sidebar", handleGlobalToggle);
+  }, []);
 
   // Modern structured navigation groupings
   const adminGroups: NavGroup[] = [
@@ -225,55 +236,79 @@ export function Sidebar({ role, user }: SidebarProps) {
   return (
     <aside
       className={`relative bg-gradient-to-b from-[#090d16] via-[#0c101d] to-[#070a12] text-slate-300 flex flex-col shrink-0 h-screen sticky top-0 border-r border-slate-800/80 select-none z-40 transition-all duration-300 ease-in-out shadow-2xl ${
-        isCollapsed ? "w-[72px]" : "w-[272px]"
+        isCollapsed ? "w-[74px]" : "w-[272px]"
       }`}
     >
+      {/* Floating Border Edge Toggle Button - Always visible & accessible */}
+      <button
+        onClick={toggleCollapse}
+        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        title={isCollapsed ? "Expand Sidebar (Ctrl+B)" : "Collapse Sidebar (Ctrl+B)"}
+        className="absolute -right-3.5 top-5 z-50 w-7 h-7 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-xl shadow-indigo-600/50 flex items-center justify-center ring-2 ring-[#090d16] cursor-pointer hover:scale-110 active:scale-95 transition-all duration-200"
+      >
+        {isCollapsed ? (
+          <ChevronRight className="w-4 h-4" />
+        ) : (
+          <ChevronLeft className="w-4 h-4" />
+        )}
+      </button>
+
       {/* Top Ambient Glow Effect */}
       <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-indigo-500/10 via-purple-500/5 to-transparent pointer-events-none" />
 
-      {/* Brand Header & Toggle */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800/80 bg-slate-950/60 backdrop-blur-xl shrink-0 z-10">
-        <Link
-          href={`/${role}`}
-          className="flex items-center gap-3 min-w-0 group"
-          title="NextOne Enterprise Platform"
-        >
-          <div className="relative w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-600/30 group-hover:shadow-indigo-500/50 group-hover:scale-105 transition-all duration-300 shrink-0 ring-1 ring-white/20">
-            <Layers className="w-5 h-5 transition-transform duration-300 group-hover:rotate-12" />
+      {/* Brand Header */}
+      <div className="h-16 flex items-center px-3.5 border-b border-slate-800/80 bg-slate-950/60 backdrop-blur-xl shrink-0 z-10">
+        {isCollapsed ? (
+          <button
+            onClick={toggleCollapse}
+            className="w-10 h-10 mx-auto rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-600/30 hover:scale-105 active:scale-95 transition-all duration-200 group relative"
+            title="Click to expand sidebar (Ctrl+B)"
+          >
+            <Layers className="w-5 h-5 group-hover:hidden transition-transform" />
+            <ChevronRight className="w-5 h-5 hidden group-hover:block transition-transform animate-pulse" />
             <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-[#090d16]" />
-          </div>
 
-          {!isCollapsed && (
-            <div className="min-w-0 transition-opacity duration-300">
-              <div className="flex items-center gap-1.5">
-                <span className="font-black text-base text-white tracking-wider bg-gradient-to-r from-white via-slate-100 to-indigo-200 bg-clip-text text-transparent">
-                  NextOne
-                </span>
-                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                  v2.5
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-500 font-semibold tracking-wide truncate">
-                Enterprise Command
-              </p>
+            {/* Hover tooltip */}
+            <div className="absolute left-full ml-3 px-2.5 py-1 bg-slate-900/95 backdrop-blur-md text-white text-xs font-semibold rounded-lg shadow-xl border border-slate-700/80 whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50">
+              Expand Sidebar (Ctrl+B)
             </div>
-          )}
-        </Link>
+          </button>
+        ) : (
+          <div className="flex items-center justify-between w-full">
+            <Link
+              href={`/${role}`}
+              className="flex items-center gap-3 min-w-0 group"
+              title="NextOne Enterprise Platform"
+            >
+              <div className="relative w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-600/30 group-hover:shadow-indigo-500/50 group-hover:scale-105 transition-all duration-300 shrink-0 ring-1 ring-white/20">
+                <Layers className="w-5 h-5 transition-transform duration-300 group-hover:rotate-12" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-[#090d16]" />
+              </div>
 
-        {/* Morphing Collapse Toggle Button */}
-        <button
-          onClick={toggleCollapse}
-          className={`p-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-all duration-200 shadow-sm ${
-            isCollapsed ? "mx-auto mt-1" : ""
-          }`}
-          title={isCollapsed ? "Expand Sidebar (Ctrl+B)" : "Collapse Sidebar"}
-        >
-          {isCollapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <ChevronLeft className="w-4 h-4" />
-          )}
-        </button>
+              <div className="min-w-0 transition-opacity duration-300">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-black text-base text-white tracking-wider bg-gradient-to-r from-white via-slate-100 to-indigo-200 bg-clip-text text-transparent">
+                    NextOne
+                  </span>
+                  <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                    v2.5
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-500 font-semibold tracking-wide truncate">
+                  Enterprise Command
+                </p>
+              </div>
+            </Link>
+
+            <button
+              onClick={toggleCollapse}
+              className="p-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 hover:border-slate-700 transition-all duration-200 shadow-sm"
+              title="Collapse Sidebar (Ctrl+B)"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Quick Search & Command Bar (Expanded only) */}
@@ -460,8 +495,19 @@ export function Sidebar({ role, user }: SidebarProps) {
             </div>
           </div>
         ) : (
-          /* Collapsed User Presence Avatar */
-          <div className="flex flex-col items-center gap-2">
+          /* Collapsed User Presence Avatar & Expand Button */
+          <div className="flex flex-col items-center gap-2.5">
+            <button
+              onClick={toggleCollapse}
+              className="w-10 h-10 rounded-xl bg-slate-900/90 hover:bg-indigo-600 text-slate-400 hover:text-white border border-slate-800 hover:border-indigo-500 flex items-center justify-center transition-all group relative shadow-md"
+              title="Expand Sidebar (Ctrl+B)"
+            >
+              <PanelLeftOpen className="w-4 h-4 transition-transform group-hover:scale-110" />
+              <div className="absolute left-full ml-3 px-2.5 py-1 bg-slate-900/95 backdrop-blur-md text-white text-xs font-semibold rounded-lg shadow-xl border border-slate-700/80 whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50">
+                Expand Sidebar (Ctrl+B)
+              </div>
+            </button>
+
             <Link
               href={`/${role}/profile`}
               className="relative w-10 h-10 rounded-xl overflow-hidden bg-indigo-950 border border-indigo-500/30 flex items-center justify-center group"

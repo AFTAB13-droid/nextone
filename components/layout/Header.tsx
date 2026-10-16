@@ -50,16 +50,22 @@ export function Header({ user, title, subtitle }: HeaderProps) {
     return () => window.removeEventListener("profile-updated", handleProfileUpdated);
   }, []);
 
-  // Initial unread count fetch
+  // Initial unread count fetch and live synchronization
   useEffect(() => {
-    fetch("/api/notifications")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && typeof data.unreadCount === "number") {
-          setUnreadCount(data.unreadCount);
-        }
-      })
-      .catch(() => {});
+    const fetchUnread = () => {
+      fetch("/api/notifications")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && typeof data.unreadCount === "number") {
+            setUnreadCount(data.unreadCount);
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchUnread();
+    window.addEventListener("notifications-updated", fetchUnread);
+    return () => window.removeEventListener("notifications-updated", fetchUnread);
   }, []);
 
   const handleLogout = async () => {
@@ -102,17 +108,27 @@ export function Header({ user, title, subtitle }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">
-          {/* Notification Sidebar Trigger */}
+          {/* Out-of-the-box Activity Radar Bell Trigger */}
           <button
             onClick={() => setDrawerOpen(true)}
-            className="relative p-2.5 rounded-xl bg-slate-100/80 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200/80 transition-all group"
+            className="relative p-2.5 rounded-xl bg-slate-100/90 hover:bg-indigo-50/90 text-slate-600 hover:text-indigo-600 border border-slate-200/80 hover:border-indigo-200/90 transition-all duration-200 group shadow-xs active:scale-95"
             aria-label="Open Activity Radar"
-            title="Open Activity Radar Sidebar"
+            title="Open Notification Radar & Live Feed"
           >
-            <Bell className="w-4 h-4 transition-transform group-hover:rotate-12" />
+            {/* Live radar sonar ping when unread notifications exist */}
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-[20px] px-1 text-[10px] font-black text-white bg-indigo-600 rounded-full ring-2 ring-white shadow-sm animate-pulse">
-                {unreadCount > 9 ? "9+" : unreadCount}
+              <span className="absolute -inset-0.5 rounded-xl bg-indigo-500/25 animate-ping pointer-events-none opacity-75" />
+            )}
+
+            <Bell className={`w-4 h-4 transition-all duration-300 group-hover:rotate-12 group-hover:scale-110 ${
+              unreadCount > 0 ? "text-indigo-600 animate-wiggle" : "text-slate-600"
+            }`} />
+
+            {/* Futuristic glowing badge */}
+            {unreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-black text-white bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-600 rounded-full ring-2 ring-white shadow-md shadow-indigo-500/40">
+                <span className="relative z-10">{unreadCount > 99 ? "99+" : unreadCount}</span>
+                <span className="absolute inset-0 rounded-full bg-white/20 animate-pulse pointer-events-none" />
               </span>
             )}
           </button>

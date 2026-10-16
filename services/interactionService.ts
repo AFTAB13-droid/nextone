@@ -2,6 +2,7 @@ import connectDB from "@/lib/mongodb";
 import Interaction from "@/models/Interaction";
 import User from "@/models/User";
 import Notification from "@/models/Notification";
+import NotificationService from "@/services/notificationService";
 import { UserRole } from "@/lib/types";
 
 export interface CreateInteractionInput {
@@ -104,26 +105,21 @@ export class InteractionService {
       readBy: [data.senderId],
     });
 
-    // Push real-time in-app notifications to all recipients
+    // Push real-time in-app and desktop FCM notifications to all recipients
     const notifSnippet =
       data.content.length > 80
         ? data.content.substring(0, 80) + "..."
         : data.content;
 
-    const notifBatch = resolvedRecipients.map((recId) => ({
-      recipient: recId,
-      title: `Broadcast: ${data.subject}`,
-      message: notifSnippet,
-      link: "/interactions",
-      type: "system",
-      isRead: false,
-    }));
-
-    if (notifBatch.length > 0) {
-      Notification.insertMany(notifBatch).catch((err) =>
-        console.error("Failed to insert broadcast notifications:", err)
-      );
-    }
+    NotificationService.createBatchNotifications(
+      resolvedRecipients,
+      `Broadcast: ${data.subject}`,
+      notifSnippet,
+      "/interactions",
+      "system"
+    ).catch((err) =>
+      console.error("Failed to insert broadcast notifications:", err)
+    );
 
     return interaction;
   }

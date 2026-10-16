@@ -1,8 +1,12 @@
 import connectDB from "@/lib/mongodb";
 import Notification from "@/models/Notification";
+import FcmService from "@/services/fcmService";
 import { INotification } from "@/lib/types";
 
 export class NotificationService {
+  /**
+   * Creates an in-app notification in MongoDB AND dispatches desktop FCM Web Push
+   */
   static async createNotification(
     recipientId: string,
     title: string,
@@ -21,10 +25,57 @@ export class NotificationService {
       isRead: false,
     });
 
+    // Asynchronously dispatch Desktop Web Push via FCM (non-blocking)
+    FcmService.sendPushToUser(recipientId, {
+      title,
+      body: message,
+      click_action: link,
+      icon: "/favicon.svg",
+    }).catch((err) => {
+      console.error("[NotificationService] Desktop push delivery error:", err);
+    });
+
     return notif.toObject() as INotification;
   }
 
-  static async getUserNotifications(userId: string, limit: number = 20): Promise<INotification[]> {
+  /**
+   * Creates batch notifications for multiple users (e.g. Broadcasts, team announcements)
+   * Stores records in MongoDB and dispatches multicast FCM Web Push
+   */
+  static async createBatchNotifications(
+    recipientIds: string[],
+    title: string,
+    message: string,
+    link: string = "",
+    type: "task" | "query" | "target" | "system" | "hierarchy" = "system"
+  ): Promise<void> {
+    if (!recipientIds || recipientIds.length === 0) return;
+    await connectDB();
+
+    const uniqueRecipients = Array.from(new Set(recipientIds.filter(Boolean)));
+    const batch = uniqueRecipients.map((recId) => ({
+      recipient: recId,
+      title,
+      message,
+      link,
+      type,
+      isRead: false,
+    }));
+
+    await Notification.insertMany(batch);
+
+    // Asynchronously dispatch Desktop Web Push via FCM
+    FcmService.sendPushToMultipleUsers(uniqueRecipients, {
+      title,
+      body: message,
+      click_action: link,
+      icon: "/favicon.svg",
+    }).catch((err) => {
+      console.error("[NotificationService] Batch desktop push error:", err);
+    });
+  }
+
+  static async getUserNotifications(userId: string, limit: number = 30): Promise<INotification[]> {
     await connectDB();
     const list = await Notification.find({ recipient: userId })
       .sort({ createdAt: -1 })

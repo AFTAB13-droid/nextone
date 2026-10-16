@@ -8,14 +8,13 @@ importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"
 importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js");
 
 // Initialize Firebase in service worker
-// The client config will be populated dynamically or via query parameters
 const firebaseConfig = {
-  apiKey: "PLACEHOLDER_API_KEY",
-  authDomain: "PLACEHOLDER_PROJECT_ID.firebaseapp.com",
-  projectId: "PLACEHOLDER_PROJECT_ID",
-  storageBucket: "PLACEHOLDER_PROJECT_ID.appspot.com",
-  messagingSenderId: "PLACEHOLDER_MESSAGING_SENDER_ID",
-  appId: "PLACEHOLDER_APP_ID",
+  apiKey: "AIzaSyDfSGtaEKv2vOhkzbQuxxyV7I09IaPveQM",
+  authDomain: "nextone-bbec6.firebaseapp.com",
+  projectId: "nextone-bbec6",
+  storageBucket: "nextone-bbec6.firebasestorage.app",
+  messagingSenderId: "402039742541",
+  appId: "1:402039742541:web:8443fb8a46ac4bc9a77c04",
 };
 
 // Check if valid config is present before initializeApp

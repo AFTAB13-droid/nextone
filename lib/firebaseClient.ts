@@ -122,43 +122,58 @@ export const attachForegroundMessageListener = (
     const messaging = getMessaging(app);
     return onMessage(messaging, (payload) => {
       console.log("[FCM Client] Foreground push message received:", payload);
-      const title = payload.notification?.title || payload.data?.title || "NextOne Update";
+      const title = payload.notification?.title || payload.data?.title || "NextOne Alert";
       const body = payload.notification?.body || payload.data?.body || "";
       const link = payload.data?.link || (payload.notification as any)?.click_action || "";
 
-      // Compulsory OS Desktop Toast even while portal tab is in foreground:
-      if ("Notification" in window && Notification.permission === "granted") {
-        const fullIconUrl = typeof window !== "undefined" ? `${window.location.origin}/icon-192.png` : "/icon-192.png";
+      const fullIconUrl = typeof window !== "undefined" ? `${window.location.origin}/icon-192.png` : "/icon-192.png";
 
+      // 1. Trigger Out-Of-The-Box In-App Animated Radar Toast
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("nextone-inapp-alert", {
+            detail: { title, body, link, type: payload.data?.type || "general" },
+          })
+        );
+      }
+
+      // 2. Compulsory OS Desktop Toast
+      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+        const notifTag = `nextone-alert-${Date.now()}`;
+        const notifOptions: NotificationOptions = {
+          body,
+          icon: fullIconUrl,
+          badge: fullIconUrl,
+          requireInteraction: true,
+          tag: notifTag,
+          data: { link },
+        };
+
+        // Attempt direct native browser notification first (instant display)
+        try {
+          const directNotif = new Notification(title, notifOptions);
+          directNotif.onclick = () => {
+            window.focus();
+            if (link) window.location.href = link;
+          };
+          console.log("[FCM Client] Direct OS Notification created successfully");
+        } catch (directErr) {
+          console.warn("[FCM Client] Direct Notification constructor notice:", directErr);
+        }
+
+        // Also trigger via Service Worker registration for persistent Action Center placement
         if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.ready.then((reg) => {
-            reg.showNotification(title, {
-              body,
-              icon: fullIconUrl,
-              badge: fullIconUrl,
-              requireInteraction: true,
-              tag: "nextone-desktop-alert",
-              data: { link },
-            });
-          }).catch(() => {
-            try {
-              new Notification(title, {
-                body,
-                icon: fullIconUrl,
-                badge: fullIconUrl,
-                requireInteraction: true,
+          navigator.serviceWorker.getRegistration().then((reg) => {
+            if (reg) {
+              reg.showNotification(title, notifOptions)
+                .then(() => console.log("[FCM Client] ServiceWorker showNotification delivered"))
+                .catch((e) => console.warn("[FCM Client] ServiceWorker showNotification notice:", e));
+            } else {
+              navigator.serviceWorker.ready.then((readyReg) => {
+                readyReg.showNotification(title, notifOptions).catch(() => {});
               });
-            } catch {}
-          });
-        } else {
-          try {
-            new Notification(title, {
-              body,
-              icon: fullIconUrl,
-              badge: fullIconUrl,
-              requireInteraction: true,
-            });
-          } catch {}
+            }
+          }).catch(() => {});
         }
       }
 

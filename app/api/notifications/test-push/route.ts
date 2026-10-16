@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       title,
       body: message,
       link,
-      tag: "nextone-fcm-test",
+      tag: `nextone-fcm-test-${Date.now()}`,
     });
 
     return NextResponse.json({

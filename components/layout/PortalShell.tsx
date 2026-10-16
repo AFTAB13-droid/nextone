@@ -7,6 +7,7 @@ import { AuthSession } from "@/lib/types";
 import OfflineScreen from "@/components/ui/OfflineScreen";
 import AmbientTracker from "@/components/telemetry/AmbientTracker";
 import PushNotificationBanner from "@/components/notifications/PushNotificationBanner";
+import InAppToastContainer from "@/components/notifications/InAppToastContainer";
 
 interface PortalShellProps {
   user: AuthSession;
@@ -18,6 +19,9 @@ interface PortalShellProps {
 export function PortalShell({ user, title, subtitle, children }: PortalShellProps) {
   return (
     <div className="flex h-screen overflow-hidden bg-portal-pattern font-sans text-slate-800 antialiased selection:bg-indigo-500 selection:text-white">
+      {/* Real-time In-App Floating Toast Radar */}
+      <InAppToastContainer />
+
       {/* Real-time Offline Connectivity Monitor */}
       <OfflineScreen />
 

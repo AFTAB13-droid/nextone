@@ -213,7 +213,7 @@ export function NotificationDrawer({
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setSelfPushFeedback("✓ Desktop push dispatched! Check your Windows/Mac system tray.");
+        setSelfPushFeedback("✓ Dispatched! Live in-app radar card popped up on screen & OS notification sent.");
       } else {
         setSelfPushFeedback(data.error || "Failed to dispatch test push.");
       }

@@ -69,7 +69,7 @@ export class FcmService {
             icon: iconUrl,
             badge: iconUrl,
             requireInteraction: true,
-            tag: payload.tag || "nextone-desktop-alert",
+            tag: payload.tag || `nextone-alert-${Date.now()}`,
           },
         },
         data: {

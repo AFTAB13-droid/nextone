@@ -45,7 +45,7 @@ try {
       icon: iconUrl, // Must be raster PNG with full absolute URL for Windows Action Center
       badge: iconUrl,
       data: { link, ...payload.data },
-      tag: payload.data?.tag || "nextone-desktop-alert",
+      tag: payload.data?.tag || `nextone-alert-${Date.now()}`,
       requireInteraction: true, // Keep notification visible on desktop until dismissed or clicked
       vibrate: [200, 100, 200],
     };

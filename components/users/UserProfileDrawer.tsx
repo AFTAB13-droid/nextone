@@ -26,6 +26,7 @@ import {
   Loader2,
 } from "lucide-react";
 import Image from "next/image";
+import UserTelemetryTab from "@/components/telemetry/UserTelemetryTab";
 
 interface UserProfileDrawerProps {
   user: IUser | null;
@@ -51,6 +52,7 @@ export function UserProfileDrawer({
   const [subordinates, setSubordinates] = useState<IUser[]>([]);
   const [loadingMetrics, setLoadingMetrics] = useState(false);
   const [loadingHierarchy, setLoadingHierarchy] = useState(false);
+  const [activeTab, setActiveTab] = useState<"telemetry" | "overview">("telemetry");
 
   // Sync initial state when drawer opens or user prop changes
   useEffect(() => {
@@ -279,12 +281,42 @@ export function UserProfileDrawer({
               )}
             </div>
           </div>
+
+          {/* Navigation Tab Bar */}
+          <div className="flex items-center gap-2 mt-6 pt-4 border-t border-white/10">
+            <button
+              onClick={() => setActiveTab("telemetry")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+                activeTab === "telemetry"
+                  ? "bg-white text-slate-900 shadow-lg shadow-black/20"
+                  : "bg-white/10 hover:bg-white/15 text-white"
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5 text-indigo-500" />
+              <span>Workforce Intelligence & Hours</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+                activeTab === "overview"
+                  ? "bg-white text-slate-900 shadow-lg shadow-black/20"
+                  : "bg-white/10 hover:bg-white/15 text-white"
+              }`}
+            >
+              <Users className="w-3.5 h-3.5 text-indigo-500" />
+              <span>Organization & Hierarchy</span>
+            </button>
+          </div>
         </div>
 
         {/* Content Body */}
         <div className="p-6 sm:p-8 max-h-[calc(85vh-200px)] overflow-y-auto space-y-6">
-          {/* Telemetry Stats Strip */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+          {activeTab === "telemetry" ? (
+            <UserTelemetryTab user={currentUserData} />
+          ) : (
+            <>
+              {/* Telemetry Stats Strip */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
             <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100">
               <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700">
                 Total Assigned
@@ -458,9 +490,11 @@ export function UserProfileDrawer({
               </div>
             )}
           </div>
-        </div>
+        </>
+      )}
+    </div>
 
-        {/* Footer */}
+    {/* Footer */}
         <div className="px-6 sm:px-8 py-4 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between text-xs text-slate-500">
           <span>User ID: #{currentUserData._id}</span>
           <button

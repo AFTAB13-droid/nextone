@@ -14,8 +14,50 @@ export interface IUser {
   avatar?: string;
   isActive: boolean;
   fcmTokens?: string[];
+  lastActiveAt?: string | Date;
+  currentStatus?: "active" | "idle" | "offline";
+  currentPath?: string;
+  currentDevice?: string;
   createdAt: string | Date;
   updatedAt: string | Date;
+}
+
+export interface IUserDailyTelemetry {
+  _id?: string;
+  userId: string | IUser;
+  date: string; // YYYY-MM-DD
+  firstSeenAt: string | Date;
+  lastSeenAt: string | Date;
+  activeSeconds: number;
+  idleSeconds: number;
+  backgroundSeconds: number;
+  totalSeconds: number;
+  deviceInfo?: {
+    os?: string;
+    browser?: string;
+    screenResolution?: string;
+    ip?: string;
+  };
+  dayStatus: "full_day" | "half_day" | "short_day" | "overtime" | "active";
+  hourlyBlocks?: { [hour: string]: number }; // hour 0..23 -> active seconds
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}
+
+export interface ITelemetrySummary {
+  totalActiveSeconds: number;
+  totalIdleSeconds: number;
+  totalDaysWorked: number;
+  avgDailyActiveSeconds: number;
+  productivityScore: number;
+  earliestStart?: string;
+  latestEnd?: string;
+  currentLiveStatus: {
+    status: "active" | "idle" | "offline";
+    lastActiveAt?: string | Date;
+    currentPath?: string;
+    deviceInfo?: string;
+  };
 }
 
 // Client specified: Assigned, In Progress, On Hold, Completed, Cancelled (with review support)

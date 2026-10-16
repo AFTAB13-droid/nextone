@@ -65,6 +65,23 @@ const UserSchema = new Schema(
       type: [String],
       default: [],
     },
+    lastActiveAt: {
+      type: Date,
+      default: null,
+    },
+    currentStatus: {
+      type: String,
+      enum: ["active", "idle", "offline"],
+      default: "offline",
+    },
+    currentPath: {
+      type: String,
+      default: "",
+    },
+    currentDevice: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,

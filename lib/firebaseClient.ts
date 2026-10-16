@@ -122,7 +122,7 @@ export const attachForegroundMessageListener = (
       console.log("[FCM Client] Foreground push message received:", payload);
       const title = payload.notification?.title || payload.data?.title || "NextOne Update";
       const body = payload.notification?.body || payload.data?.body || "";
-      const link = payload.data?.link || payload.notification?.click_action || "";
+      const link = payload.data?.link || (payload.notification as any)?.click_action || "";
 
       callback({ title, body, link });
     });

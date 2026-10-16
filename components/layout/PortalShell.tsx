@@ -5,6 +5,7 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { AuthSession } from "@/lib/types";
 import OfflineScreen from "@/components/ui/OfflineScreen";
+import AmbientTracker from "@/components/telemetry/AmbientTracker";
 
 interface PortalShellProps {
   user: AuthSession;
@@ -18,6 +19,9 @@ export function PortalShell({ user, title, subtitle, children }: PortalShellProp
     <div className="flex h-screen overflow-hidden bg-portal-pattern font-sans text-slate-800 antialiased selection:bg-indigo-500 selection:text-white">
       {/* Real-time Offline Connectivity Monitor */}
       <OfflineScreen />
+
+      {/* Ambient Zero-Click Telemetry & Screen Time Tracker */}
+      <AmbientTracker user={user} />
 
       {/* Sidebar Navigation - Fixed and Stationary */}
       <Sidebar role={user.role} user={user} />

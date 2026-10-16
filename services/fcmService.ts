@@ -48,6 +48,11 @@ export class FcmService {
     try {
       const messaging = admin.messaging(app);
 
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const iconUrl = payload.icon?.startsWith("http")
+        ? payload.icon
+        : `${baseUrl}/icon-192.png`;
+
       const response = await messaging.sendEachForMulticast({
         tokens: uniqueTokens,
         notification: {
@@ -61,8 +66,8 @@ export class FcmService {
           notification: {
             title: payload.title,
             body: payload.body,
-            icon: payload.icon || "/favicon.svg",
-            badge: "/favicon.svg",
+            icon: iconUrl,
+            badge: iconUrl,
             requireInteraction: true,
             tag: payload.tag || "nextone-desktop-alert",
           },
@@ -71,6 +76,7 @@ export class FcmService {
           title: payload.title,
           body: payload.body,
           link: payload.link || payload.click_action || "/",
+          icon: iconUrl,
           ...payload.data,
         },
       });
@@ -78,6 +84,14 @@ export class FcmService {
       console.log(
         `[FCM Service] Sent push "${payload.title}": ${response.successCount} succeeded, ${response.failureCount} failed.`
       );
+
+      if (response.failureCount > 0) {
+        response.responses.forEach((resp, idx) => {
+          if (!resp.success) {
+            console.error(`[FCM Service] Push failure on token [${idx}]:`, resp.error?.code, resp.error?.message);
+          }
+        });
+      }
 
       // Prune dead/unregistered tokens if any failed
       if (response.failureCount > 0 && userIdToPrune) {

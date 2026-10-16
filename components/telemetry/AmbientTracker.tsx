@@ -3,6 +3,10 @@
 import React, { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { AuthSession } from "@/lib/types";
+import {
+  requestDesktopPushPermission,
+  attachForegroundMessageListener,
+} from "@/lib/firebaseClient";
 
 interface AmbientTrackerProps {
   user: AuthSession;
@@ -153,6 +157,40 @@ export function AmbientTracker({ user }: AmbientTrackerProps) {
       if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);
     };
   }, [user, pathname]);
+
+  // Seamless automatic FCM desktop push synchronization & foreground listener
+  useEffect(() => {
+    const uid = user?.userId || (user as any)?._id?.toString() || (user as any)?._id;
+    if (!uid || typeof window === "undefined") return;
+
+    let cleanupForeground: (() => void) | undefined;
+
+    const syncFcmAndListen = async () => {
+      try {
+        // If the browser has already granted permission, ensure SW is active and token is in DB
+        if ("Notification" in window && Notification.permission === "granted") {
+          await requestDesktopPushPermission();
+        }
+
+        // Global foreground listener: pops OS toast and emits update event
+        cleanupForeground = attachForegroundMessageListener(() => {
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("notifications-updated"));
+          }
+        });
+      } catch (err) {
+        console.warn("[AmbientTracker] FCM background sync notice:", err);
+      }
+    };
+
+    syncFcmAndListen();
+
+    return () => {
+      if (typeof cleanupForeground === "function") {
+        cleanupForeground();
+      }
+    };
+  }, [user]);
 
   return null; // Silent background component
 }

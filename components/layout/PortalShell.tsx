@@ -6,6 +6,7 @@ import Header from "./Header";
 import { AuthSession } from "@/lib/types";
 import OfflineScreen from "@/components/ui/OfflineScreen";
 import AmbientTracker from "@/components/telemetry/AmbientTracker";
+import PushNotificationBanner from "@/components/notifications/PushNotificationBanner";
 
 interface PortalShellProps {
   user: AuthSession;
@@ -29,6 +30,8 @@ export function PortalShell({ user, title, subtitle, children }: PortalShellProp
       {/* Main Content Area - Independently Scrollable */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
         <Header user={user} title={title} subtitle={subtitle} />
+        {/* Unobtrusive One-Click Desktop Push Notification Opt-in */}
+        <PushNotificationBanner />
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 w-full">
           {children}
         </main>

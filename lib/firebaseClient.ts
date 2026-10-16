@@ -78,6 +78,8 @@ export const requestDesktopPushPermission = async (): Promise<{
     const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
       scope: "/",
     });
+    await navigator.serviceWorker.ready;
+    await registration.update().catch(() => {});
 
     // Obtain token with VAPID key
     const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || undefined;
@@ -109,7 +111,7 @@ export const requestDesktopPushPermission = async (): Promise<{
  * Attaches foreground push listener to display in-app notifications while tab is open
  */
 export const attachForegroundMessageListener = (
-  callback: (payload: { title: string; body: string; link?: string }) => void
+  callback?: (payload: { title: string; body: string; link?: string }) => void
 ) => {
   if (typeof window === "undefined" || !isFirebaseConfigured()) return () => {};
 
@@ -124,7 +126,43 @@ export const attachForegroundMessageListener = (
       const body = payload.notification?.body || payload.data?.body || "";
       const link = payload.data?.link || (payload.notification as any)?.click_action || "";
 
-      callback({ title, body, link });
+      // Compulsory OS Desktop Toast even while portal tab is in foreground:
+      if ("Notification" in window && Notification.permission === "granted") {
+        const fullIconUrl = typeof window !== "undefined" ? `${window.location.origin}/icon-192.png` : "/icon-192.png";
+
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.ready.then((reg) => {
+            reg.showNotification(title, {
+              body,
+              icon: fullIconUrl,
+              badge: fullIconUrl,
+              requireInteraction: true,
+              tag: "nextone-desktop-alert",
+              data: { link },
+            });
+          }).catch(() => {
+            try {
+              new Notification(title, {
+                body,
+                icon: fullIconUrl,
+                badge: fullIconUrl,
+                requireInteraction: true,
+              });
+            } catch {}
+          });
+        } else {
+          try {
+            new Notification(title, {
+              body,
+              icon: fullIconUrl,
+              badge: fullIconUrl,
+              requireInteraction: true,
+            });
+          } catch {}
+        }
+      }
+
+      if (callback) callback({ title, body, link });
     });
   } catch (e) {
     console.warn("[FCM Client] Could not attach foreground listener:", e);

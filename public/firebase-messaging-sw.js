@@ -3,11 +3,20 @@
  * Handles desktop background Web Push Notifications for Employees, Managers, and Admins.
  */
 
-// Import Firebase scripts inside service worker
+// 1. Service Worker Lifecycle: Activate immediately on update
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(clients.claim());
+});
+
+// 2. Import Firebase scripts inside service worker
 importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js");
 
-// Initialize Firebase in service worker
+// 3. Initialize Firebase in service worker with valid NextOne credentials
 const firebaseConfig = {
   apiKey: "AIzaSyDfSGtaEKv2vOhkzbQuxxyV7I09IaPveQM",
   authDomain: "nextone-bbec6.firebaseapp.com",
@@ -17,68 +26,37 @@ const firebaseConfig = {
   appId: "1:402039742541:web:8443fb8a46ac4bc9a77c04",
 };
 
-// Check if valid config is present before initializeApp
 try {
-  if (firebaseConfig.projectId !== "PLACEHOLDER_PROJECT_ID") {
-    firebase.initializeApp(firebaseConfig);
-    const messaging = firebase.messaging();
+  firebase.initializeApp(firebaseConfig);
+  const messaging = firebase.messaging();
 
-    messaging.onBackgroundMessage((payload) => {
-      console.log("[firebase-messaging-sw.js] Received background message:", payload);
+  messaging.onBackgroundMessage((payload) => {
+    console.log("[firebase-messaging-sw.js] Background push received:", payload);
 
-      const notificationTitle = payload.notification?.title || payload.data?.title || "NextOne Alert";
-      const notificationOptions = {
-        body: payload.notification?.body || payload.data?.body || "You have a new update in NextOne.",
-        icon: payload.notification?.icon || payload.data?.icon || "/favicon.svg",
-        badge: "/favicon.svg",
-        data: payload.data || {},
-        tag: payload.data?.tag || "nextone-notification",
-        requireInteraction: true, // Keep notification on desktop until user dismisses or clicks
-        vibrate: [200, 100, 200],
-      };
+    const title = payload.notification?.title || payload.data?.title || "NextOne Alert";
+    const body = payload.notification?.body || payload.data?.body || "You have a new update in NextOne.";
+    const link = payload.data?.link || payload.notification?.click_action || "/";
+    const icon = payload.notification?.icon || payload.data?.icon || "/icon-192.png";
 
-      self.registration.showNotification(notificationTitle, notificationOptions);
-    });
-  }
+    const iconUrl = self.location.origin + "/icon-192.png";
+
+    const notificationOptions = {
+      body,
+      icon: iconUrl, // Must be raster PNG with full absolute URL for Windows Action Center
+      badge: iconUrl,
+      data: { link, ...payload.data },
+      tag: payload.data?.tag || "nextone-desktop-alert",
+      requireInteraction: true, // Keep notification visible on desktop until dismissed or clicked
+      vibrate: [200, 100, 200],
+    };
+
+    return self.registration.showNotification(title, notificationOptions);
+  });
 } catch (e) {
   console.warn("[firebase-messaging-sw.js] Firebase background initialization:", e);
 }
 
-// Fallback native push event listener (works even if Firebase config is still in onboarding)
-self.addEventListener("push", (event) => {
-  if (!event.data) return;
-
-  try {
-    const data = event.data.json();
-    const title = data.notification?.title || data.title || "NextOne Alert";
-    const body = data.notification?.body || data.body || "You have a new operational notice.";
-    const link = data.data?.link || data.link || "/";
-    const icon = data.icon || "/favicon.svg";
-
-    const options = {
-      body,
-      icon,
-      badge: "/favicon.svg",
-      data: { link, ...data.data },
-      requireInteraction: true,
-      vibrate: [200, 100, 200],
-    };
-
-    event.waitUntil(self.registration.showNotification(title, options));
-  } catch (err) {
-    const text = event.data.text();
-    event.waitUntil(
-      self.registration.showNotification("NextOne Alert", {
-        body: text,
-        icon: "/favicon.svg",
-        badge: "/favicon.svg",
-        requireInteraction: true,
-      })
-    );
-  }
-});
-
-// Click listener: focus existing window or open new tab to the target link
+// 4. Click listener: focus existing window or open new tab to the target link
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 

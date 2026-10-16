@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import PortalShell from "@/components/layout/PortalShell";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import TaskCard from "@/components/tasks/TaskCard";
@@ -21,6 +21,8 @@ import {
   Calendar,
   Eye,
   GitFork,
+  ArrowUpDown,
+  Filter,
 } from "lucide-react";
 import { AuthSession, ITask } from "@/lib/types";
 
@@ -28,8 +30,11 @@ export default function EmployeeTasksPage() {
   const [currentUser, setCurrentUser] = useState<AuthSession | null>(null);
   const [tasks, setTasks] = useState<ITask[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [quickFilter, setQuickFilter] = useState<"all" | "active" | "review" | "overdue" | "completed">("all");
+  const [sortBy, setSortBy] = useState<"dueDate" | "priority" | "progress" | "newest">("dueDate");
   const [search, setSearch] = useState<string>("");
-  const [viewMode, setViewMode] = useState<"table" | "cards">("cards");
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
   const [selectedTask, setSelectedTask] = useState<ITask | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -80,23 +85,6 @@ export default function EmployeeTasksPage() {
     fetchData();
   }, []);
 
-  if (loading || !currentUser) {
-    return (
-      <div className="min-h-screen bg-portal-pattern flex items-center justify-center">
-        <LoadingSpinner fullscreen message="Loading Assigned Tasks" subtext="Fetching assigned sprint objectives and task deliverables" />
-      </div>
-    );
-  }
-
-  const filteredTasks = tasks.filter((t) => {
-    const matchesStatus = statusFilter === "all" || t.status === statusFilter;
-    const matchesSearch =
-      t.title.toLowerCase().includes(search.toLowerCase()) ||
-      t.description?.toLowerCase().includes(search.toLowerCase()) ||
-      (t.taskId && t.taskId.toLowerCase().includes(search.toLowerCase()));
-    return matchesStatus && matchesSearch;
-  });
-
   const totalTasks = tasks.length;
   const activeCount = tasks.filter((t) => t.status === "in_progress" || t.status === "assigned" || t.status === "pending").length;
   const reviewCount = tasks.filter((t) => t.status === "in_review").length;
@@ -108,10 +96,63 @@ export default function EmployeeTasksPage() {
       new Date(t.dueDate) < new Date()
   ).length;
 
+  const filteredTasks = useMemo(() => {
+    let result = tasks.filter((t) => {
+      // Quick filter tabs
+      if (quickFilter === "active" && t.status === "completed") return false;
+      if (quickFilter === "review" && t.status !== "in_review") return false;
+      if (quickFilter === "overdue") {
+        const isOver = t.status !== "completed" && t.status !== "cancelled" && new Date(t.dueDate) < new Date();
+        if (!isOver) return false;
+      }
+      if (quickFilter === "completed" && t.status !== "completed") return false;
+
+      // Status dropdown
+      const matchesStatus = statusFilter === "all" || t.status === statusFilter;
+
+      // Priority dropdown
+      const matchesPriority = priorityFilter === "all" || t.priority === priorityFilter;
+
+      // Search
+      const matchesSearch =
+        t.title.toLowerCase().includes(search.toLowerCase()) ||
+        t.description?.toLowerCase().includes(search.toLowerCase()) ||
+        (t.taskId && t.taskId.toLowerCase().includes(search.toLowerCase()));
+
+      return matchesStatus && matchesPriority && matchesSearch;
+    });
+
+    // Sorting
+    result.sort((a, b) => {
+      if (sortBy === "dueDate") {
+        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      }
+      if (sortBy === "priority") {
+        const pMap: Record<string, number> = { urgent: 4, high: 3, medium: 2, low: 1 };
+        return (pMap[b.priority] || 0) - (pMap[a.priority] || 0);
+      }
+      if (sortBy === "progress") {
+        return (b.progressPercentage || 0) - (a.progressPercentage || 0);
+      }
+      // newest
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return result;
+  }, [tasks, quickFilter, statusFilter, priorityFilter, search, sortBy]);
+
   const handleOpenDetails = (task: ITask) => {
     setSelectedTask(task);
     setIsTaskModalOpen(true);
   };
+
+  if (loading || !currentUser) {
+    return (
+      <div className="min-h-screen bg-portal-pattern flex items-center justify-center">
+        <LoadingSpinner fullscreen message="Loading Assigned Tasks" subtext="Fetching assigned sprint objectives and task deliverables" />
+      </div>
+    );
+  }
 
   return (
     <PortalShell
@@ -153,49 +194,125 @@ export default function EmployeeTasksPage() {
         />
       </div>
 
+      {/* Quick Filter Pill Tabs */}
+      <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-none">
+        <button
+          onClick={() => {
+            setQuickFilter("all");
+            setStatusFilter("all");
+          }}
+          className={`px-4 py-2 rounded-2xl text-xs font-black transition-all shrink-0 ${
+            quickFilter === "all"
+              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+              : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
+          }`}
+        >
+          All Tasks ({tasks.length})
+        </button>
+        <button
+          onClick={() => setQuickFilter("active")}
+          className={`px-4 py-2 rounded-2xl text-xs font-black transition-all shrink-0 ${
+            quickFilter === "active"
+              ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+              : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
+          }`}
+        >
+          In Flight ({activeCount})
+        </button>
+        <button
+          onClick={() => setQuickFilter("review")}
+          className={`px-4 py-2 rounded-2xl text-xs font-black transition-all shrink-0 ${
+            quickFilter === "review"
+              ? "bg-amber-600 text-white shadow-md shadow-amber-600/20"
+              : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
+          }`}
+        >
+          Under Review ({reviewCount})
+        </button>
+        <button
+          onClick={() => setQuickFilter("overdue")}
+          className={`px-4 py-2 rounded-2xl text-xs font-black transition-all shrink-0 flex items-center gap-1.5 ${
+            quickFilter === "overdue"
+              ? "bg-rose-600 text-white shadow-md shadow-rose-600/20"
+              : "bg-white text-rose-600 hover:bg-rose-50 border border-rose-200"
+          }`}
+        >
+          <Flame className="w-3.5 h-3.5" />
+          <span>Overdue ({overdueCount})</span>
+        </button>
+        <button
+          onClick={() => setQuickFilter("completed")}
+          className={`px-4 py-2 rounded-2xl text-xs font-black transition-all shrink-0 ${
+            quickFilter === "completed"
+              ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
+              : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
+          }`}
+        >
+          Completed ({completedCount})
+        </button>
+      </div>
+
       {/* Filters and View Controls Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div className="flex flex-wrap items-center gap-3">
+          {/* Search */}
           <div className="relative">
             <input
               type="text"
-              placeholder="Search tasks or ID..."
+              placeholder="Search tasks, deliverables, or ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-64 sm:w-72 text-xs bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm font-medium"
+              className="w-64 sm:w-72 text-xs bg-white border border-slate-200/90 rounded-2xl pl-10 pr-4 py-2.5 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 shadow-2xs font-medium transition-all"
             />
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
           </div>
 
+          {/* Status Dropdown */}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="text-xs bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm font-bold"
+            className="text-xs bg-white border border-slate-200/90 rounded-2xl px-3.5 py-2.5 text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 shadow-2xs font-bold"
           >
-            <option value="all">All Statuses ({tasks.length})</option>
+            <option value="all">All Statuses</option>
             <option value="assigned">Assigned</option>
             <option value="in_progress">In Progress</option>
             <option value="in_review">Submitted for Review</option>
             <option value="completed">Completed & Approved</option>
             <option value="blocked">Blocked</option>
           </select>
+
+          {/* Priority Dropdown */}
+          <select
+            value={priorityFilter}
+            onChange={(e) => setPriorityFilter(e.target.value)}
+            className="text-xs bg-white border border-slate-200/90 rounded-2xl px-3.5 py-2.5 text-slate-700 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 shadow-2xs font-bold"
+          >
+            <option value="all">All Priorities</option>
+            <option value="urgent">Urgent</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+
+          {/* Sort By Dropdown */}
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200/90 rounded-2xl px-3 py-1 shadow-2xs">
+            <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="text-xs text-slate-700 font-bold bg-transparent focus:outline-none py-1.5 cursor-pointer"
+            >
+              <option value="dueDate">Sort by Due Date</option>
+              <option value="priority">Sort by Priority</option>
+              <option value="progress">Sort by Progress</option>
+              <option value="newest">Sort by Newest</option>
+            </select>
+          </div>
         </div>
 
-        {/* View Toggle: Cards vs Table */}
+        {/* View Toggle: Table vs Cards */}
         <div className="flex items-center gap-3">
           <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-2xs">
-            <button
-              onClick={() => handleSetViewMode("cards")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                viewMode === "cards"
-                  ? "bg-white text-indigo-700 shadow-sm"
-                  : "text-slate-500 hover:text-slate-800"
-              }`}
-              title="Cards View"
-            >
-              <LayoutGrid className="w-4 h-4" />
-              <span>Cards</span>
-            </button>
             <button
               onClick={() => handleSetViewMode("table")}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
@@ -207,6 +324,18 @@ export default function EmployeeTasksPage() {
             >
               <List className="w-4 h-4" />
               <span>Table</span>
+            </button>
+            <button
+              onClick={() => handleSetViewMode("cards")}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                viewMode === "cards"
+                  ? "bg-white text-indigo-700 shadow-sm"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+              title="Cards View"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span>Cards</span>
             </button>
           </div>
 
@@ -252,7 +381,8 @@ export default function EmployeeTasksPage() {
                   <tr>
                     <td colSpan={7} className="px-6 py-12 text-center text-slate-400 font-medium">
                       <Briefcase className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                      No tasks found in this view.
+                      <p className="font-bold text-slate-700">No tasks match this filter</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Try selecting another filter or search keyword.</p>
                     </td>
                   </tr>
                 ) : (

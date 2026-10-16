@@ -7,6 +7,7 @@ import TaskCard from "@/components/tasks/TaskCard";
 import TaskModal from "@/components/tasks/TaskModal";
 import CreateTaskModal from "@/components/tasks/CreateTaskModal";
 import { PriorityBadge, StatusBadge } from "@/components/ui/Badge";
+import StatCard from "@/components/ui/StatCard";
 import { getUserAvatar } from "@/lib/avatarHelper";
 import {
   Plus,
@@ -19,6 +20,10 @@ import {
   GitFork,
   ArrowRight,
   Filter,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+  Flame,
 } from "lucide-react";
 import { AuthSession, ITask } from "@/lib/types";
 import Image from "next/image";
@@ -79,6 +84,17 @@ export default function AdminTasksPage() {
     return matchesStatus && matchesPriority && matchesSearch;
   });
 
+  const totalTasks = tasks.length;
+  const activeCount = tasks.filter((t) => t.status === "in_progress" || t.status === "assigned").length;
+  const reviewCount = tasks.filter((t) => t.status === "in_review").length;
+  const completedCount = tasks.filter((t) => t.status === "completed").length;
+  const overdueCount = tasks.filter(
+    (t) =>
+      t.status !== "completed" &&
+      t.status !== "cancelled" &&
+      new Date(t.dueDate) < new Date()
+  ).length;
+
   const handleOpenDetails = (task: ITask) => {
     setSelectedTask(task);
     setIsTaskModalOpen(true);
@@ -90,6 +106,40 @@ export default function AdminTasksPage() {
       title="Master Task Governance Board"
       subtitle="Executive Lifecycle Control: Assign initiatives, monitor decomposition into subtasks, and audit deliverables"
     >
+      {/* KPI Summary Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <StatCard
+          title="Total Initiatives"
+          value={totalTasks}
+          subtitle={`${activeCount} currently active`}
+          icon={Briefcase}
+          color="indigo"
+        />
+        <StatCard
+          title="Active Sprint"
+          value={activeCount}
+          subtitle="In flight work streams"
+          icon={Clock}
+          color="blue"
+        />
+        <StatCard
+          title="Needs Review"
+          value={reviewCount}
+          subtitle="Pending sign-off & audit"
+          icon={AlertCircle}
+          color="amber"
+          badge={reviewCount > 0 ? "Requires Review" : undefined}
+        />
+        <StatCard
+          title="Overdue Tasks"
+          value={overdueCount}
+          subtitle="Past milestone deadline"
+          icon={Flame}
+          color="rose"
+          badge={overdueCount > 0 ? "Urgent Action" : undefined}
+        />
+      </div>
+
       {/* Top Filter and Actions Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div className="flex flex-wrap items-center gap-3">
@@ -226,14 +276,30 @@ export default function AdminTasksPage() {
                       <tr
                         key={t._id}
                         onClick={() => handleOpenDetails(t)}
-                        className="hover:bg-slate-50/70 transition-colors group cursor-pointer"
+                        className={`transition-all duration-200 group cursor-pointer border-b ${
+                          isOverdue
+                            ? "bg-gradient-to-r from-rose-100/85 via-red-50/70 to-rose-50/40 hover:bg-rose-100/95 border-b-rose-200 border-l-4 border-l-rose-600 shadow-xs"
+                            : "border-slate-100 hover:bg-slate-50/70"
+                        }`}
                       >
                         {/* Task Title & ID */}
                         <td className="px-6 py-4.5 max-w-[280px]">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[10px] font-mono font-black bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-lg border border-slate-200">
+                          <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                            <span
+                              className={`text-[10px] font-mono font-black px-2.5 py-0.5 rounded-lg border flex items-center gap-1 ${
+                                isOverdue
+                                  ? "bg-rose-100 text-rose-800 border-rose-300"
+                                  : "bg-slate-100 text-slate-800 border-slate-200"
+                              }`}
+                            >
+                              {isOverdue && <Flame className="w-3 h-3 text-rose-600 animate-pulse" />}
                               {t.taskId || `#${t._id.slice(-6)}`}
                             </span>
+                            {isOverdue && (
+                              <span className="text-[9px] font-black uppercase tracking-wider bg-rose-600 text-white px-2 py-0.5 rounded-full shadow-2xs animate-pulse">
+                                Overdue
+                              </span>
+                            )}
                             {t.parentTaskId && (
                               <span className="text-[10px] font-bold bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded-lg border border-cyan-200 flex items-center gap-1">
                                 <GitFork className="w-2.5 h-2.5" />
@@ -241,11 +307,21 @@ export default function AdminTasksPage() {
                               </span>
                             )}
                           </div>
-                          <p className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors text-sm line-clamp-1">
+                          <p
+                            className={`font-black text-sm line-clamp-1 transition-colors ${
+                              isOverdue
+                                ? "text-rose-950 group-hover:text-rose-700"
+                                : "text-slate-900 group-hover:text-indigo-600"
+                            }`}
+                          >
                             {t.title}
                           </p>
                           {t.description && (
-                            <p className="text-slate-400 text-[11px] line-clamp-1 mt-0.5">
+                            <p
+                              className={`text-[11px] line-clamp-1 mt-0.5 ${
+                                isOverdue ? "text-rose-700/80 font-medium" : "text-slate-400"
+                              }`}
+                            >
                               {t.description}
                             </p>
                           )}
@@ -254,7 +330,13 @@ export default function AdminTasksPage() {
                         {/* Assignee */}
                         <td className="px-6 py-4.5">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-xl overflow-hidden bg-slate-100 ring-1 ring-slate-200 shrink-0">
+                            <div
+                              className={`w-8 h-8 rounded-xl overflow-hidden shrink-0 ${
+                                isOverdue
+                                  ? "ring-2 ring-rose-400/60 bg-rose-50"
+                                  : "bg-slate-100 ring-1 ring-slate-200"
+                              }`}
+                            >
                               <Image
                                 src={getUserAvatar(t.assignedTo)}
                                 alt={t.assignedTo?.name || "User"}
@@ -265,10 +347,18 @@ export default function AdminTasksPage() {
                               />
                             </div>
                             <div className="min-w-0">
-                              <p className="font-bold text-slate-800 truncate">
+                              <p
+                                className={`font-bold truncate ${
+                                  isOverdue ? "text-rose-950" : "text-slate-800"
+                                }`}
+                              >
                                 {t.assignedTo?.name || "Unassigned"}
                               </p>
-                              <p className="text-[10px] text-slate-400 truncate">
+                              <p
+                                className={`text-[10px] truncate ${
+                                  isOverdue ? "text-rose-600 font-medium" : "text-slate-400"
+                                }`}
+                              >
                                 {t.assignedTo?.designation || "Associate"}
                               </p>
                             </div>
@@ -287,20 +377,32 @@ export default function AdminTasksPage() {
 
                         {/* Due Date */}
                         <td className="px-6 py-4.5">
-                          <span
-                            className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-xl ${
-                              isOverdue
-                                ? "text-rose-700 bg-rose-50 border border-rose-200"
-                                : "text-slate-600 bg-slate-50 border border-slate-200/80"
-                            }`}
-                          >
-                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                            {new Date(t.dueDate).toLocaleDateString("en-IN", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                          </span>
+                          {isOverdue ? (
+                            <div>
+                              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-rose-100 border border-rose-300 text-rose-800 w-fit">
+                                <Flame className="w-3.5 h-3.5 text-rose-600 animate-pulse" />
+                                <span className="font-mono text-xs font-black text-rose-700">
+                                  {new Date(t.dueDate).toLocaleDateString("en-IN", {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  })}
+                                </span>
+                              </div>
+                              <span className="text-[9px] font-black text-rose-600 block mt-1 uppercase tracking-wider">
+                                Action Overdue
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-xl text-slate-600 bg-slate-50 border border-slate-200/80">
+                              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                              {new Date(t.dueDate).toLocaleDateString("en-IN", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </span>
+                          )}
                         </td>
 
                         {/* Progress Bar */}
@@ -311,7 +413,9 @@ export default function AdminTasksPage() {
                           <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all duration-300 ${
-                                t.status === "completed"
+                                isOverdue
+                                  ? "bg-gradient-to-r from-rose-500 to-red-600"
+                                  : t.status === "completed"
                                   ? "bg-emerald-500"
                                   : t.progressPercentage > 50
                                   ? "bg-gradient-to-r from-indigo-500 to-cyan-500"
@@ -326,7 +430,11 @@ export default function AdminTasksPage() {
                         <td className="px-6 py-4.5 text-right" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => handleOpenDetails(t)}
-                            className="px-4 py-2 text-xs font-extrabold text-indigo-700 bg-indigo-50 hover:bg-indigo-600 hover:text-white rounded-xl border border-indigo-200/80 shadow-2xs transition-all duration-200 inline-flex items-center gap-1.5 btn-action"
+                            className={`px-4 py-2 text-xs font-extrabold rounded-xl transition-all duration-200 inline-flex items-center gap-1.5 btn-action ${
+                              isOverdue
+                                ? "text-white bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 shadow-md shadow-rose-600/20"
+                                : "text-indigo-700 bg-indigo-50 hover:bg-indigo-600 hover:text-white border border-indigo-200/80 shadow-2xs"
+                            }`}
                           >
                             <Eye className="w-3.5 h-3.5" />
                             <span>Details</span>

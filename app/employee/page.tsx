@@ -16,6 +16,7 @@ import {
   UserCheck,
   Send,
   Calendar,
+  Flame,
 } from "lucide-react";
 import { AuthSession, ITask, IUser, IQuery } from "@/lib/types";
 import Link from "next/link";
@@ -82,6 +83,12 @@ export default function EmployeeDashboardPage() {
   const inReviewTasks = tasks.filter((t) => t.status === "in_review");
   const completedTasks = tasks.filter((t) => t.status === "completed");
   const openQueries = queries.filter((q) => q.status !== "resolved");
+  const overdueTasks = tasks.filter(
+    (t) =>
+      t.status !== "completed" &&
+      t.status !== "cancelled" &&
+      new Date(t.dueDate) < new Date()
+  );
 
   return (
     <PortalShell
@@ -124,6 +131,7 @@ export default function EmployeeDashboardPage() {
           subtitle="Awaiting manager verification"
           icon={Clock}
           color="amber"
+          badge={inReviewTasks.length > 0 ? "Under Review" : undefined}
         />
         <StatCard
           title="Completed Deliverables"
@@ -133,11 +141,16 @@ export default function EmployeeDashboardPage() {
           color="emerald"
         />
         <StatCard
-          title="My Open Queries"
-          value={openQueries.length}
-          subtitle="Questions submitted to manager"
-          icon={HelpCircle}
-          color="purple"
+          title={overdueTasks.length > 0 ? "Overdue Tasks" : "My Open Queries"}
+          value={overdueTasks.length > 0 ? overdueTasks.length : openQueries.length}
+          subtitle={
+            overdueTasks.length > 0
+              ? "Requires urgent completion"
+              : "Questions submitted to manager"
+          }
+          icon={overdueTasks.length > 0 ? Flame : HelpCircle}
+          color={overdueTasks.length > 0 ? "rose" : "purple"}
+          badge={overdueTasks.length > 0 ? "Urgent Action" : undefined}
         />
       </div>
 

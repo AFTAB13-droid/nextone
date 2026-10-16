@@ -5,6 +5,7 @@ import PortalShell from "@/components/layout/PortalShell";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import TargetCard from "@/components/targets/TargetCard";
 import SetEmployeeTargetModal from "@/components/targets/SetEmployeeTargetModal";
+import StatCard from "@/components/ui/StatCard";
 import {
   Target as TargetIcon,
   Calendar,
@@ -93,43 +94,27 @@ export default function ManagerTargetsPage() {
     >
       {/* Overview Metric Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-2xl font-black text-slate-900">{targets.length}</div>
-              <div className="text-[11px] font-semibold text-slate-500">
-                Targets Recorded for {selectedDate}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-2xl font-black text-slate-900">{achievedCount}</div>
-              <div className="text-[11px] font-semibold text-slate-500">Marked Achieved</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-              <Clock className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-2xl font-black text-slate-900">{inProgressCount}</div>
-              <div className="text-[11px] font-semibold text-slate-500">Currently In Progress</div>
-            </div>
-          </div>
-        </div>
+        <StatCard
+          title="Daily Targets Recorded"
+          value={targets.length}
+          subtitle={`Commitments for ${selectedDate}`}
+          icon={TargetIcon}
+          color="indigo"
+        />
+        <StatCard
+          title="Marked Achieved"
+          value={achievedCount}
+          subtitle="Verified successful goals"
+          icon={CheckCircle2}
+          color="emerald"
+        />
+        <StatCard
+          title="In Progress"
+          value={inProgressCount}
+          subtitle="Work items underway today"
+          icon={Clock}
+          color="amber"
+        />
       </div>
 
       {/* Filter and Date Bar */}

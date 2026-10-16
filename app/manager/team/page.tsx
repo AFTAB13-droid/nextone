@@ -7,6 +7,7 @@ import CreateTaskModal from "@/components/tasks/CreateTaskModal";
 import { UserProfileDrawer } from "@/components/users/UserProfileDrawer";
 import { getUserAvatar } from "@/lib/avatarHelper";
 import { RoleBadge } from "@/components/ui/Badge";
+import StatCard from "@/components/ui/StatCard";
 import {
   Users,
   Mail,
@@ -147,65 +148,34 @@ export default function ManagerTeamPage() {
       <div className="space-y-6">
         {/* KPI Summary Header Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Reporting Team
-              </p>
-              <h3 className="text-2xl font-black text-slate-900 mt-1">
-                {totalSubordinates}
-              </h3>
-              <p className="text-[10px] text-slate-500 mt-0.5">Active team members</p>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <Users className="w-6 h-6" />
-            </div>
-          </div>
-
-          <div className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Tasks In Progress
-              </p>
-              <h3 className="text-2xl font-black text-amber-600 mt-1">
-                {totalActiveTasks}
-              </h3>
-              <p className="text-[10px] text-slate-500 mt-0.5">Active sprint items</p>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Clock className="w-6 h-6" />
-            </div>
-          </div>
-
-          <div className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Completed Goals
-              </p>
-              <h3 className="text-2xl font-black text-emerald-600 mt-1">
-                {totalCompletedTasks}
-              </h3>
-              <p className="text-[10px] text-slate-500 mt-0.5">Finished deliverables</p>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-          </div>
-
-          <div className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Team Velocity
-              </p>
-              <h3 className="text-2xl font-black text-violet-600 mt-1">
-                {completionRate}%
-              </h3>
-              <p className="text-[10px] text-slate-500 mt-0.5">Overall task throughput</p>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6" />
-            </div>
-          </div>
+          <StatCard
+            title="Reporting Team"
+            value={totalSubordinates}
+            subtitle="Active team members"
+            icon={Users}
+            color="indigo"
+          />
+          <StatCard
+            title="Tasks In Progress"
+            value={totalActiveTasks}
+            subtitle="Active sprint items"
+            icon={Clock}
+            color="amber"
+          />
+          <StatCard
+            title="Completed Goals"
+            value={totalCompletedTasks}
+            subtitle="Finished deliverables"
+            icon={CheckCircle2}
+            color="emerald"
+          />
+          <StatCard
+            title="Team Velocity"
+            value={`${completionRate}%`}
+            subtitle="Overall task throughput"
+            icon={TrendingUp}
+            color="purple"
+          />
         </div>
 
         {/* Action & Filter Toolbar */}

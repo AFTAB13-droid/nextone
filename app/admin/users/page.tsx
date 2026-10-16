@@ -10,6 +10,7 @@ import EditUserModal from "@/components/users/EditUserModal";
 import UserProfileDrawer from "@/components/users/UserProfileDrawer";
 import { AssignEmployeesToManagerModal } from "@/components/users/AssignEmployeesToManagerModal";
 import { getUserAvatar } from "@/lib/avatarHelper";
+import StatCard from "@/components/ui/StatCard";
 import {
   Users,
   UserPlus,
@@ -143,6 +144,38 @@ export default function AdminUsersPage() {
       title="Team & Organizational Governance"
       subtitle="Executive Oversight: Provision accounts, supervise hierarchical lines, and manage team access"
     >
+      {/* Workforce KPI Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <StatCard
+          title="Total Workforce"
+          value={users.length}
+          subtitle="Registered company accounts"
+          icon={Users}
+          color="indigo"
+        />
+        <StatCard
+          title="Supervising Managers"
+          value={managers.length}
+          subtitle="Team leadership heads"
+          icon={Shield}
+          color="purple"
+        />
+        <StatCard
+          title="Associate Employees"
+          value={employees.length}
+          subtitle="Core execution workforce"
+          icon={Briefcase}
+          color="blue"
+        />
+        <StatCard
+          title="Active Accounts"
+          value={users.filter((u) => u.isActive).length}
+          subtitle={`${users.filter((u) => !u.isActive).length} suspended accounts`}
+          icon={CheckCircle2}
+          color="emerald"
+        />
+      </div>
+
       {/* Top Filter and Actions Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div className="flex flex-wrap items-center gap-3">

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import PortalShell from "@/components/layout/PortalShell";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import TargetCard from "@/components/targets/TargetCard";
+import StatCard from "@/components/ui/StatCard";
 import {
   Target as TargetIcon,
   Calendar,
@@ -85,45 +86,34 @@ export default function AdminTargetsPage() {
     >
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-            <Users className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xl font-black text-slate-900">{targets.length}</div>
-            <div className="text-[11px] font-semibold text-slate-500">Targets Logged</div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xl font-black text-slate-900">{achievedCount}</div>
-            <div className="text-[11px] font-semibold text-slate-500">Achieved</div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-            <Clock className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xl font-black text-slate-900">{inProgressCount}</div>
-            <div className="text-[11px] font-semibold text-slate-500">In Progress</div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-xl font-black text-slate-900">{partiallyCount}</div>
-            <div className="text-[11px] font-semibold text-slate-500">Partially Achieved</div>
-          </div>
-        </div>
+        <StatCard
+          title="Targets Logged"
+          value={targets.length}
+          subtitle={`Commitments for ${selectedDate}`}
+          icon={Users}
+          color="indigo"
+        />
+        <StatCard
+          title="Achieved"
+          value={achievedCount}
+          subtitle="Delivered commitments"
+          icon={CheckCircle2}
+          color="emerald"
+        />
+        <StatCard
+          title="In Progress"
+          value={inProgressCount}
+          subtitle="Underway today"
+          icon={Clock}
+          color="blue"
+        />
+        <StatCard
+          title="Partially Achieved"
+          value={partiallyCount}
+          subtitle="Partial progress"
+          icon={ShieldCheck}
+          color="amber"
+        />
       </div>
 
       {/* Filter and Date Bar */}

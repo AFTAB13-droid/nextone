@@ -38,7 +38,8 @@ export function AmbientTracker({ user }: AmbientTrackerProps) {
   };
 
   const sendHeartbeat = async (forcedState?: "active" | "idle" | "background") => {
-    if (!user || !user.userId || typeof window === "undefined") return;
+    const uid = user?.userId || (user as any)?._id?.toString() || (user as any)?._id;
+    if (!user || !uid || typeof window === "undefined") return;
 
     const currentState = forcedState || stateRef.current;
     const currentPath = pathname || window.location.pathname;
@@ -48,13 +49,16 @@ export function AmbientTracker({ user }: AmbientTrackerProps) {
       await fetch("/api/telemetry/heartbeat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
+          userId: uid,
           state: currentState,
           durationSeconds: 60,
           currentPath,
           deviceInfo,
         }),
       });
+      // console.log("[AmbientTracker] Heartbeat pulse:", { uid, state: currentState, path: currentPath });
     } catch {
       // Silent failure for telemetry
     }
@@ -118,10 +122,17 @@ export function AmbientTracker({ user }: AmbientTrackerProps) {
       }
     };
 
+    const handleWindowFocus = () => {
+      stateRef.current = "active";
+      resetIdleTimer();
+      sendHeartbeat("active");
+    };
+
     // Attach passive activity listeners
     const events = ["mousemove", "keydown", "click", "scroll", "touchstart"];
     events.forEach((evt) => window.addEventListener(evt, resetIdleTimer, { passive: true }));
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleWindowFocus);
     window.addEventListener("beforeunload", handleBeforeUnload);
 
     // Initial heartbeat on mount
@@ -136,6 +147,7 @@ export function AmbientTracker({ user }: AmbientTrackerProps) {
     return () => {
       events.forEach((evt) => window.removeEventListener(evt, resetIdleTimer));
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleWindowFocus);
       window.removeEventListener("beforeunload", handleBeforeUnload);
       if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
       if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);

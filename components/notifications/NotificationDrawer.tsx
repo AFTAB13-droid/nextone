@@ -22,6 +22,7 @@ import {
   ShieldAlert,
   ArrowRight,
   Flame,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { INotification } from "@/lib/types";
@@ -198,6 +199,31 @@ export function NotificationDrawer({
     }
   };
 
+  const [testingSelfPush, setTestingSelfPush] = useState(false);
+  const [selfPushFeedback, setSelfPushFeedback] = useState<string>("");
+
+  const handleTestSelfPush = async () => {
+    setTestingSelfPush(true);
+    setSelfPushFeedback("");
+    try {
+      const res = await fetch("/api/notifications/test-push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSelfPushFeedback("✓ Desktop push dispatched! Check your Windows/Mac system tray.");
+      } else {
+        setSelfPushFeedback(data.error || "Failed to dispatch test push.");
+      }
+    } catch {
+      setSelfPushFeedback("Network error testing push.");
+    } finally {
+      setTestingSelfPush(false);
+    }
+  };
+
   const markAllRead = async () => {
     setLoading(true);
     try {
@@ -351,7 +377,7 @@ export function NotificationDrawer({
           </div>
 
           {/* Desktop Push Prompt Banner (if not already granted) */}
-          {pushStatus !== "granted" && (
+          {pushStatus !== "granted" ? (
             <div className="p-4 mx-4 mt-4 rounded-2xl bg-gradient-to-br from-indigo-950/60 via-purple-950/40 to-slate-900 border border-indigo-500/30 shadow-lg relative overflow-hidden">
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 shrink-0 mt-0.5">
@@ -379,6 +405,29 @@ export function NotificationDrawer({
                   )}
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className="mx-4 mt-4 p-3 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-between gap-3 shadow-md">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="text-xs font-bold text-slate-200">Desktop Web Push Active</span>
+              </div>
+              <button
+                onClick={handleTestSelfPush}
+                disabled={testingSelfPush}
+                className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-extrabold flex items-center gap-1.5 shadow-md shadow-indigo-600/30 transition-all disabled:opacity-50"
+                title="Send an instant test push to your desktop"
+              >
+                <Zap className={`w-3.5 h-3.5 text-cyan-300 ${testingSelfPush ? "animate-spin" : ""}`} />
+                <span>{testingSelfPush ? "Dispatching..." : "Test Push"}</span>
+              </button>
+            </div>
+          )}
+
+          {selfPushFeedback && (
+            <div className="mx-4 mt-2 p-2.5 rounded-xl bg-indigo-900/60 border border-indigo-500/40 text-[11px] font-semibold text-indigo-200 flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span>{selfPushFeedback}</span>
             </div>
           )}
 

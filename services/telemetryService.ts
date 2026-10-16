@@ -127,7 +127,7 @@ export class TelemetryService {
   ) {
     await connectToDatabase();
 
-    const user = await User.findById(userId).select("name email role department designation currentStatus lastActiveAt currentPath currentDevice");
+    const user = await User.findById(userId).select("name email role department designation currentStatus lastActiveAt currentPath currentDevice fcmTokens");
     if (!user) {
       throw new Error("User not found");
     }
@@ -190,17 +190,17 @@ export class TelemetryService {
     const productivityScore =
       totalScreenSec > 0 ? Math.min(Math.round((totalActiveSec / totalScreenSec) * 100), 100) : 0;
 
-    // Check if user is currently active (lastActiveAt within last 3 minutes)
-    let liveStatus: "active" | "idle" | "offline" = user.currentStatus || "offline";
+    // Check if user is currently active (lastActiveAt within last 4 minutes)
+    let liveStatus: "active" | "idle" | "offline" = "offline";
     if (user.lastActiveAt) {
       const diffMinutes = (Date.now() - new Date(user.lastActiveAt).getTime()) / (1000 * 60);
-      if (diffMinutes > 15) {
-        liveStatus = "offline";
-      } else if (diffMinutes > 4 && liveStatus === "active") {
+      if (diffMinutes <= 4) {
+        liveStatus = user.currentStatus === "idle" ? "idle" : "active";
+      } else if (diffMinutes <= 15) {
         liveStatus = "idle";
+      } else {
+        liveStatus = "offline";
       }
-    } else {
-      liveStatus = "offline";
     }
 
     const summary: ITelemetrySummary = {
@@ -225,6 +225,7 @@ export class TelemetryService {
         role: user.role,
         department: user.department,
         designation: user.designation,
+        fcmTokensCount: user.fcmTokens?.length || 0,
       },
       range: {
         type: range,

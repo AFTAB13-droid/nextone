@@ -47,6 +47,11 @@ export function UserTelemetryTab({ user }: UserTelemetryTabProps) {
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailStatusMessage, setEmailStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  // FCM Push Testing State
+  const [userData, setUserData] = useState<any>(user);
+  const [testingPush, setTestingPush] = useState(false);
+  const [pushResult, setPushResult] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
   const fetchTelemetry = useCallback(async () => {
     setLoading(true);
     try {
@@ -59,6 +64,7 @@ export function UserTelemetryTab({ user }: UserTelemetryTabProps) {
         const data = await res.json();
         setSummary(data.summary);
         setLogs(data.logs || []);
+        if (data.user) setUserData(data.user);
         if (data.logs && data.logs.length > 0) {
           setSelectedDayForTimeline(data.logs[0]);
         } else {
@@ -72,9 +78,50 @@ export function UserTelemetryTab({ user }: UserTelemetryTabProps) {
     }
   }, [user._id, range, customStart, customEnd]);
 
+  const handleTestPush = async () => {
+    setTestingPush(true);
+    setPushResult(null);
+    try {
+      const res = await fetch("/api/notifications/test-push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetUserId: user._id }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setPushResult({ type: "success", text: data.message });
+      } else {
+        setPushResult({ type: "error", text: data.error || "Failed to dispatch test push" });
+      }
+    } catch {
+      setPushResult({ type: "error", text: "Network error sending test push" });
+    } finally {
+      setTestingPush(false);
+    }
+  };
+
   useEffect(() => {
     fetchTelemetry();
-  }, [fetchTelemetry]);
+
+    // Auto-sync live presence and telemetry every 8 seconds
+    const interval = setInterval(() => {
+      let url = `/api/telemetry/user/${user._id}?range=${range}`;
+      if (range === "custom" && customStart && customEnd) {
+        url += `&startDate=${customStart}&endDate=${customEnd}`;
+      }
+      fetch(url)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data) {
+            setSummary(data.summary);
+            setLogs(data.logs || []);
+          }
+        })
+        .catch(() => {});
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [fetchTelemetry, user._id, range, customStart, customEnd]);
 
   // Helpers
   const formatSeconds = (sec: number = 0): string => {
@@ -258,6 +305,56 @@ export function UserTelemetryTab({ user }: UserTelemetryTabProps) {
           </div>
         </div>
       </div>
+
+      {/* FCM Desktop Push Diagnostics & Live Test Console */}
+      <div className="p-4 sm:p-5 rounded-3xl bg-slate-900 border border-slate-800 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+        <div className="flex items-center gap-3.5">
+          <div className="p-2.5 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shrink-0">
+            <Zap className="w-5 h-5 text-cyan-400" />
+          </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-black tracking-tight text-white">Firebase Cloud Messaging (FCM) Desktop Status</span>
+              <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ring-1 ${
+                (userData?.fcmTokensCount || 0) > 0
+                  ? "bg-emerald-500/20 text-emerald-300 ring-emerald-500/40"
+                  : "bg-amber-500/20 text-amber-300 ring-amber-500/40"
+              }`}>
+                {(userData?.fcmTokensCount || 0) > 0 ? `${userData.fcmTokensCount} Registered Device` : "No Device Token Yet"}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {(userData?.fcmTokensCount || 0) > 0
+                ? "Compulsory desktop web push is enabled on this user's machine. Ready to receive persistent alerts."
+                : "This user has not allowed desktop notifications yet. They must click 'Allow' on the Bell icon prompt."}
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={handleTestPush}
+          disabled={testingPush}
+          className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-indigo-600/30 transition-all shrink-0 disabled:opacity-50 active:scale-95"
+        >
+          <Zap className={`w-3.5 h-3.5 ${testingPush ? "animate-spin" : ""}`} />
+          <span>{testingPush ? "Dispatching..." : "Send Test Push to Device"}</span>
+        </button>
+      </div>
+
+      {pushResult && (
+        <div className={`p-4 rounded-2xl text-xs font-bold flex items-start gap-2.5 shadow-sm ${
+          pushResult.type === "success"
+            ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30"
+            : "bg-rose-500/10 text-rose-300 border border-rose-500/30"
+        }`}>
+          {pushResult.type === "success" ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+          )}
+          <span>{pushResult.text}</span>
+        </div>
+      )}
 
       {/* 2. Controls & Date Range Filter Bar */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 rounded-3xl bg-white border border-slate-200/80 shadow-xs">

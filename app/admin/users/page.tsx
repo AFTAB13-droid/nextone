@@ -519,15 +519,37 @@ export default function AdminUsersPage() {
                         {/* 1. User Identity Column */}
                         <td className="px-6 sm:px-8 py-5">
                           <div className="flex items-center gap-4">
-                            <div className="relative w-12 h-12 rounded-2xl overflow-hidden bg-slate-100 ring-2 ring-indigo-500/20 shadow-sm shrink-0 group-hover:scale-105 transition-transform">
-                              <Image
-                                src={getUserAvatar(u)}
-                                alt={u.name}
-                                width={48}
-                                height={48}
-                                className="w-full h-full object-cover"
-                                unoptimized
-                              />
+                            <div className="relative shrink-0">
+                              <div className="relative w-12 h-12 rounded-2xl overflow-hidden bg-slate-100 ring-2 ring-indigo-500/20 shadow-sm group-hover:scale-105 transition-transform">
+                                <Image
+                                  src={getUserAvatar(u)}
+                                  alt={u.name}
+                                  width={48}
+                                  height={48}
+                                  className="w-full h-full object-cover"
+                                  unoptimized
+                                />
+                              </div>
+                              {/* Real-time Presence Beacon */}
+                              {(() => {
+                                const diffMin = u.lastActiveAt
+                                  ? (Date.now() - new Date(u.lastActiveAt).getTime()) / (1000 * 60)
+                                  : 999;
+                                const isOnline = diffMin <= 4;
+                                const isIdle = diffMin > 4 && diffMin <= 15;
+                                return (
+                                  <span
+                                    className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full ring-2 ring-white shadow-xs ${
+                                      isOnline
+                                        ? "bg-emerald-500 animate-pulse"
+                                        : isIdle
+                                        ? "bg-amber-400"
+                                        : "bg-slate-300"
+                                    }`}
+                                    title={isOnline ? "Active Now" : isIdle ? "Idle / Screen On" : "Offline"}
+                                  />
+                                );
+                              })()}
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
@@ -781,15 +803,37 @@ export default function AdminUsersPage() {
                   <div>
                     {/* Header info */}
                     <div className="flex items-start justify-between gap-3 mb-4">
-                      <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 ring-2 ring-indigo-500/20 shadow-md shrink-0 group-hover:scale-105 transition-transform">
-                        <Image
-                          src={getUserAvatar(u)}
-                          alt={u.name}
-                          width={56}
-                          height={56}
-                          className="w-full h-full object-cover"
-                          unoptimized
-                        />
+                      <div className="relative shrink-0">
+                        <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 ring-2 ring-indigo-500/20 shadow-md group-hover:scale-105 transition-transform">
+                          <Image
+                            src={getUserAvatar(u)}
+                            alt={u.name}
+                            width={56}
+                            height={56}
+                            className="w-full h-full object-cover"
+                            unoptimized
+                          />
+                        </div>
+                        {/* Real-time Presence Beacon */}
+                        {(() => {
+                          const diffMin = u.lastActiveAt
+                            ? (Date.now() - new Date(u.lastActiveAt).getTime()) / (1000 * 60)
+                            : 999;
+                          const isOnline = diffMin <= 4;
+                          const isIdle = diffMin > 4 && diffMin <= 15;
+                          return (
+                            <span
+                              className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full ring-2 ring-white shadow-xs ${
+                                isOnline
+                                  ? "bg-emerald-500 animate-pulse"
+                                  : isIdle
+                                  ? "bg-amber-400"
+                                  : "bg-slate-300"
+                              }`}
+                              title={isOnline ? "Active Now" : isIdle ? "Idle / Screen On" : "Offline"}
+                            />
+                          );
+                        })()}
                       </div>
 
                       <div className="flex flex-col items-end gap-1.5">

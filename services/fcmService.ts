@@ -9,6 +9,7 @@ export interface FcmPayload {
   data?: Record<string, string>;
   icon?: string;
   click_action?: string;
+  link?: string;
   tag?: string;
 }
 
@@ -55,7 +56,7 @@ export class FcmService {
         },
         webpush: {
           fcmOptions: {
-            link: payload.click_action || "/",
+            link: payload.link || payload.click_action || "/",
           },
           notification: {
             title: payload.title,
@@ -69,7 +70,7 @@ export class FcmService {
         data: {
           title: payload.title,
           body: payload.body,
-          link: payload.click_action || "/",
+          link: payload.link || payload.click_action || "/",
           ...payload.data,
         },
       });

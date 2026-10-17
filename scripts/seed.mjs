@@ -59,6 +59,7 @@ async function runSeed() {
           phone: "+1 800-555-0199",
           avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
           isActive: true,
+          firstLoginCompleted: true,
           updatedAt: new Date(),
         },
         $setOnInsert: { createdAt: new Date() },

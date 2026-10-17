@@ -8,6 +8,7 @@ import OfflineScreen from "@/components/ui/OfflineScreen";
 import AmbientTracker from "@/components/telemetry/AmbientTracker";
 import PushNotificationBanner from "@/components/notifications/PushNotificationBanner";
 import InAppToastContainer from "@/components/notifications/InAppToastContainer";
+import FirstLoginWelcomeModal from "@/components/onboarding/FirstLoginWelcomeModal";
 
 interface PortalShellProps {
   user: AuthSession;
@@ -19,6 +20,9 @@ interface PortalShellProps {
 export function PortalShell({ user, title, subtitle, children }: PortalShellProps) {
   return (
     <div className="flex h-screen overflow-hidden bg-portal-pattern font-sans text-slate-800 antialiased selection:bg-indigo-500 selection:text-white">
+      {/* First-Time Login Celebration & Induction Modal */}
+      <FirstLoginWelcomeModal user={user} />
+
       {/* Real-time In-App Floating Toast Radar */}
       <InAppToastContainer />
 

@@ -13,6 +13,9 @@ export interface IUser {
   phone?: string;
   avatar?: string;
   isActive: boolean;
+  firstLoginCompleted?: boolean;
+  privacyPolicyAcceptedAt?: string | Date;
+  firstLoginAt?: string | Date;
   fcmTokens?: string[];
   lastActiveAt?: string | Date;
   currentStatus?: "active" | "idle" | "offline";
@@ -228,6 +231,9 @@ export interface AuthSession {
   managerId?: string;
   avatar?: string;
   gender?: string;
+  department?: string;
+  designation?: string;
+  firstLoginCompleted?: boolean;
 }
 
 export interface IInteraction {

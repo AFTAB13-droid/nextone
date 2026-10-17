@@ -51,6 +51,7 @@ export class UserService {
       phone: input.phone || "",
       avatar: input.avatar || defaultAvatar,
       isActive: true,
+      firstLoginCompleted: false,
     });
 
     // If an employee was assigned to a manager right away, notify the manager
@@ -218,6 +219,27 @@ export class UserService {
       $addToSet: { fcmTokens: token },
     });
     return true;
+  }
+
+  static async completeFirstLogin(userId: string): Promise<IUser | null> {
+    await connectDB();
+    const now = new Date();
+    const updated = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          firstLoginCompleted: true,
+          firstLoginAt: now,
+          privacyPolicyAcceptedAt: now,
+        },
+      },
+      { new: true }
+    )
+      .populate("managerId", MANAGER_POPULATE_FIELDS)
+      .select("-password")
+      .lean();
+
+    return updated as unknown as IUser;
   }
 }
 

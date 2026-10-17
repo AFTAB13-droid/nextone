@@ -35,6 +35,9 @@ export class AuthService {
       name: userDoc.name,
       role: userDoc.role,
       managerId: userDoc.managerId ? userDoc.managerId.toString() : undefined,
+      department: userDoc.department,
+      designation: userDoc.designation,
+      firstLoginCompleted: userDoc.firstLoginCompleted ?? false,
     };
 
     const token = await signToken(sessionPayload);

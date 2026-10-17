@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { AuthSession, IUser } from "@/lib/types";
 import Image from "next/image";
+import FirstLoginWelcomeModal from "@/components/onboarding/FirstLoginWelcomeModal";
 
 interface ProfileStats {
   totalTasks: number;
@@ -80,6 +81,7 @@ export function ProfileView() {
     null
   );
   const [changingPass, setChangingPass] = useState(false);
+  const [showWelcomePreview, setShowWelcomePreview] = useState(false);
 
   const [loading, setLoading] = useState(true);
 
@@ -682,6 +684,44 @@ export function ProfileView() {
               {changingPass ? "Updating Password..." : "Update Password"}
             </button>
           </form>
+
+          {/* Onboarding & Workplace Induction Protocol */}
+          <div className="pt-6 border-t border-slate-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  Workplace Induction & Policy Consent
+                </h4>
+                <p className="text-xs text-slate-500 mt-1">
+                  Status:{" "}
+                  {profileData.firstLoginCompleted ? (
+                    <span className="text-emerald-700 font-semibold inline-flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                      Completed & Policies Accepted
+                    </span>
+                  ) : (
+                    <span className="text-amber-700 font-semibold">
+                      Pending First Login Induction
+                    </span>
+                  )}
+                </p>
+                {profileData.privacyPolicyAcceptedAt && (
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Consent Logged: {new Date(profileData.privacyPolicyAcceptedAt).toLocaleString()}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowWelcomePreview(true)}
+                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 transition-all flex items-center justify-center gap-1.5 shrink-0"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>Preview Induction Pop-up</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -743,6 +783,15 @@ export function ProfileView() {
         onCropComplete={handleCroppedAvatarComplete}
         isSaving={isSavingCroppedAvatar}
       />
+
+      {/* Induction & Celebration Modal Preview */}
+      {showWelcomePreview && currentUser && (
+        <FirstLoginWelcomeModal
+          user={currentUser}
+          forceOpen={true}
+          onClose={() => setShowWelcomePreview(false)}
+        />
+      )}
     </PortalShell>
   );
 }

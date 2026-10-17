@@ -61,6 +61,18 @@ const UserSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    firstLoginCompleted: {
+      type: Boolean,
+      default: false,
+    },
+    firstLoginAt: {
+      type: Date,
+      default: null,
+    },
+    privacyPolicyAcceptedAt: {
+      type: Date,
+      default: null,
+    },
     fcmTokens: {
       type: [String],
       default: [],

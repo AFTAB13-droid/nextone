@@ -48,38 +48,37 @@ export class FcmService {
     try {
       const messaging = admin.messaging(app);
 
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-      const iconUrl = payload.icon?.startsWith("http")
-        ? payload.icon
-        : `${baseUrl}/icon-192.png`;
+      const clickAction = payload.link || payload.click_action || "/";
 
-      const response = await messaging.sendEachForMulticast({
+      const message = {
         tokens: uniqueTokens,
         notification: {
           title: payload.title,
           body: payload.body,
         },
-        webpush: {
-          fcmOptions: {
-            link: payload.link || payload.click_action || "/",
-          },
-          notification: {
-            title: payload.title,
-            body: payload.body,
-            icon: iconUrl,
-            badge: iconUrl,
-            requireInteraction: true,
-            tag: payload.tag || `nextone-alert-${Date.now()}`,
-          },
-        },
         data: {
           title: payload.title,
           body: payload.body,
-          link: payload.link || payload.click_action || "/",
-          icon: iconUrl,
+          click_action: clickAction,
+          icon: "/icon-192.png",
           ...payload.data,
         },
-      });
+        android: {
+          priority: "high" as const,
+        },
+        webpush: {
+          headers: {
+            Urgency: "high",
+          },
+          notification: {
+            icon: "/icon-192.png",
+            badge: "/icon-192.png",
+            click_action: clickAction,
+          },
+        },
+      };
+
+      const response = await messaging.sendEachForMulticast(message);
 
       console.log(
         `[FCM Service] Sent push "${payload.title}": ${response.successCount} succeeded, ${response.failureCount} failed.`

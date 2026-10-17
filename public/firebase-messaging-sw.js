@@ -1,80 +1,105 @@
-/**
- * NextOne Firebase Cloud Messaging (FCM) Service Worker
- * Handles desktop background Web Push Notifications for Employees, Managers, and Admins.
- */
+// Import Firebase Compat scripts for Service Workers (Matches AspireMint Architecture)
+importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
 
-// 1. Service Worker Lifecycle: Activate immediately on update
-self.addEventListener("install", (event) => {
-  self.skipWaiting();
-});
+// Parse Firebase credentials dynamically from register parameters (Vercel & localhost compatible)
+const params = new URLSearchParams(self.location.search);
+const apiKey = params.get('apiKey');
+const authDomain = params.get('authDomain');
+const projectId = params.get('projectId');
+const storageBucket = params.get('storageBucket');
+const messagingSenderId = params.get('messagingSenderId');
+const appId = params.get('appId');
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil(clients.claim());
-});
+if (apiKey && projectId && messagingSenderId) {
+  const firebaseConfig = {
+    apiKey,
+    authDomain,
+    projectId,
+    storageBucket,
+    messagingSenderId,
+    appId,
+  };
 
-// 2. Import Firebase scripts inside service worker
-importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js");
-
-// 3. Initialize Firebase in service worker with valid NextOne credentials
-const firebaseConfig = {
-  apiKey: "AIzaSyDfSGtaEKv2vOhkzbQuxxyV7I09IaPveQM",
-  authDomain: "nextone-bbec6.firebaseapp.com",
-  projectId: "nextone-bbec6",
-  storageBucket: "nextone-bbec6.firebasestorage.app",
-  messagingSenderId: "402039742541",
-  appId: "1:402039742541:web:8443fb8a46ac4bc9a77c04",
-};
-
-try {
   firebase.initializeApp(firebaseConfig);
   const messaging = firebase.messaging();
 
+  // Background notifications handler
   messaging.onBackgroundMessage((payload) => {
-    console.log("[firebase-messaging-sw.js] Background push received:", payload);
+    console.log('[firebase-messaging-sw.js] Background push notification received:', payload);
+    
+    // Firebase automatically displays notifications if the payload contains a 'notification' object.
+    // If we call showNotification manually here, we will get duplicates.
+    if (payload.notification) {
+      return;
+    }
 
-    const title = payload.notification?.title || payload.data?.title || "NextOne Alert";
-    const body = payload.notification?.body || payload.data?.body || "You have a new update in NextOne.";
-    const link = payload.data?.link || payload.notification?.click_action || "/";
-    const icon = payload.notification?.icon || payload.data?.icon || "/icon-192.png";
-
-    const iconUrl = self.location.origin + "/icon-192.png";
-
+    const notificationTitle = payload.data?.title || "NextOne Update";
     const notificationOptions = {
-      body,
-      icon: iconUrl, // Must be raster PNG with full absolute URL for Windows Action Center
-      badge: iconUrl,
-      data: { link, ...payload.data },
-      tag: payload.data?.tag || `nextone-alert-${Date.now()}`,
-      requireInteraction: true, // Keep notification visible on desktop until dismissed or clicked
-      vibrate: [200, 100, 200],
+      body: payload.data?.body || "",
+      icon: payload.data?.icon || '/icon-192.png',
+      badge: payload.data?.badge || '/icon-192.png',
+      data: {
+        click_action: payload.data?.click_action || '/'
+      }
     };
 
-    return self.registration.showNotification(title, notificationOptions);
+    self.registration.showNotification(notificationTitle, notificationOptions);
   });
-} catch (e) {
-  console.warn("[firebase-messaging-sw.js] Firebase background initialization:", e);
+} else {
+  // Fallback default config if query params omitted
+  const defaultFallback = {
+    apiKey: "AIzaSyDfSGtaEKv2vOhkzbQuxxyV7I09IaPveQM",
+    authDomain: "nextone-bbec6.firebaseapp.com",
+    projectId: "nextone-bbec6",
+    storageBucket: "nextone-bbec6.firebasestorage.app",
+    messagingSenderId: "402039742541",
+    appId: "1:402039742541:web:8443fb8a46ac4bc9a77c04",
+  };
+  try {
+    firebase.initializeApp(defaultFallback);
+    const messaging = firebase.messaging();
+    messaging.onBackgroundMessage((payload) => {
+      console.log('[firebase-messaging-sw.js] Background push notification received:', payload);
+      if (payload.notification) return;
+      const notificationTitle = payload.data?.title || "NextOne Update";
+      self.registration.showNotification(notificationTitle, {
+        body: payload.data?.body || "",
+        icon: payload.data?.icon || '/icon-192.png',
+        badge: payload.data?.badge || '/icon-192.png',
+        data: { click_action: payload.data?.click_action || '/' }
+      });
+    });
+  } catch (e) {
+    console.warn("[firebase-messaging-sw.js] Fallback initialization notice:", e);
+  }
 }
 
-// 4. Click listener: focus existing window or open new tab to the target link
-self.addEventListener("notificationclick", (event) => {
+// Background click handler to focus tab or navigate
+self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-
-  const targetUrl = event.notification.data?.link || "/";
-
+  const urlToOpen = event.notification.data?.click_action || '/';
+  
   event.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
-      // If a window is already open, focus it and navigate
-      for (let client of windowClients) {
-        if ("focus" in client) {
-          client.navigate(targetUrl);
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        if ('focus' in client) {
           return client.focus();
         }
       }
-      // If no window is open, open a new window
       if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
+        return clients.openWindow(urlToOpen);
       }
     })
   );
+});
+
+// PWA & Service Worker Lifecycle
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
 });

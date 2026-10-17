@@ -74,8 +74,16 @@ export const requestDesktopPushPermission = async (): Promise<{
 
     const messaging = getMessaging(app);
 
-    // Register service worker explicitly for desktop scope
-    const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js", {
+    // Register service worker with dynamic config query parameters (AspireMint Architecture)
+    const swUrl = `/firebase-messaging-sw.js` +
+      `?apiKey=${encodeURIComponent(firebaseConfig.apiKey || "")}` +
+      `&authDomain=${encodeURIComponent(firebaseConfig.authDomain || "")}` +
+      `&projectId=${encodeURIComponent(firebaseConfig.projectId || "")}` +
+      `&storageBucket=${encodeURIComponent(firebaseConfig.storageBucket || "")}` +
+      `&messagingSenderId=${encodeURIComponent(firebaseConfig.messagingSenderId || "")}` +
+      `&appId=${encodeURIComponent(firebaseConfig.appId || "")}`;
+
+    const registration = await navigator.serviceWorker.register(swUrl, {
       scope: "/",
     });
     await navigator.serviceWorker.ready;
@@ -124,57 +132,31 @@ export const attachForegroundMessageListener = (
       console.log("[FCM Client] Foreground push message received:", payload);
       const title = payload.notification?.title || payload.data?.title || "NextOne Alert";
       const body = payload.notification?.body || payload.data?.body || "";
-      const link = payload.data?.link || (payload.notification as any)?.click_action || "";
+      const link = payload.data?.click_action || payload.data?.link || "/";
+      const icon = payload.data?.icon || "/icon-192.png";
 
-      const fullIconUrl = typeof window !== "undefined" ? `${window.location.origin}/icon-192.png` : "/icon-192.png";
+      // Trigger standard browser native notification banner in foreground (matching AspireMint)
+      try {
+        const notif = new Notification(title, {
+          body,
+          icon,
+        });
+        notif.onclick = () => {
+          window.focus();
+          if (link && link !== "/") window.location.href = link;
+        };
+      } catch (e) {
+        console.warn("[FCM Client] Native notification error:", e);
+      }
 
-      // 1. Trigger Out-Of-The-Box In-App Animated Radar Toast
+      // Trigger in-app live floating radar toast & update badge
       if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("notifications-updated"));
         window.dispatchEvent(
           new CustomEvent("nextone-inapp-alert", {
             detail: { title, body, link, type: payload.data?.type || "general" },
           })
         );
-      }
-
-      // 2. Compulsory OS Desktop Toast
-      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-        const notifTag = `nextone-alert-${Date.now()}`;
-        const notifOptions: NotificationOptions = {
-          body,
-          icon: fullIconUrl,
-          badge: fullIconUrl,
-          requireInteraction: true,
-          tag: notifTag,
-          data: { link },
-        };
-
-        // Attempt direct native browser notification first (instant display)
-        try {
-          const directNotif = new Notification(title, notifOptions);
-          directNotif.onclick = () => {
-            window.focus();
-            if (link) window.location.href = link;
-          };
-          console.log("[FCM Client] Direct OS Notification created successfully");
-        } catch (directErr) {
-          console.warn("[FCM Client] Direct Notification constructor notice:", directErr);
-        }
-
-        // Also trigger via Service Worker registration for persistent Action Center placement
-        if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.getRegistration().then((reg) => {
-            if (reg) {
-              reg.showNotification(title, notifOptions)
-                .then(() => console.log("[FCM Client] ServiceWorker showNotification delivered"))
-                .catch((e) => console.warn("[FCM Client] ServiceWorker showNotification notice:", e));
-            } else {
-              navigator.serviceWorker.ready.then((readyReg) => {
-                readyReg.showNotification(title, notifOptions).catch(() => {});
-              });
-            }
-          }).catch(() => {});
-        }
       }
 
       if (callback) callback({ title, body, link });

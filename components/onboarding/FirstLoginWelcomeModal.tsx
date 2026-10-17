@@ -19,7 +19,9 @@ import {
   FileText,
   X,
 } from "lucide-react";
+import Image from "next/image";
 import { AuthSession, IUser } from "@/lib/types";
+import { getUserAvatar } from "@/lib/avatarHelper";
 
 interface FirstLoginWelcomeModalProps {
   user: AuthSession;
@@ -28,13 +30,23 @@ interface FirstLoginWelcomeModalProps {
   onClose?: () => void;
 }
 
+const shouldShowOnboarding = (u: any): boolean => {
+  if (!u) return false;
+  // If user has explicitly completed onboarding, never show
+  if (u.firstLoginCompleted === true) return false;
+  // If user is admin and not explicitly set to false, do not show
+  if (u.role === "admin" && u.firstLoginCompleted !== false) return false;
+  // For both employees and managers who have not completed onboarding, show!
+  return true;
+};
+
 export default function FirstLoginWelcomeModal({
   user,
   onCompleted,
   forceOpen = false,
   onClose,
 }: FirstLoginWelcomeModalProps) {
-  const [isOpen, setIsOpen] = useState(forceOpen);
+  const [isOpen, setIsOpen] = useState(forceOpen || shouldShowOnboarding(user));
   const [fullUserDetails, setFullUserDetails] = useState<IUser | null>(null);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [agreeTelemetry, setAgreeTelemetry] = useState(false);
@@ -127,22 +139,22 @@ export default function FirstLoginWelcomeModal({
           const data = await res.json();
           if (data?.user) {
             setFullUserDetails(data.user);
-            // If user has not completed first login, open the modal
-            if (data.user.firstLoginCompleted === false) {
+            if (shouldShowOnboarding(data.user)) {
               setIsOpen(true);
+            } else if (!forceOpen) {
+              setIsOpen(false);
             }
           }
         }
       } catch {
-        // Fallback to prop
-        if (user.firstLoginCompleted === false) {
+        if (shouldShowOnboarding(user)) {
           setIsOpen(true);
         }
       }
     };
 
     checkFirstLoginStatus();
-  }, [user]);
+  }, [user, forceOpen]);
 
   // When modal opens, blast celebratory confetti and chime
   useEffect(() => {
@@ -253,8 +265,15 @@ export default function FirstLoginWelcomeModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Identity Card */}
             <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100/80 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-lg flex items-center justify-center shadow-md shadow-indigo-200 flex-shrink-0">
-                {displayUser.name.charAt(0).toUpperCase()}
+              <div className="w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 shadow-md shadow-indigo-200 border-2 border-indigo-200 flex-shrink-0 relative">
+                <Image
+                  src={getUserAvatar(displayUser)}
+                  alt={displayUser.name}
+                  width={56}
+                  height={56}
+                  className="w-full h-full object-cover"
+                  unoptimized
+                />
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="font-bold text-slate-900 truncate">{displayUser.name}</h4>

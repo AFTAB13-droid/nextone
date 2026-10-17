@@ -47,6 +47,7 @@ export function CreateUserModal({
 
   useEffect(() => {
     if (!isOpen) return;
+    setManagerId(""); // Always default to Unassigned
     const fetchManagers = async () => {
       try {
         const res = await fetch("/api/users?role=manager");
@@ -54,16 +55,13 @@ export function CreateUserModal({
           const data = await res.json();
           const mgrList: IUser[] = data.users || [];
           setManagers(mgrList);
-          if (mgrList.length > 0 && !managerId) {
-            setManagerId(mgrList[0]._id);
-          }
         }
       } catch (e) {
         console.error(e);
       }
     };
     fetchManagers();
-  }, [isOpen, managerId]);
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,14 +128,14 @@ export function CreateUserModal({
   const genderOptions: CustomSelectOption[] = [
     {
       value: "male",
-      label: "Male (Assigns Executive Male Avatar)",
-      badge: "Male",
+      label: "Male (Assigns 3D Executive Male Avatar)",
+      badge: "3D Male",
       icon: <User className="w-4 h-4 text-indigo-600" />,
     },
     {
       value: "female",
-      label: "Female (Assigns Executive Female Avatar)",
-      badge: "Female",
+      label: "Female (Assigns 3D Executive Female Avatar)",
+      badge: "3D Female",
       icon: <User className="w-4 h-4 text-purple-600" />,
     },
     {
@@ -151,8 +149,10 @@ export function CreateUserModal({
   const managerOptions: CustomSelectOption[] = [
     {
       value: "",
-      label: "-- Unassigned (No Manager Yet) --",
-      description: "Can be assigned later from the team governance board",
+      label: "None (Create as Unassigned)",
+      badge: "Optional",
+      description: "Employee will be unassigned. Admin can assign to any manager later.",
+      icon: <Users className="w-4 h-4 text-slate-400" />,
     },
     ...managers.map((m) => ({
       value: m._id,
@@ -289,7 +289,13 @@ export function CreateUserModal({
               label="Organizational Role"
               required
               value={role}
-              onChange={(val) => setRole(val as UserRole)}
+              onChange={(val) => {
+                const newRole = val as UserRole;
+                setRole(newRole);
+                if (newRole !== "employee") {
+                  setManagerId("");
+                }
+              }}
               options={roleOptions}
             />
           </div>
@@ -306,20 +312,33 @@ export function CreateUserModal({
         </div>
 
         {/* Manager selector if role is Employee */}
-        {role === "employee" && (
+        {role === "employee" ? (
           <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100/90 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Assign Direct Reporting Manager (Optional)
+              </label>
+              <span className="text-[11px] font-semibold text-indigo-600 bg-indigo-100/70 px-2 py-0.5 rounded-full">
+                Optional
+              </span>
+            </div>
             <CustomSelect
-              label="Assign Direct Reporting Manager"
+              label=""
               value={managerId}
               onChange={(val) => setManagerId(val)}
               options={managerOptions}
               searchable
             />
-            {managers.length === 0 && (
-              <p className="text-[11px] text-amber-600 font-medium">
-                Note: No managers are registered currently. Create a Manager account first to assign employees.
-              </p>
-            )}
+            <p className="text-[11px] text-slate-500 font-medium">
+              💡 Leave as &ldquo;None (Create as Unassigned)&rdquo; to assign this employee to a manager whenever you want later.
+            </p>
+          </div>
+        ) : (
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-500 flex items-center gap-2">
+            <Shield className="w-4 h-4 text-indigo-600 shrink-0" />
+            <span>
+              <strong>Manager Role:</strong> Reports directly to Corporate Leadership. No manager assignment required.
+            </span>
           </div>
         )}
 

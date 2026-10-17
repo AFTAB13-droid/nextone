@@ -1,7 +1,7 @@
 /**
  * Avatar Helper
- * Provides high-resolution avatars according to user preference and gender.
- * Defaults to distinct professional avatars for male vs female when no custom image is uploaded.
+ * Provides high-resolution 3D stylized cartoon character avatars.
+ * Eliminates real human photos in favor of professional 3D animated character renders.
  */
 
 export function getUserAvatar(user?: {
@@ -9,26 +9,40 @@ export function getUserAvatar(user?: {
   gender?: "male" | "female" | "other" | string;
   name?: string;
 }): string {
-  if (user?.avatar && user.avatar.trim() !== "") {
+  // If user uploaded a custom cropped avatar (e.g. on Cloudinary) and not the old Unsplash stock photos
+  if (
+    user?.avatar &&
+    user.avatar.trim() !== "" &&
+    !user.avatar.includes("images.unsplash.com")
+  ) {
     return user.avatar;
   }
 
-  const name = user?.name || "NextOne Team";
+  const name = user?.name?.toLowerCase() || "";
 
-  if (user?.gender === "female") {
-    // Professional Female Enterprise Avatar
-    return `https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=256&auto=format&fit=crop&q=80`;
+  if (
+    user?.gender === "female" ||
+    name.includes("sarah") ||
+    name.includes("emily")
+  ) {
+    // High-resolution 3D Stylized Female Executive Character
+    return `/avatars/avatar-female-3d.jpg`;
   }
 
-  if (user?.gender === "male") {
-    // Professional Male Enterprise Avatar
-    return `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=256&auto=format&fit=crop&q=80`;
+  if (
+    user?.gender === "male" ||
+    name.includes("david") ||
+    name.includes("alex") ||
+    name.includes("marcus") ||
+    name.includes("admin") ||
+    name.includes("manager")
+  ) {
+    // High-resolution 3D Stylized Male Executive Character
+    return `/avatars/avatar-male-3d.jpg`;
   }
 
-  // Neutral or other: High contrast corporate avatar
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
-    name
-  )}&background=4f46e5&color=ffffff&bold=true&size=256`;
+  // Fallback to 3D male avatar
+  return `/avatars/avatar-male-3d.jpg`;
 }
 
 export default getUserAvatar;

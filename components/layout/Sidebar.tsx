@@ -29,6 +29,7 @@ import {
 import { UserRole, AuthSession } from "@/lib/types";
 import { getUserAvatar } from "@/lib/avatarHelper";
 import { RoleBadge } from "@/components/ui/Badge";
+import InstallPWA from "@/components/ui/InstallPWA";
 
 interface SidebarProps {
   role: UserRole;
@@ -439,6 +440,9 @@ export function Sidebar({ role, user }: SidebarProps) {
           </div>
         ))}
       </nav>
+
+      {/* Progressive Web App (PWA) Desktop Software Install Button */}
+      <InstallPWA variant={isCollapsed ? "sidebar_collapsed" : "sidebar"} />
 
       {/* User Presence Dock & Telemetry Footer */}
       <div className="p-3 border-t border-slate-200/80 bg-white/90 backdrop-blur-md shrink-0 z-10">

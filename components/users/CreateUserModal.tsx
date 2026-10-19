@@ -128,21 +128,54 @@ export function CreateUserModal({
   const genderOptions: CustomSelectOption[] = [
     {
       value: "male",
-      label: "Male (Assigns 3D Executive Male Avatar)",
-      badge: "3D Male",
-      icon: <User className="w-4 h-4 text-indigo-600" />,
+      label: "Male (Assigns Male Professional Avatar)",
+      badge: "Male Avatar",
+      icon: (
+        <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-slate-200">
+          <Image
+            src="/avatars/man-1.svg"
+            alt="Male"
+            width={20}
+            height={20}
+            className="w-full h-full object-cover"
+            unoptimized
+          />
+        </div>
+      ),
     },
     {
       value: "female",
-      label: "Female (Assigns 3D Executive Female Avatar)",
-      badge: "3D Female",
-      icon: <User className="w-4 h-4 text-purple-600" />,
+      label: "Female (Assigns Female Professional Avatar)",
+      badge: "Female Avatar",
+      icon: (
+        <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-slate-200">
+          <Image
+            src="/avatars/woman-1.svg"
+            alt="Female"
+            width={20}
+            height={20}
+            className="w-full h-full object-cover"
+            unoptimized
+          />
+        </div>
+      ),
     },
     {
       value: "other",
-      label: "Neutral / Other (Standard Corporate Monogram)",
+      label: "Neutral / Other (Standard Professional Monogram)",
       badge: "Neutral",
-      icon: <Sparkles className="w-4 h-4 text-emerald-600" />,
+      icon: (
+        <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-slate-200">
+          <Image
+            src="/avatars/champion-1.svg"
+            alt="Neutral"
+            width={20}
+            height={20}
+            className="w-full h-full object-cover"
+            unoptimized
+          />
+        </div>
+      ),
     },
   ];
 
@@ -174,11 +207,13 @@ export function CreateUserModal({
     })),
   ];
 
-  // Dynamic Avatar Preview
-  const previewAvatar = getUserAvatar({
-    name: name || "New Member",
-    gender,
-  });
+  // Dynamic Avatar Preview using clean SVG avatars
+  const previewAvatar =
+    gender === "female"
+      ? "/avatars/woman-1.svg"
+      : gender === "other"
+      ? "/avatars/champion-1.svg"
+      : "/avatars/man-1.svg";
 
   return (
     <Modal

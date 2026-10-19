@@ -32,12 +32,23 @@ interface FirstLoginWelcomeModalProps {
 
 const shouldShowOnboarding = (u: any): boolean => {
   if (!u) return false;
-  // If user has explicitly completed onboarding, never show
+  // 1. If user has already completed onboarding in DB, NEVER show again!
   if (u.firstLoginCompleted === true) return false;
-  // If user is admin and not explicitly set to false, do not show
-  if (u.role === "admin" && u.firstLoginCompleted !== false) return false;
-  // For both employees and managers who have not completed onboarding, show!
-  return true;
+
+  // 2. Client-side localStorage guard: if user already completed it in this browser, NEVER show again!
+  if (typeof window !== "undefined") {
+    const uid = u.userId || u._id || u.email;
+    if (uid && localStorage.getItem(`nextone_onboarding_completed_${uid}`) === "true") {
+      return false;
+    }
+  }
+
+  // 3. Admin never sees onboarding unless explicitly previewed/tested
+  if (u.role === "admin") return false;
+
+  // 4. ONLY show for new users who explicitly have firstLoginCompleted === false
+  // (Existing users with undefined or true will NOT see it!)
+  return u.firstLoginCompleted === false;
 };
 
 export default function FirstLoginWelcomeModal({
@@ -190,6 +201,13 @@ export default function FirstLoginWelcomeModal({
 
       if (!res.ok) {
         throw new Error("Failed to record onboarding completion");
+      }
+
+      // Mark locally so it never re-appears in this browser session
+      const targetUser = fullUserDetails || user;
+      const uid = (targetUser as any)?.userId || (targetUser as any)?._id || (targetUser as any)?.email;
+      if (uid && typeof window !== "undefined") {
+        localStorage.setItem(`nextone_onboarding_completed_${uid}`, "true");
       }
 
       setIsOpen(false);

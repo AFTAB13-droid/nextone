@@ -5,33 +5,47 @@ const uri = "mongodb+srv://NEXTONE:Next678@nextone.1frrsde.mongodb.net/nextone?r
 async function run() {
   await mongoose.connect(uri);
   const users = await mongoose.connection.collection("users").find({}).toArray();
+
   for (const u of users) {
-    if (u.avatar && u.avatar.includes("images.unsplash.com")) {
-      const isFemale =
-        u.gender === "female" ||
-        u.name.toLowerCase().includes("sarah") ||
-        u.name.toLowerCase().includes("emily");
-      const newAvatar = isFemale
-        ? "/avatars/avatar-female-3d.jpg"
-        : "/avatars/avatar-male-3d.jpg";
-      await mongoose.connection
-        .collection("users")
-        .updateOne({ _id: u._id }, { $set: { avatar: newAvatar } });
-      console.log("Updated avatar for", u.name, "to", newAvatar);
+    const isFemale =
+      u.gender === "female" ||
+      u.name.toLowerCase().includes("sarah") ||
+      u.name.toLowerCase().includes("emily");
+
+    const newAvatar = isFemale ? "/avatars/woman-1.svg" : "/avatars/man-1.svg";
+
+    const updateDoc = { avatar: newAvatar };
+
+    // For all established accounts (admin, Sarah, David, Alex, Emily, Marcus), ensure firstLoginCompleted is true
+    if (
+      u.email === "admin@nextone.com" ||
+      u.email === "sarah.lead@nextone.com" ||
+      u.email === "david.lead@nextone.com" ||
+      u.email === "alex.dev@nextone.com" ||
+      u.email === "emily.design@nextone.com" ||
+      u.email === "marcus.growth@nextone.com"
+    ) {
+      updateDoc.firstLoginCompleted = true;
     }
+
+    await mongoose.connection
+      .collection("users")
+      .updateOne({ _id: u._id }, { $set: updateDoc });
+
+    console.log(`Updated user ${u.name} (${u.email}) with avatar: ${newAvatar}`);
   }
 
-  // Also, for manager@nextone.in: reset firstLoginCompleted to false and set role to manager if user intended manager
-  const managerUser = await mongoose.connection.collection("users").findOne({ email: "manager@nextone.in" });
-  if (managerUser) {
+  // Ensure manager@nextone.in has role: manager and firstLoginCompleted: false for testing first login
+  const testManager = await mongoose.connection.collection("users").findOne({ email: "manager@nextone.in" });
+  if (testManager) {
     await mongoose.connection.collection("users").updateOne(
       { email: "manager@nextone.in" },
-      { $set: { role: "manager", firstLoginCompleted: false, managerId: null } }
+      { $set: { role: "manager", firstLoginCompleted: false, managerId: null, avatar: "/avatars/man-1.svg" } }
     );
-    console.log("Updated manager@nextone.in to role: manager and firstLoginCompleted: false");
+    console.log("Updated manager@nextone.in -> role: manager, firstLoginCompleted: false");
   }
 
-  console.log("Avatar & user migration complete!");
+  console.log("All DB avatars updated to clean SVG and pre-existing accounts marked completed!");
   process.exit(0);
 }
 

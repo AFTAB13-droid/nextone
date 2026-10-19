@@ -23,8 +23,9 @@ export async function POST() {
         department: "Executive Management",
         designation: "Chief Operations Officer",
         phone: "+1 800-555-0199",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
+        avatar: "/avatars/man-2.svg",
         isActive: true,
+        firstLoginCompleted: true,
       });
     }
 
@@ -39,8 +40,9 @@ export async function POST() {
         department: "Engineering & Tech",
         designation: "Principal Tech Lead",
         phone: "+1 800-555-0101",
-        avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80",
+        avatar: "/avatars/woman-1.svg",
         isActive: true,
+        firstLoginCompleted: true,
       });
     }
 
@@ -54,8 +56,9 @@ export async function POST() {
         department: "Product & Growth",
         designation: "Product Director",
         phone: "+1 800-555-0102",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80",
+        avatar: "/avatars/man-2.svg",
         isActive: true,
+        firstLoginCompleted: true,
       });
     }
 
@@ -71,8 +74,9 @@ export async function POST() {
         department: "Engineering & Tech",
         designation: "Senior Frontend Engineer",
         phone: "+1 800-555-0201",
-        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80",
+        avatar: "/avatars/man-1.svg",
         isActive: true,
+        firstLoginCompleted: true,
       });
     }
 
@@ -87,8 +91,9 @@ export async function POST() {
         department: "Engineering & Tech",
         designation: "UI/UX Product Designer",
         phone: "+1 800-555-0202",
-        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop&q=80",
+        avatar: "/avatars/woman-2.svg",
         isActive: true,
+        firstLoginCompleted: true,
       });
     }
 
@@ -103,8 +108,9 @@ export async function POST() {
         department: "Product & Growth",
         designation: "Growth Marketing Specialist",
         phone: "+1 800-555-0203",
-        avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&auto=format&fit=crop&q=80",
+        avatar: "/avatars/man-3.svg",
         isActive: true,
+        firstLoginCompleted: true,
       });
     }
 

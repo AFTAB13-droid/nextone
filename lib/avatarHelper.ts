@@ -1,7 +1,7 @@
 /**
  * Avatar Helper
- * Provides high-resolution 3D stylized cartoon character avatars.
- * Eliminates real human photos in favor of professional 3D animated character renders.
+ * Provides crisp, professional vector avatars.
+ * Uses clean SVG avatars (/avatars/man-1.svg, /avatars/woman-1.svg, etc.)
  */
 
 export function getUserAvatar(user?: {
@@ -9,11 +9,13 @@ export function getUserAvatar(user?: {
   gender?: "male" | "female" | "other" | string;
   name?: string;
 }): string {
-  // If user uploaded a custom cropped avatar (e.g. on Cloudinary) and not the old Unsplash stock photos
+  // If user uploaded a custom cropped avatar (e.g. on Cloudinary) and not old stock or AI images
   if (
     user?.avatar &&
     user.avatar.trim() !== "" &&
-    !user.avatar.includes("images.unsplash.com")
+    !user.avatar.includes("images.unsplash.com") &&
+    !user.avatar.includes("avatar-male-3d.jpg") &&
+    !user.avatar.includes("avatar-female-3d.jpg")
   ) {
     return user.avatar;
   }
@@ -25,8 +27,7 @@ export function getUserAvatar(user?: {
     name.includes("sarah") ||
     name.includes("emily")
   ) {
-    // High-resolution 3D Stylized Female Executive Character
-    return `/avatars/avatar-female-3d.jpg`;
+    return `/avatars/woman-1.svg`;
   }
 
   if (
@@ -35,14 +36,14 @@ export function getUserAvatar(user?: {
     name.includes("alex") ||
     name.includes("marcus") ||
     name.includes("admin") ||
-    name.includes("manager")
+    name.includes("manager") ||
+    name.includes("aftab")
   ) {
-    // High-resolution 3D Stylized Male Executive Character
-    return `/avatars/avatar-male-3d.jpg`;
+    return `/avatars/man-1.svg`;
   }
 
-  // Fallback to 3D male avatar
-  return `/avatars/avatar-male-3d.jpg`;
+  // Fallback to clean professional avatar
+  return `/avatars/man-1.svg`;
 }
 
 export default getUserAvatar;

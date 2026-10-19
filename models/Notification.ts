@@ -38,6 +38,10 @@ const NotificationSchema = new Schema(
   }
 );
 
+// High-speed compound indexes for unread counts and notifications feed
+NotificationSchema.index({ recipient: 1, isRead: 1, createdAt: -1 });
+NotificationSchema.index({ recipient: 1, createdAt: -1 });
+
 const Notification: Model<INotification> =
   mongoose.models.Notification || mongoose.model<INotification>("Notification", NotificationSchema);
 

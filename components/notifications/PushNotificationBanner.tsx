@@ -60,7 +60,7 @@ export function PushNotificationBanner() {
               </span>
             </p>
             <p className="text-[11px] text-slate-300 mt-0.5">
-              Receive live task dispatches, query responses, and radar alerts directly on your screen even when minimized.
+              Receive live task assignments, query updates, and team alerts directly on your screen even when minimized.
             </p>
           </div>
         </div>

@@ -834,7 +834,7 @@ export function InteractionHub({ currentUser }: InteractionHubProps) {
                       <option value="">-- Choose a Manager's Team --</option>
                       {teams.map((m) => (
                         <option key={m._id} value={m._id}>
-                          {m.name} ({m.subordinateCount} direct subordinates)
+                          {m.name} ({m.subordinateCount} team members)
                         </option>
                       ))}
                     </select>

@@ -255,13 +255,13 @@ export default function FirstLoginWelcomeModal({
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold text-indigo-100 uppercase tracking-wider mb-2.5 border border-white/20">
                 <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-spin-slow" />
-                <span>Induction & Welcome Protocol</span>
+                <span>Welcome & Onboarding</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white drop-shadow-sm">
                 Welcome to NextOne, {displayUser.name}!
               </h2>
               <p className="text-indigo-100 text-sm mt-1 max-w-xl">
-                We are thrilled to welcome you to our high-performance community workplace portal. Please review your induction notes and accept workplace policies to activate your workspace.
+                We are delighted to welcome you to NextOne. Please review your orientation guidelines and accept company policies to enter your workspace.
               </p>
             </div>
 

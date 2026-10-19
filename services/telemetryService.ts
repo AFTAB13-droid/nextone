@@ -7,6 +7,7 @@ export interface HeartbeatPayload {
   state: "active" | "idle" | "background";
   durationSeconds?: number;
   currentPath?: string;
+  clientDate?: string;
   deviceInfo?: {
     os?: string;
     browser?: string;
@@ -23,8 +24,10 @@ export class TelemetryService {
     await connectToDatabase();
 
     const now = new Date();
-    // Use local/ISO date string YYYY-MM-DD
-    const dateStr = now.toISOString().slice(0, 10);
+    // Use client's local date if valid YYYY-MM-DD, otherwise fallback to UTC
+    const dateStr = (payload.clientDate && /^\d{4}-\d{2}-\d{2}$/.test(payload.clientDate))
+      ? payload.clientDate
+      : now.toISOString().slice(0, 10);
     const currentHour = now.getHours().toString();
     const delta = Math.min(Math.max(payload.durationSeconds || 60, 5), 180);
 

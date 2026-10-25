@@ -30,6 +30,7 @@ export async function POST(req: Request) {
       durationSeconds: body.durationSeconds || 60,
       currentPath: body.currentPath || "",
       deviceInfo: body.deviceInfo || {},
+      clientDate: body.clientDate,
     };
 
     const record = await TelemetryService.recordHeartbeat(targetUserId, payload);

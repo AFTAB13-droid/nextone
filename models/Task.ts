@@ -130,6 +130,13 @@ const TaskSchema = new Schema(
   }
 );
 
+// High-speed compound indexes for queries & dashboard filters
+TaskSchema.index({ assignedTo: 1, status: 1 });
+TaskSchema.index({ createdBy: 1, status: 1 });
+TaskSchema.index({ managerInCharge: 1, status: 1 });
+TaskSchema.index({ status: 1, dueDate: 1 });
+TaskSchema.index({ parentTaskId: 1, status: 1 });
+
 const Task: Model<ITask> = mongoose.models.Task || mongoose.model<ITask>("Task", TaskSchema);
 
 export default Task;

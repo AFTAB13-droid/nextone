@@ -213,7 +213,7 @@ export function NotificationDrawer({
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setSelfPushFeedback("✓ Dispatched! Live in-app radar card popped up on screen & OS notification sent.");
+        setSelfPushFeedback("✓ Dispatched! In-app notification card popped up on screen & push alert sent.");
       } else {
         setSelfPushFeedback(data.error || "Failed to dispatch test push.");
       }
@@ -340,14 +340,14 @@ export function NotificationDrawer({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-black tracking-tight text-white">Live Activity Radar</h3>
+                  <h3 className="text-sm font-black tracking-tight text-white">Notifications & Activity</h3>
                   {unreadCount > 0 && (
                     <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-[10px] font-black shadow-2xs">
                       {unreadCount} unread
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-slate-400">Desktop Web Push & In-App Operations Desk</p>
+                <p className="text-[11px] text-slate-400">Real-time updates and push alerts</p>
               </div>
             </div>
 

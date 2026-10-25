@@ -32,11 +32,13 @@ export async function connectDB(): Promise<typeof mongoose> {
     const opts = {
       bufferCommands: false,
       serverSelectionTimeoutMS: 5000,
-      autoIndex: true,
+      maxPoolSize: 10,
+      minPoolSize: 1,
+      autoIndex: process.env.NODE_ENV !== "production",
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
-      console.log(`[MongoDB] Connected successfully to ${MONGODB_URI}`);
+      console.log("[MongoDB] Connected successfully to database");
       return mongooseInstance;
     }).catch((err) => {
       console.error("[MongoDB] Connection error:", err.message);

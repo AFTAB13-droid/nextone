@@ -108,14 +108,14 @@ export function Header({ user, title, subtitle }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">
-          {/* Out-of-the-box Activity Radar Bell Trigger */}
+          {/* Notifications Trigger */}
           <button
             onClick={() => setDrawerOpen(true)}
             className="relative p-2.5 rounded-xl bg-slate-100/90 hover:bg-indigo-50/90 text-slate-600 hover:text-indigo-600 border border-slate-200/80 hover:border-indigo-200/90 transition-all duration-200 group shadow-xs active:scale-95"
-            aria-label="Open Activity Radar"
-            title="Open Notification Radar & Live Feed"
+            aria-label="Open Notifications"
+            title="Notifications & Updates"
           >
-            {/* Live radar sonar ping when unread notifications exist */}
+            {/* Live ping when unread notifications exist */}
             {unreadCount > 0 && (
               <span className="absolute -inset-0.5 rounded-xl bg-indigo-500/25 animate-ping pointer-events-none opacity-75" />
             )}

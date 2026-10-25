@@ -98,7 +98,7 @@ export default function FcmInitializer() {
             console.warn("[FCM Initializer] Native notification notice:", e);
           }
 
-          // Trigger in-app live floating radar toast & update badge
+          // Trigger in-app live notification card & update badge
           if (typeof window !== "undefined") {
             window.dispatchEvent(new Event("notifications-updated"));
             window.dispatchEvent(

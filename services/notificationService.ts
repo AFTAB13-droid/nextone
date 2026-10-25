@@ -30,7 +30,7 @@ export class NotificationService {
       title,
       body: message,
       click_action: link,
-      icon: "/favicon.svg",
+      icon: "/icon-192.png",
     }).catch((err) => {
       console.error("[NotificationService] Desktop push delivery error:", err);
     });
@@ -69,7 +69,7 @@ export class NotificationService {
       title,
       body: message,
       click_action: link,
-      icon: "/favicon.svg",
+      icon: "/icon-192.png",
     }).catch((err) => {
       console.error("[NotificationService] Batch desktop push error:", err);
     });

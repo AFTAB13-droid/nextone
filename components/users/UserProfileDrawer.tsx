@@ -412,7 +412,7 @@ export function UserProfileDrawer({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-slate-700 font-bold">
-                    Supervised Direct Reports ({subordinates.length} Employees):
+                    Assigned Team Members ({subordinates.length}):
                   </p>
                   {onAssignTeam && (
                     <button

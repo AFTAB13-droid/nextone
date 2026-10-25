@@ -10,11 +10,18 @@ interface AmbientTrackerProps {
 
 export function AmbientTracker({ user }: AmbientTrackerProps) {
   const pathname = usePathname();
+  const pathnameRef = useRef<string>(pathname || "");
   const stateRef = useRef<"active" | "idle" | "background">("active");
+  const lastHeartbeatTimestamp = useRef<number>(Date.now());
   const lastActiveTimestamp = useRef<number>(Date.now());
   const idleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const throttleRef = useRef<number>(0);
+
+  // Keep pathname updated in ref without causing useEffect to re-mount
+  useEffect(() => {
+    pathnameRef.current = pathname || "";
+  }, [pathname]);
 
   // Detect OS & Browser
   const getDeviceInfo = () => {
@@ -37,13 +44,29 @@ export function AmbientTracker({ user }: AmbientTrackerProps) {
     return { os, browser, screenResolution };
   };
 
+  const getLocalDateString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const sendHeartbeat = async (forcedState?: "active" | "idle" | "background") => {
     const uid = user?.userId || (user as any)?._id?.toString() || (user as any)?._id;
     if (!user || !uid || typeof window === "undefined") return;
 
+    const now = Date.now();
+    const elapsedSeconds = Math.min(
+      Math.max(Math.round((now - lastHeartbeatTimestamp.current) / 1000), 5),
+      180
+    );
+    lastHeartbeatTimestamp.current = now;
+
     const currentState = forcedState || stateRef.current;
-    const currentPath = pathname || window.location.pathname;
+    const currentPath = pathnameRef.current || window.location.pathname;
     const deviceInfo = getDeviceInfo();
+    const clientDate = getLocalDateString();
 
     try {
       await fetch("/api/telemetry/heartbeat", {
@@ -53,14 +76,14 @@ export function AmbientTracker({ user }: AmbientTrackerProps) {
         body: JSON.stringify({
           userId: uid,
           state: currentState,
-          durationSeconds: 60,
+          durationSeconds: elapsedSeconds,
           currentPath,
           deviceInfo,
+          clientDate,
         }),
       });
-      // console.log("[AmbientTracker] Heartbeat pulse:", { uid, state: currentState, path: currentPath });
     } catch {
-      // Silent failure for telemetry
+      // Silent catch for background telemetry
     }
   };
 
@@ -68,12 +91,13 @@ export function AmbientTracker({ user }: AmbientTrackerProps) {
     if (!user) return;
 
     const IDLE_THRESHOLD_MS = 3 * 60 * 1000; // 3 minutes without input = idle
+    const HEARTBEAT_INTERVAL_MS = 3 * 60 * 1000; // 3 minutes interval saves 66% Vercel invocations
 
     const resetIdleTimer = () => {
       const now = Date.now();
       lastActiveTimestamp.current = now;
 
-      // Throttle event processing to avoid CPU work
+      // Throttle event processing to avoid high CPU work
       if (now - throttleRef.current < 4000) return;
       throttleRef.current = now;
 
@@ -115,7 +139,13 @@ export function AmbientTracker({ user }: AmbientTrackerProps) {
     const handleBeforeUnload = () => {
       if (typeof navigator !== "undefined" && navigator.sendBeacon) {
         const blob = new Blob(
-          [JSON.stringify({ action: "leave", currentPath: pathname })],
+          [
+            JSON.stringify({
+              action: "leave",
+              currentPath: pathnameRef.current,
+              clientDate: getLocalDateString(),
+            }),
+          ],
           { type: "application/json" }
         );
         navigator.sendBeacon("/api/telemetry/heartbeat", blob);
@@ -139,10 +169,10 @@ export function AmbientTracker({ user }: AmbientTrackerProps) {
     sendHeartbeat("active");
     resetIdleTimer();
 
-    // Periodic heartbeat every 60 seconds
+    // Regular interval: pulse every 3 minutes (180s)
     heartbeatIntervalRef.current = setInterval(() => {
       sendHeartbeat();
-    }, 60 * 1000);
+    }, HEARTBEAT_INTERVAL_MS);
 
     return () => {
       events.forEach((evt) => window.removeEventListener(evt, resetIdleTimer));
@@ -152,9 +182,9 @@ export function AmbientTracker({ user }: AmbientTrackerProps) {
       if (idleTimeoutRef.current) clearTimeout(idleTimeoutRef.current);
       if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);
     };
-  }, [user, pathname]);
+  }, [user]);
 
-  return null; // Silent background component
+  return null;
 }
 
 export default AmbientTracker;

@@ -551,13 +551,13 @@ export function ProfileView() {
                   </div>
                 ) : (
                   <p className="text-xs text-slate-500 py-4 italic">
-                    You currently report directly to Executive Admin.
+                    You currently report directly to Company Admin.
                   </p>
                 )
               ) : profileData.role === "manager" ? (
                 <div className="space-y-3">
                   <p className="text-xs text-slate-600 font-medium">
-                    You supervise {subordinates.length} team members assigned by Executive Admin.
+                    You lead {subordinates.length} team members assigned by Admin.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {subordinates.map((sub) => (
@@ -685,13 +685,13 @@ export function ProfileView() {
             </button>
           </form>
 
-          {/* Onboarding & Workplace Induction Protocol */}
+          {/* Onboarding & Workplace Policy Agreement */}
           <div className="pt-6 border-t border-slate-100">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  Workplace Induction & Policy Consent
+                  Workplace Onboarding & Policy Agreement
                 </h4>
                 <p className="text-xs text-slate-500 mt-1">
                   Status:{" "}
@@ -702,7 +702,7 @@ export function ProfileView() {
                     </span>
                   ) : (
                     <span className="text-amber-700 font-semibold">
-                      Pending First Login Induction
+                      Pending First Login Onboarding
                     </span>
                   )}
                 </p>
@@ -731,7 +731,7 @@ export function ProfileView() {
           {profileData.role === "manager" ? (
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-slate-900">
-                Subordinate Employees Reporting to You ({subordinates.length})
+                Team Members Reporting to You ({subordinates.length})
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {subordinates.map((s) => (

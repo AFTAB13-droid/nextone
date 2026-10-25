@@ -134,7 +134,7 @@ export function InAppToastContainer() {
             <div className="flex-1 min-w-0 pr-1">
               <div className="flex items-center gap-1.5 mb-0.5">
                 <span className="text-[10px] font-black uppercase tracking-wider text-cyan-400">
-                  Radar Notification
+                  Live Update
                 </span>
                 <span className="text-[10px] text-slate-400">• Just now</span>
               </div>

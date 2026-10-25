@@ -20,16 +20,16 @@ interface PortalShellProps {
 export function PortalShell({ user, title, subtitle, children }: PortalShellProps) {
   return (
     <div className="flex h-screen overflow-hidden bg-portal-pattern font-sans text-slate-800 antialiased selection:bg-indigo-500 selection:text-white">
-      {/* First-Time Login Celebration & Induction Modal */}
+      {/* First-Time Login Celebration & Welcome Modal */}
       <FirstLoginWelcomeModal user={user} />
 
-      {/* Real-time In-App Floating Toast Radar */}
+      {/* Real-time In-App Notification Alerts */}
       <InAppToastContainer />
 
       {/* Real-time Offline Connectivity Monitor */}
       <OfflineScreen />
 
-      {/* Ambient Zero-Click Telemetry & Screen Time Tracker */}
+      {/* Team Presence & Activity Tracker */}
       <AmbientTracker user={user} />
 
       {/* Sidebar Navigation - Fixed and Stationary */}

@@ -103,3 +103,8 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 });
+
+self.addEventListener('fetch', (event) => {
+  // Pass-through fetch handler satisfying PWA installability requirements
+  // We do not intercept API calls to avoid breaking Next.js routing and caching
+});

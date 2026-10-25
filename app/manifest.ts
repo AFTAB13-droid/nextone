@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "NextOne Enterprise Portal",
     short_name: "NextOne",
-    description: "NextOne Enterprise Task Lifecycle, Team Hierarchy & Real-Time Intelligence Platform",
+    description: "NextOne Operations & Team Workflow Management Platform",
     start_url: "/",
     display: "standalone",
     background_color: "#0f172a",

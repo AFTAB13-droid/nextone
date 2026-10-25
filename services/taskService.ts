@@ -160,7 +160,7 @@ export class TaskService {
       if (filter?.assignedBy) query.assignedBy = filter.assignedBy;
     } else if (actor.role === "manager") {
       // Find employees reporting to this manager
-      const subordinates = await User.find({ managerId: actor.userId }).select("_id");
+      const subordinates = await User.find({ managerId: actor.userId }).select("_id").lean();
       const subordinateIds = subordinates.map((s) => s._id);
 
       // Manager sees: tasks assigned TO this manager OR tasks assigned BY this manager OR tasks belonging to their subordinates

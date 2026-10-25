@@ -145,7 +145,7 @@ export default function LoginPage() {
                   ENTERPRISE v2.5
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-medium">Operations & Task Governance OS</p>
+              <p className="text-xs text-slate-400 font-medium">Team Operations & Task Workspace</p>
             </div>
           </div>
         </div>
@@ -155,19 +155,19 @@ export default function LoginPage() {
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/10 text-cyan-300 text-xs font-bold backdrop-blur-md">
               <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Hierarchical Operations Architecture</span>
+              <span>Team Collaboration & Workflow Platform</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-[1.15]">
-              Executive Command. <br />
+              Clear Leadership. <br />
               <span className="bg-gradient-to-r from-indigo-400 via-cyan-300 to-teal-300 bg-clip-text text-transparent">
-                Frictionless Delegation.
+                Seamless Delegation.
               </span>
             </h1>
 
             <p className="text-sm sm:text-base text-slate-300 font-normal leading-relaxed max-w-xl">
               NextOne unifies organization-wide task assignment, manager-to-employee work decomposition,
-              daily commitments, and dual-tier query escalation into a single real-time console.
+              daily commitments, and team query resolution into a single real-time console.
             </p>
           </div>
 
@@ -179,7 +179,7 @@ export default function LoginPage() {
               </div>
               <h4 className="text-xs font-bold text-white">3-Tier Hierarchy</h4>
               <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
-                Admin governs managers; managers oversee assigned direct reports.
+                Admins guide managers; managers lead assigned team members.
               </p>
             </div>
 

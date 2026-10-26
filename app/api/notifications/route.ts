@@ -2,11 +2,15 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import NotificationService from "@/services/notificationService";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const actor = await requireAuth();
+    const { searchParams } = new URL(req.url);
+    const limitParam = searchParams.get("limit");
+    const limit = limitParam ? Math.min(Math.max(parseInt(limitParam, 10), 10), 200) : 100;
+
     const [notifications, unreadCount] = await Promise.all([
-      NotificationService.getUserNotifications(actor.userId, 25),
+      NotificationService.getUserNotifications(actor.userId, limit),
       NotificationService.getUnreadCount(actor.userId),
     ]);
 

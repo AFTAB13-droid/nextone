@@ -75,7 +75,7 @@ export class NotificationService {
     });
   }
 
-  static async getUserNotifications(userId: string, limit: number = 30): Promise<INotification[]> {
+  static async getUserNotifications(userId: string, limit: number = 100): Promise<INotification[]> {
     await connectDB();
     const list = await Notification.find({ recipient: userId })
       .sort({ createdAt: -1 })

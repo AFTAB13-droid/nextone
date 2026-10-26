@@ -24,7 +24,14 @@ export const getFirebaseAdmin = () => {
     return null;
   }
 
-  // Handle escaped newlines in environment variable strings
+  // Handle quotes and escaped newlines in environment variable strings
+  privateKey = privateKey.trim();
+  if (
+    (privateKey.startsWith('"') && privateKey.endsWith('"')) ||
+    (privateKey.startsWith("'") && privateKey.endsWith("'"))
+  ) {
+    privateKey = privateKey.slice(1, -1);
+  }
   if (privateKey.includes("\\n")) {
     privateKey = privateKey.replace(/\\n/g, "\n");
   }

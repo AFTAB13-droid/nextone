@@ -117,7 +117,7 @@ export default function EmployeeTargetsPage() {
       title="Daily Targets & Commitments"
       subtitle="Define what you will deliver today, log progress updates, and collaborate with your manager"
     >
-      <div className="space-y-8 max-w-6xl">
+      <div className="space-y-8 w-full">
         {/* KPI Stat Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
@@ -220,7 +220,7 @@ export default function EmployeeTargetsPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
               {pastTargets.map((item) => (
                 <TargetCard
                   key={item._id}

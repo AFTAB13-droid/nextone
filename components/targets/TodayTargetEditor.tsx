@@ -286,116 +286,124 @@ export function TodayTargetEditor({
           </div>
         )}
 
-        {/* Commitment Statement */}
-        <div className="space-y-1.5">
-          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-            Committed Deliverable / Milestone
-          </label>
-          <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/90 text-sm font-semibold text-slate-900 leading-relaxed">
-            {todayTarget.targetText}
-          </div>
-        </div>
-
-        {/* Ongoing Progress Notes & Quick Update */}
-        <div className="space-y-2.5">
-          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
-            <span className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-amber-500" />
-              Ongoing Progress Updates
-            </span>
-            {todayTarget.lastUpdatedTime && (
-              <span className="text-[10px] font-mono font-medium text-slate-400">
-                Last updated: {new Date(todayTarget.lastUpdatedTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </span>
-            )}
-          </label>
-
-          {todayTarget.progressNotes ? (
-            <div className="p-3.5 rounded-2xl bg-amber-50/40 border border-amber-200/70 text-xs font-medium text-slate-700 leading-relaxed whitespace-pre-wrap">
-              {todayTarget.progressNotes}
+        {/* 2-Column Responsive Cockpit on Wide Screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column: Commitment & Progress Updates */}
+          <div className="lg:col-span-7 xl:col-span-7 space-y-5">
+            {/* Commitment Statement */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                Committed Deliverable / Milestone
+              </label>
+              <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/90 text-sm font-semibold text-slate-900 leading-relaxed shadow-2xs">
+                {todayTarget.targetText}
+              </div>
             </div>
-          ) : (
-            <p className="text-xs text-slate-400 italic">No progress notes logged yet today.</p>
-          )}
 
-          {/* Quick inline note adder */}
-          <form onSubmit={handleAddQuickNote} className="flex items-center gap-2 pt-1">
-            <input
-              type="text"
-              placeholder="Log a quick progress update (e.g. Completed initial draft, shared with team)..."
-              value={quickNote}
-              onChange={(e) => setQuickNote(e.target.value)}
-              className="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
-            />
-            <button
-              type="submit"
-              disabled={loggingNote || !quickNote.trim()}
-              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50 shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>{loggingNote ? "Logging..." : "Log Update"}</span>
-            </button>
-          </form>
-        </div>
+            {/* Ongoing Progress Notes & Quick Update */}
+            <div className="space-y-2.5">
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-amber-500" />
+                  Ongoing Progress Updates
+                </span>
+                {todayTarget.lastUpdatedTime && (
+                  <span className="text-[10px] font-mono font-medium text-slate-400">
+                    Last updated: {new Date(todayTarget.lastUpdatedTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                )}
+              </label>
 
-        {/* Manager Feedback & Discussion Thread */}
-        <div className="pt-4 border-t border-slate-100 space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-              <MessageSquare className="w-3.5 h-3.5 text-indigo-500" />
-              Manager Feedback & Coaching Discussion
-            </label>
-            <span className="text-xs font-semibold text-slate-400">
-              {comments.length} {comments.length === 1 ? "note" : "notes"}
-            </span>
-          </div>
-
-          {comments.length > 0 ? (
-            <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
-              {comments.map((c, idx) => (
-                <div
-                  key={c._id || idx}
-                  className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 text-xs space-y-1"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900">{c.author.name}</span>
-                      <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 border border-indigo-200">
-                        {c.author.role}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      {new Date(c.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                  </div>
-                  <p className="text-slate-700 font-medium leading-relaxed">{c.message}</p>
+              {todayTarget.progressNotes ? (
+                <div className="p-3.5 rounded-2xl bg-amber-50/40 border border-amber-200/70 text-xs font-medium text-slate-700 leading-relaxed whitespace-pre-wrap">
+                  {todayTarget.progressNotes}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-slate-400 italic">
-              No feedback notes from your manager yet for today&apos;s milestone.
-            </p>
-          )}
+              ) : (
+                <p className="text-xs text-slate-400 italic">No progress notes logged yet today.</p>
+              )}
 
-          {/* Reply input */}
-          <form onSubmit={handleAddComment} className="flex items-center gap-2 pt-1">
-            <input
-              type="text"
-              placeholder="Reply to manager or leave a note on this target..."
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              className="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
-            />
-            <button
-              type="submit"
-              disabled={submittingComment || !commentText.trim()}
-              className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5 shrink-0"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>Reply</span>
-            </button>
-          </form>
+              {/* Quick inline note adder */}
+              <form onSubmit={handleAddQuickNote} className="flex items-center gap-2 pt-1">
+                <input
+                  type="text"
+                  placeholder="Log a quick progress update (e.g. Completed initial draft)..."
+                  value={quickNote}
+                  onChange={(e) => setQuickNote(e.target.value)}
+                  className="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+                />
+                <button
+                  type="submit"
+                  disabled={loggingNote || !quickNote.trim()}
+                  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50 shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{loggingNote ? "Logging..." : "Log Update"}</span>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Right Column: Manager Feedback & Discussion Thread */}
+          <div className="lg:col-span-5 xl:col-span-5 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-slate-100 pt-5 lg:pt-0 lg:pl-6 space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-indigo-500" />
+                  Manager Feedback & Coaching
+                </label>
+                <span className="text-xs font-semibold text-slate-400">
+                  {comments.length} {comments.length === 1 ? "note" : "notes"}
+                </span>
+              </div>
+
+              {comments.length > 0 ? (
+                <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                  {comments.map((c, idx) => (
+                    <div
+                      key={c._id || idx}
+                      className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 text-xs space-y-1 shadow-2xs"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-900">{c.author.name}</span>
+                          <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 border border-indigo-200">
+                            {c.author.role}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {new Date(c.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      <p className="text-slate-700 font-medium leading-relaxed">{c.message}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 italic py-4 bg-slate-50 rounded-2xl px-3 border border-dashed border-slate-200 text-center">
+                  No feedback notes from manager yet today.
+                </p>
+              )}
+            </div>
+
+            {/* Reply input */}
+            <form onSubmit={handleAddComment} className="flex items-center gap-2 pt-2">
+              <input
+                type="text"
+                placeholder="Reply to manager or leave note..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                className="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+              />
+              <button
+                type="submit"
+                disabled={submittingComment || !commentText.trim()}
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5 shrink-0"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Reply</span>
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     );

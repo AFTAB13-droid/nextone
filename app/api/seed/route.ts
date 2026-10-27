@@ -4,6 +4,7 @@ import User from "@/models/User";
 import Task from "@/models/Task";
 import Query from "@/models/Query";
 import Notification from "@/models/Notification";
+import Target from "@/models/Target";
 import AuthService from "@/services/authService";
 
 export async function POST() {
@@ -355,6 +356,144 @@ export async function POST() {
         type: "task",
         isRead: false,
       });
+    }
+
+    // Sample Daily Targets (Today + History for Employees)
+    const todayStr = new Date().toISOString().split("T")[0];
+    const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+    const twoDaysAgoStr = new Date(Date.now() - 86400000 * 2).toISOString().split("T")[0];
+    const threeDaysAgoStr = new Date(Date.now() - 86400000 * 3).toISOString().split("T")[0];
+    const fourDaysAgoStr = new Date(Date.now() - 86400000 * 4).toISOString().split("T")[0];
+
+    const sampleTargets = [
+      // 1. Aarav Patel (Employee under Priya Sharma)
+      {
+        employee: emp1._id,
+        date: todayStr,
+        targetText: "Prepare Corporate Presentation & Client Onboarding Kit for Apex Enterprises",
+        progressNotes: "11:30 AM: Reviewed deck outline with design team. Currently coordinating with accounts for pricing annexure.",
+        status: "in_progress",
+        comments: [
+          {
+            author: { _id: manager1._id, name: manager1.name, role: "manager" },
+            message: "Make sure to highlight our 24/7 SLA commitments and milestone delivery timelines on slide 6.",
+            createdAt: new Date(Date.now() - 3600000 * 2),
+          },
+        ],
+        lastUpdatedTime: new Date(),
+      },
+      {
+        employee: emp1._id,
+        date: yesterdayStr,
+        targetText: "Reconcile Q3 Vendor Invoices & Dispatch Payment Vouchers",
+        progressNotes: "Reconciled all 18 vendor invoices with accounts department. Verified TDS deductions as per norms.",
+        status: "achieved",
+        comments: [
+          {
+            author: { _id: manager1._id, name: manager1.name, role: "manager" },
+            message: "Verified and signed off with accounts. Good job on the quick turnaround!",
+            createdAt: new Date(Date.now() - 86400000 + 3600000 * 4),
+          },
+        ],
+        lastUpdatedTime: new Date(Date.now() - 86400000),
+      },
+      {
+        employee: emp1._id,
+        date: twoDaysAgoStr,
+        targetText: "Conduct Client Walkthrough Session for Pune Branch Deployment",
+        progressNotes: "Walkthrough completed with 12 participants. Session recording and Q&A notes shared over email.",
+        status: "achieved",
+        comments: [
+          {
+            author: { _id: manager1._id, name: manager1.name, role: "manager" },
+            message: "Client team was very appreciative of the clear explanation.",
+            createdAt: new Date(Date.now() - 86400000 * 2 + 3600000 * 3),
+          },
+        ],
+        lastUpdatedTime: new Date(Date.now() - 86400000 * 2),
+      },
+      {
+        employee: emp1._id,
+        date: threeDaysAgoStr,
+        targetText: "Review Service Level Agreements (SLAs) for Renewing Corporate Accounts",
+        progressNotes: "Audited 5 contracts. Flagged 2 renewal date mismatches to sales team.",
+        status: "achieved",
+        comments: [],
+        lastUpdatedTime: new Date(Date.now() - 86400000 * 3),
+      },
+      {
+        employee: emp1._id,
+        date: fourDaysAgoStr,
+        targetText: "Draft Internal Standard Operating Procedures (SOP) for Escalation Desk",
+        progressNotes: "Drafted sections 1 to 3. Section 4 pending review from compliance.",
+        status: "partially_achieved",
+        comments: [
+          {
+            author: { _id: manager1._id, name: manager1.name, role: "manager" },
+            message: "Compliance review scheduled for early next week.",
+            createdAt: new Date(Date.now() - 86400000 * 4 + 3600000 * 5),
+          },
+        ],
+        lastUpdatedTime: new Date(Date.now() - 86400000 * 4),
+      },
+      // 2. Neha Gupta (Design Specialist)
+      {
+        employee: emp2._id,
+        date: todayStr,
+        targetText: "Design Diwali Festive Marketing Collaterals & Social Media Banners",
+        progressNotes: "Created 3 banner variations. Finalizing typography adjustments.",
+        status: "in_progress",
+        comments: [],
+        lastUpdatedTime: new Date(),
+      },
+      {
+        employee: emp2._id,
+        date: yesterdayStr,
+        targetText: "Export Vector UI Assets and Update Company Brand Guide",
+        progressNotes: "Vector kit uploaded to Drive and shared with engineering team.",
+        status: "achieved",
+        comments: [
+          {
+            author: { _id: manager1._id, name: manager1.name, role: "manager" },
+            message: "Color scheme matches our brand specifications perfectly.",
+            createdAt: new Date(Date.now() - 86400000 + 3600000 * 2),
+          },
+        ],
+        lastUpdatedTime: new Date(Date.now() - 86400000),
+      },
+      // 3. Rohan Mehta (Business Development)
+      {
+        employee: emp3._id,
+        date: todayStr,
+        targetText: "Follow up with Mumbai Corporate Accounts for Contract Renewals",
+        progressNotes: "Contacted 4 relationship managers. 2 renewal meetings scheduled for Thursday.",
+        status: "in_progress",
+        comments: [],
+        lastUpdatedTime: new Date(),
+      },
+      {
+        employee: emp3._id,
+        date: yesterdayStr,
+        targetText: "Audit Client Lead Database and Update Contact Pipeline",
+        progressNotes: "Updated 42 lead records in pipeline with current contact details.",
+        status: "achieved",
+        comments: [
+          {
+            author: { _id: manager2._id, name: manager2.name, role: "manager" },
+            message: "Accurate CRM pipeline makes forecasting much easier. Great job Rohan.",
+            createdAt: new Date(Date.now() - 86400000 + 3600000 * 3),
+          },
+        ],
+        lastUpdatedTime: new Date(Date.now() - 86400000),
+      },
+    ];
+
+    for (const t of sampleTargets) {
+      await Target.findOneAndUpdate(
+        { employee: t.employee, date: t.date },
+        { $set: t },
+        { upsert: true, new: true }
+      );
     }
 
     return NextResponse.json({

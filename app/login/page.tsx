@@ -27,7 +27,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<"admin" | "manager" | "employee">("admin");
   const [loading, setLoading] = useState(false);
-  const [seeding, setSeeding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isShake, setIsShake] = useState(false);
   const [seedNotice, setSeedNotice] = useState<string | null>(null);
@@ -108,14 +107,13 @@ export default function LoginPage() {
     }
   };
 
-  const handleSeedDatabase = async () => {
-    setSeeding(true);
+  const handleResetDatabase = async () => {
     setSeedNotice(null);
     try {
       const res = await fetch("/api/seed", { method: "POST" });
       const data = await res.json();
       if (res.ok) {
-        setSeedNotice("Atlas cloud database seeded with sample users, tasks, and queries!");
+        setSeedNotice("Atlas cloud database restored with Indian demo accounts!");
         handleSelectRole("admin");
       } else {
         setError(data.error || "Failed to initialize demo database");
@@ -123,8 +121,6 @@ export default function LoginPage() {
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Error connecting to cloud cluster";
       setError(msg);
-    } finally {
-      setSeeding(false);
     }
   };
 
@@ -232,55 +228,42 @@ export default function LoginPage() {
         
         {/* Subtle Decorative Orbital Ring behind the login card */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none z-0">
-          <div className="w-[520px] h-[520px] rounded-full border border-indigo-300/25 animate-spin-slow" />
-          <div className="w-[380px] h-[380px] rounded-full border border-cyan-300/20 animate-spin-slow-reverse absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          <div className="w-[580px] h-[580px] rounded-full border border-indigo-300/20 animate-spin-slow" />
+          <div className="w-[420px] h-[420px] rounded-full border border-cyan-300/15 animate-spin-slow-reverse absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
         </div>
 
-        {/* Top Right Utilities */}
-        <div className="w-full flex items-center justify-between sm:justify-end gap-3 z-10 relative">
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/90 backdrop-blur-md border border-slate-200/90 shadow-2xs text-xs text-slate-600 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Atlas MongoDB Online</span>
-          </div>
+        {/* Clean Top Spacer (Top right badges removed per client request) */}
+        <div className="w-full h-4 sm:h-8" />
 
-          <button
-            onClick={handleSeedDatabase}
-            disabled={seeding}
-            className="text-xs font-bold text-slate-700 hover:text-indigo-600 px-3.5 py-1.5 rounded-xl bg-white/90 backdrop-blur-md hover:bg-white border border-slate-200/90 shadow-2xs transition-all flex items-center gap-1.5 disabled:opacity-50"
-            title="Seed sample data into MongoDB Atlas"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-            <span>{seeding ? "Syncing..." : "Seed Demo Accounts"}</span>
-          </button>
-        </div>
-
-        {/* ================= CENTER AUTH CARD ================= */}
-        <div className="w-full max-w-lg mx-auto my-auto py-6 z-10 relative">
+        {/* ================= CENTER AUTH CARD: EXPANDED LENGTH & WIDTH ================= */}
+        <div className="w-full max-w-xl lg:max-w-2xl mx-auto my-auto py-4 sm:py-8 z-10 relative">
           
-          {/* Card Container with Dynamic Glow, Glassmorphism, and Wrong-Password Shake Animation */}
+          {/* Card Container with Dynamic Glow, Glassmorphism, Rounded 36px, and Overflow-Hidden */}
           <div
-            className={`relative rounded-[32px] bg-white/90 backdrop-blur-2xl p-7 sm:p-10 border border-white/90 shadow-[0_25px_70px_-15px_rgba(79,70,229,0.18),0_10px_25px_-5px_rgba(15,23,42,0.06)] ring-1 ring-slate-900/5 space-y-6 transition-all duration-300 ${
+            className={`relative rounded-[36px] bg-white/95 backdrop-blur-2xl p-8 sm:p-12 lg:p-14 border border-white/95 shadow-[0_30px_90px_-15px_rgba(79,70,229,0.22),0_15px_35px_-5px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 space-y-7 transition-all duration-300 overflow-hidden ${
               isShake ? "animate-shake ring-2 ring-rose-500 border-rose-300 shadow-rose-500/20" : ""
             }`}
           >
-            {/* Top Animated Shimmer Bar */}
-            <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-indigo-500 via-cyan-400 to-indigo-600 bg-[length:200%_auto] animate-[shimmer_3s_infinite_linear]" />
+            {/* Top Animated Accent Bar - strictly clipped inside rounded container */}
+            <div className="absolute top-0 inset-x-0 h-1.5 overflow-hidden rounded-t-[36px] pointer-events-none z-20">
+              <div className="w-full h-full bg-gradient-to-r from-indigo-600 via-cyan-400 to-indigo-600 animate-pulse" />
+            </div>
 
             {/* Corner Ambient Glow inside Card */}
-            <div className="absolute -top-16 -right-16 w-44 h-44 bg-gradient-to-bl from-indigo-400/15 via-cyan-300/10 to-transparent rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-16 -left-16 w-44 h-44 bg-gradient-to-tr from-purple-400/15 via-pink-300/10 to-transparent rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -top-16 -right-16 w-52 h-52 bg-gradient-to-bl from-indigo-400/15 via-cyan-300/10 to-transparent rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-16 -left-16 w-52 h-52 bg-gradient-to-tr from-purple-400/15 via-pink-300/10 to-transparent rounded-full blur-2xl pointer-events-none" />
 
             {/* Header */}
             <div className="relative z-10 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">
                   Sign in to Portal
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
                   Select a 1-click persona fast-track or enter provisioned credentials
                 </p>
               </div>
-              <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold shrink-0 self-start shadow-2xs">
+              <div className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold shrink-0 self-start shadow-2xs">
                 <Shield className="w-3.5 h-3.5 text-indigo-600" />
                 <span>Secure Access</span>
               </div>
@@ -288,13 +271,13 @@ export default function LoginPage() {
 
             {/* Wrong Password / Auth Error Alert Banner */}
             {error && (
-              <div className="relative z-10 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-bold flex items-center justify-between animate-in fade-in shadow-xs">
+              <div className="relative z-10 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-bold flex items-center justify-between animate-in fade-in shadow-xs">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 animate-bounce" />
                   <span>{error}</span>
                 </div>
                 <button
-                  onClick={handleSeedDatabase}
+                  onClick={handleResetDatabase}
                   className="underline text-indigo-600 hover:text-indigo-800 ml-2 shrink-0 font-extrabold text-xs"
                 >
                   Reset DB
@@ -303,14 +286,14 @@ export default function LoginPage() {
             )}
 
             {seedNotice && (
-              <div className="relative z-10 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-bold flex items-center gap-2.5 animate-in fade-in shadow-xs">
+              <div className="relative z-10 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-bold flex items-center gap-2.5 animate-in fade-in shadow-xs">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>{seedNotice}</span>
               </div>
             )}
 
             {/* 1-Click Persona Fast Track Cards */}
-            <div className="relative z-10 space-y-2.5">
+            <div className="relative z-10 space-y-3">
               <div className="flex items-center justify-between">
                 <label className="block text-xs font-black uppercase tracking-wider text-slate-400">
                   1-Click Persona Fast Track
@@ -321,7 +304,7 @@ export default function LoginPage() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {(["admin", "manager", "employee"] as const).map((roleKey) => {
                   const isSelected = selectedRole === roleKey;
                   const acc = demoAccounts[roleKey];
@@ -330,33 +313,33 @@ export default function LoginPage() {
                       key={roleKey}
                       type="button"
                       onClick={() => handleSelectRole(roleKey)}
-                      className={`p-3.5 rounded-2xl border text-left sm:text-center transition-all duration-200 ${
+                      className={`p-4 sm:p-4.5 rounded-2xl border text-left sm:text-center transition-all duration-200 ${
                         isSelected
                           ? "bg-gradient-to-br from-indigo-600 to-indigo-700 text-white border-indigo-600 shadow-md shadow-indigo-600/25 scale-[1.02]"
                           : "bg-white/80 hover:bg-white text-slate-700 border-slate-200/90 hover:border-indigo-300 shadow-2xs"
                       }`}
                     >
-                      <div className="text-xs font-black capitalize flex items-center justify-between sm:justify-center gap-1.5">
+                      <div className="text-xs sm:text-sm font-black capitalize flex items-center justify-between sm:justify-center gap-1.5">
                         <div className="flex items-center gap-1.5">
                           {roleKey === "admin" && (
-                            <Shield className={`w-3.5 h-3.5 ${isSelected ? "text-amber-200" : "text-amber-600"}`} />
+                            <Shield className={`w-4 h-4 ${isSelected ? "text-amber-200" : "text-amber-600"}`} />
                           )}
                           {roleKey === "manager" && (
-                            <GitFork className={`w-3.5 h-3.5 ${isSelected ? "text-cyan-200" : "text-cyan-600"}`} />
+                            <GitFork className={`w-4 h-4 ${isSelected ? "text-cyan-200" : "text-cyan-600"}`} />
                           )}
                           {roleKey === "employee" && (
-                            <Target className={`w-3.5 h-3.5 ${isSelected ? "text-emerald-200" : "text-emerald-600"}`} />
+                            <Target className={`w-4 h-4 ${isSelected ? "text-emerald-200" : "text-emerald-600"}`} />
                           )}
                           <span>{roleKey}</span>
                         </div>
                         {isSelected && (
-                          <span className="w-3.5 h-3.5 rounded-full bg-white/20 flex items-center justify-center">
-                            <Check className="w-2.5 h-2.5 stroke-[3] text-white" />
+                          <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center">
+                            <Check className="w-3 h-3 stroke-[3] text-white" />
                           </span>
                         )}
                       </div>
                       <div
-                        className={`text-[10px] font-semibold mt-1 truncate ${
+                        className={`text-[11px] font-semibold mt-1 truncate ${
                           isSelected ? "text-indigo-100" : "text-slate-500"
                         }`}
                       >
@@ -369,10 +352,10 @@ export default function LoginPage() {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleLogin} className="relative z-10 space-y-4 pt-1">
+            <form onSubmit={handleLogin} className="relative z-10 space-y-5 pt-1">
               {/* Email */}
               <div>
-                <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
                   Work Email Address
                 </label>
                 <div className="relative">
@@ -382,15 +365,15 @@ export default function LoginPage() {
                     placeholder="name@nexton.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full text-sm bg-slate-50/90 border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-slate-900 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 font-medium transition-all shadow-inner"
+                    className="w-full text-sm sm:text-base bg-slate-50/90 border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 sm:py-4 text-slate-900 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 font-medium transition-all shadow-inner"
                   />
-                  <Mail className="w-4.5 h-4.5 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
+                  <Mail className="w-5 h-5 text-slate-400 absolute left-4 top-4 pointer-events-none" />
                 </div>
               </div>
 
               {/* Password with Eye Toggle & Error Flash */}
               <div>
-                <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center justify-between mb-2">
                   <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
                     Password
                   </label>
@@ -406,24 +389,24 @@ export default function LoginPage() {
                       setPassword(e.target.value);
                       if (error) setError(null);
                     }}
-                    className={`w-full text-sm rounded-xl pl-11 pr-11 py-3 text-slate-900 focus:outline-none font-medium transition-all shadow-inner ${
+                    className={`w-full text-sm sm:text-base rounded-2xl pl-12 pr-12 py-3.5 sm:py-4 text-slate-900 focus:outline-none font-medium transition-all shadow-inner ${
                       isShake
                         ? "bg-rose-50 border-2 border-rose-500 ring-4 ring-rose-500/20"
                         : "bg-slate-50/90 border border-slate-200 focus:bg-white focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500"
                     }`}
                   />
                   <Lock
-                    className={`w-4.5 h-4.5 absolute left-3.5 top-3.5 pointer-events-none transition-colors ${
+                    className={`w-5 h-5 absolute left-4 top-4 pointer-events-none transition-colors ${
                       isShake ? "text-rose-500" : "text-slate-400"
                     }`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors"
+                    className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 p-1.5 rounded-xl transition-colors"
                     title={showPassword ? "Hide password" : "Show password"}
                   >
-                    {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
@@ -432,14 +415,14 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-indigo-600 via-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white rounded-xl text-sm font-black shadow-lg shadow-indigo-600/25 hover:shadow-indigo-600/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-2 cursor-pointer"
+                className="w-full py-4 sm:py-4.5 bg-gradient-to-r from-indigo-600 via-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white rounded-2xl text-base sm:text-lg font-black shadow-lg shadow-indigo-600/25 hover:shadow-indigo-600/40 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 mt-3 cursor-pointer"
               >
                 {loading ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
                     <span>Sign In to Nexton Console</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-5 h-5" />
                   </>
                 )}
               </button>

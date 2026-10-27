@@ -34,7 +34,7 @@ if (apiKey && projectId && messagingSenderId) {
       return;
     }
 
-    const notificationTitle = payload.data?.title || "NextOne Update";
+    const notificationTitle = payload.data?.title || "Nexton Update";
     const notificationOptions = {
       body: payload.data?.body || "",
       icon: payload.data?.icon || '/icon-192.png',
@@ -62,7 +62,7 @@ if (apiKey && projectId && messagingSenderId) {
     messaging.onBackgroundMessage((payload) => {
       console.log('[firebase-messaging-sw.js] Background push notification received:', payload);
       if (payload.notification) return;
-      const notificationTitle = payload.data?.title || "NextOne Update";
+      const notificationTitle = payload.data?.title || "Nexton Update";
       self.registration.showNotification(notificationTitle, {
         body: payload.data?.body || "",
         icon: payload.data?.icon || '/icon-192.png',

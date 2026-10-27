@@ -524,7 +524,7 @@ export function NotificationDrawer({
                     Enable Desktop Notifications
                   </h4>
                   <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">
-                    Receive instant desktop banners for assigned tasks, manager replies, and urgent announcements even when NextOne is minimized.
+                    Receive instant desktop banners for assigned tasks, manager replies, and urgent announcements even when Nexton is minimized.
                   </p>
                   <button
                     onClick={handleEnablePush}

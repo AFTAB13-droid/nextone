@@ -20,7 +20,7 @@ export default function NotFoundPage() {
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-indigo-600/20">
             <Layers className="w-5 h-5" />
           </div>
-          <span className="font-black text-base text-slate-900 tracking-wider">NextOne Portal</span>
+          <span className="font-black text-base text-slate-900 tracking-wider">Nexton Portal</span>
         </div>
         <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-mono text-slate-500">
           <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
@@ -45,7 +45,7 @@ export default function NotFoundPage() {
           Lost in Navigation?
         </h1>
         <p className="text-sm sm:text-base text-slate-600 font-medium max-w-md mx-auto leading-relaxed mb-8">
-          The requested path or resource does not exist in the NextOne Portal cluster. It may have been relocated or archived.
+          The requested path or resource does not exist in the Nexton Portal cluster. It may have been relocated or archived.
         </p>
 
         {/* Action Buttons */}
@@ -69,13 +69,13 @@ export default function NotFoundPage() {
 
         {/* Telemetry info */}
         <div className="mt-12 p-3.5 rounded-2xl bg-white/70 border border-slate-200 backdrop-blur-md inline-block text-[11px] font-mono text-slate-500">
-          Node: NextOne Gateway • Protocol: HTTP/2 • Handshake: Valid
+          Node: Nexton Gateway • Protocol: HTTP/2 • Handshake: Valid
         </div>
       </main>
 
       {/* Footer */}
       <footer className="w-full text-center text-xs text-slate-400 py-4 z-10">
-        &copy; {new Date().getFullYear()} NextOne Portal. All operations isolated and role-verified.
+        &copy; {new Date().getFullYear()} Nexton Portal. All operations isolated and role-verified.
       </footer>
     </div>
   );

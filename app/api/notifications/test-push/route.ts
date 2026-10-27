@@ -22,11 +22,11 @@ export async function POST(req: Request) {
         success: false,
         tokensCount: 0,
         userName: targetUser.name,
-        error: `No desktop push token registered for ${targetUser.name}. To receive desktop push notifications, open NextOne in that browser, click the Bell Icon in the top header, and click "Activate Notifications" (Allow permission).`,
+        error: `No desktop push token registered for ${targetUser.name}. To receive desktop push notifications, open Nexton in that browser, click the Bell Icon in the top header, and click "Activate Notifications" (Allow permission).`,
       });
     }
 
-    const title = body.title || `NextOne Radar Alert • ${targetUser.name}`;
+    const title = body.title || `Nexton Live Alert • ${targetUser.name}`;
     const message = body.body || `Verified Desktop FCM Web Push test dispatched at ${new Date().toLocaleTimeString()}. Operational systems nominal.`;
     const link = body.link || `/${actor.role}/tasks`;
 

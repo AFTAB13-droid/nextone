@@ -87,7 +87,7 @@ export class TaskService {
     // Email notification (Section 9: non-blocking)
     EmailService.sendNotificationEmail({
       to: assignee.email,
-      subject: `[NextOne] New Task Assigned: ${task.title} (${taskIdFormatted})`,
+      subject: `[Nexton] New Task Assigned: ${task.title} (${taskIdFormatted})`,
       htmlContent: `<p>Hello ${assignee.name},</p><p>${actor.name} has assigned you task <strong>${task.title}</strong> (${taskIdFormatted}).</p>`,
     });
 

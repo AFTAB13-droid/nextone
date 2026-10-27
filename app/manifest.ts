@@ -2,9 +2,9 @@ import { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "NextOne Enterprise Portal",
-    short_name: "NextOne",
-    description: "NextOne Operations & Team Workflow Management Platform",
+    name: "Nexton Enterprise Portal",
+    short_name: "Nexton",
+    description: "Nexton Operations & Team Workflow Management Platform",
     start_url: "/",
     display: "standalone",
     background_color: "#0f172a",

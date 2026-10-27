@@ -200,7 +200,7 @@ export function UserProfileDrawer({
           <div className="flex items-center justify-between pb-6 border-b border-white/10">
             <div className="flex items-center gap-2 text-xs font-mono text-cyan-300">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>NextOne Enterprise • Comprehensive User Profile</span>
+              <span>Nexton Enterprise • Comprehensive User Profile</span>
             </div>
 
             <button

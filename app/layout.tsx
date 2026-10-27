@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "NextOne | Enterprise Role-Based Portal",
-  description: "NextOne Enterprise Task Lifecycle, Team Hierarchy & Query Resolution Platform",
+  title: "Nexton | Enterprise Role-Based Portal",
+  description: "Nexton Enterprise Task Lifecycle, Team Hierarchy & Query Resolution Platform",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "NextOne",
+    title: "Nexton",
   },
 };
 

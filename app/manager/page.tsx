@@ -96,30 +96,30 @@ export default function ManagerDashboardPage() {
     <PortalShell
       user={currentUser}
       title="Manager Workspace"
-      subtitle="Supervise subordinate team members, delegate tasks, approve deliverables, and triage queries"
+      subtitle="Supervise team members, delegate tasks, verify deliverables, and resolve employee queries"
     >
       {/* Top Banner & Quick Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
             Hello, {currentUser.name}
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            You are supervising {teamMembers.length} team members with {delegatedTasks.length} delegated tasks.
+            Supervising {teamMembers.length} team members with {delegatedTasks.length} delegated tasks.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setIsCreateQueryOpen(true)}
-            className="px-4 py-2.5 text-xs font-bold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+            className="px-3.5 py-2 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl shadow-xs transition-all flex items-center gap-1.5"
           >
             <HelpCircle className="w-4 h-4 text-purple-600" />
             Ask Executive Admin
           </button>
           <button
             onClick={() => setIsCreateTaskOpen(true)}
-            className="px-4 py-2.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md shadow-indigo-600/25 transition-all flex items-center gap-1.5"
+            className="px-3.5 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs transition-all flex items-center gap-1.5"
           >
             <Plus className="w-4 h-4" />
             Delegate Task to Team
@@ -128,7 +128,7 @@ export default function ManagerDashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard
           title="Team Members"
           value={teamMembers.length}
@@ -160,7 +160,7 @@ export default function ManagerDashboardPage() {
       </div>
 
       {/* Urgent: Tasks Assigned by Admin to Manager */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm mb-8">
+      <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs mb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-bold text-slate-900">

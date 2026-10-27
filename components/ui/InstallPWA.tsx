@@ -57,7 +57,7 @@ export function InstallPWA({ variant = "sidebar" }: InstallPWAProps) {
 
   const handleInstallClick = async () => {
     if (isInstalled) {
-      setInstallFeedback("✓ NextOne is already installed on your PC!");
+      setInstallFeedback("✓ Nexton is already installed on your PC!");
       setTimeout(() => setInstallFeedback(""), 4000);
       return;
     }
@@ -89,7 +89,7 @@ export function InstallPWA({ variant = "sidebar" }: InstallPWAProps) {
       <button
         onClick={handleInstallClick}
         className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md shadow-indigo-600/30 group relative"
-        title="Install NextOne Desktop App"
+        title="Install Nexton Desktop App"
         aria-label="Install App"
       >
         <Download className="w-4 h-4 animate-bounce" />

@@ -79,7 +79,7 @@ export default function FcmInitializer() {
         onMessage(messaging, (payload) => {
           console.log("[FCM Initializer] Foreground push received:", payload);
 
-          const title = payload.notification?.title || payload.data?.title || "NextOne Alert";
+          const title = payload.notification?.title || payload.data?.title || "Nexton Alert";
           const body = payload.notification?.body || payload.data?.body || "";
           const link = payload.data?.click_action || payload.data?.link || "/";
           const icon = payload.data?.icon || "/icon-192.png";

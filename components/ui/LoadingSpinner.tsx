@@ -57,7 +57,7 @@ export function LoadingSpinner({
     );
   }
 
-  // Large & Fullscreen NextOne Trending Enterprise Loader
+  // Large & Fullscreen Nexton Trending Enterprise Loader
   const containerClasses = fullscreen
     ? "fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-xl"
     : `flex flex-col items-center justify-center py-16 px-4 w-full ${className}`;
@@ -85,7 +85,7 @@ export function LoadingSpinner({
             style={{ animationDuration: "1.8s" }}
           />
 
-          {/* Center NextOne Core Emblem */}
+          {/* Center Nexton Core Emblem */}
           <div className="relative w-9 h-9 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-indigo-600/30 ring-2 ring-white animate-pulse-glow">
             <Layers className="w-4 h-4" />
           </div>
@@ -96,7 +96,7 @@ export function LoadingSpinner({
           <div className="flex items-center gap-1.5 mb-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
             <p className="text-xs font-black uppercase tracking-wider text-slate-800">
-              {message || "Loading NextOne Workspace"}
+              {message || "Loading Nexton Workspace"}
             </p>
           </div>
 

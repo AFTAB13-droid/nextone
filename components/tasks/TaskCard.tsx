@@ -19,17 +19,17 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
   return (
     <div
       onClick={() => onClick(task)}
-      className={`rounded-[26px] p-5 sm:p-6 transition-all duration-300 cursor-pointer group flex flex-col justify-between relative overflow-hidden ${
+      className={`rounded-2xl p-5 sm:p-5 transition-all duration-200 cursor-pointer group flex flex-col justify-between relative bg-white border ${
         isOverdue
-          ? "bg-gradient-to-br from-rose-50/95 via-red-50/80 to-rose-100/50 border border-rose-300 ring-2 ring-rose-400/30 shadow-lg shadow-rose-500/10 hover:shadow-2xl hover:shadow-rose-500/20 hover:border-rose-400 hover:-translate-y-1"
-          : "bg-white border border-slate-200/90 shadow-2xs hover:shadow-xl hover:-translate-y-1 hover:border-indigo-300"
-      }`}
+          ? "border-rose-300 bg-rose-50/20 shadow-xs hover:shadow-md hover:border-rose-400"
+          : "border-slate-200/80 shadow-xs hover:shadow-md hover:border-indigo-300"
+      } hover:-translate-y-0.5`}
     >
-      {/* Top accent line */}
+      {/* Top clean accent strip */}
       <div
-        className={`absolute top-0 inset-x-0 h-1.5 ${
+        className={`absolute top-0 inset-x-0 h-1 rounded-t-2xl ${
           isOverdue
-            ? "bg-gradient-to-r from-rose-600 via-red-500 to-rose-600 animate-pulse"
+            ? "bg-rose-500"
             : task.priority === "urgent"
             ? "bg-rose-500"
             : task.priority === "high"
@@ -38,35 +38,28 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
         }`}
       />
 
-      {/* Overdue Watermark Graphic */}
-      {isOverdue && (
-        <div className="absolute -right-4 -bottom-4 pointer-events-none opacity-[0.08] text-rose-600 group-hover:opacity-[0.14] transition-opacity duration-300">
-          <Flame className="w-32 h-32" />
-        </div>
-      )}
-
       <div>
-        {/* Top Badges */}
-        <div className="flex items-center justify-between gap-2 mb-3">
+        {/* Top Badges Row */}
+        <div className="flex items-center justify-between gap-2 mb-2.5 pt-1">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span
-              className={`text-[10px] font-mono font-black px-2.5 py-0.5 rounded-lg border ${
+              className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-md border ${
                 isOverdue
-                  ? "bg-rose-100 text-rose-900 border-rose-200"
-                  : "bg-slate-100 text-slate-800 border-slate-200"
+                  ? "bg-rose-100/80 text-rose-800 border-rose-200"
+                  : "bg-slate-100 text-slate-700 border-slate-200/80"
               }`}
             >
               {task.taskId || `#${task._id.slice(-6)}`}
             </span>
             {task.parentTaskId && (
-              <span className="text-[10px] font-bold bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded-lg border border-cyan-200 flex items-center gap-1">
+              <span className="text-[10px] font-semibold bg-cyan-50 text-cyan-700 px-2 py-0.5 rounded-md border border-cyan-200/70 flex items-center gap-1">
                 <GitFork className="w-2.5 h-2.5" />
                 Subtask
               </span>
             )}
             {isOverdue && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-rose-600 to-red-600 text-white text-[10px] font-black uppercase tracking-wider shadow-sm shadow-rose-600/30 animate-pulse">
-                <Flame className="w-3 h-3 text-amber-300" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-200 text-[10px] font-bold">
+                <Clock className="w-2.5 h-2.5 text-rose-600" />
                 Overdue
               </span>
             )}
@@ -79,7 +72,7 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
 
         {/* Title */}
         <h3
-          className={`text-sm sm:text-base font-black transition-colors line-clamp-2 leading-snug ${
+          className={`text-sm sm:text-[15px] font-bold transition-colors line-clamp-2 leading-snug tracking-tight ${
             isOverdue
               ? "text-rose-950 group-hover:text-rose-600"
               : "text-slate-900 group-hover:text-indigo-600"
@@ -91,8 +84,8 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
         {/* Description snippet */}
         {task.description && (
           <p
-            className={`text-xs mt-1.5 line-clamp-2 leading-relaxed font-medium ${
-              isOverdue ? "text-rose-800/85" : "text-slate-500"
+            className={`text-xs mt-1.5 line-clamp-2 leading-relaxed font-normal ${
+              isOverdue ? "text-rose-900/80" : "text-slate-500"
             }`}
           >
             {task.description}
@@ -101,52 +94,45 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
 
         {/* Tags */}
         {task.tags && task.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {task.tags.map((tag, idx) => (
+          <div className="flex flex-wrap items-center gap-1.5 mt-3">
+            {task.tags.slice(0, 2).map((tag, idx) => (
               <span
                 key={idx}
-                className={`text-[10px] font-bold px-2.5 py-0.5 rounded-lg border ${
-                  isOverdue
-                    ? "bg-rose-100/70 text-rose-800 border-rose-200"
-                    : "bg-slate-50 text-slate-600 border-slate-200/80"
-                }`}
+                className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-200/70"
               >
                 #{tag}
               </span>
             ))}
+            {task.tags.length > 2 && (
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200/60">
+                +{task.tags.length - 2}
+              </span>
+            )}
           </div>
         )}
       </div>
 
-      <div className={`mt-5 pt-3.5 border-t ${isOverdue ? "border-rose-200/80" : "border-slate-100/90"}`}>
+      <div className={`mt-4 pt-3 border-t ${isOverdue ? "border-rose-200/60" : "border-slate-100"}`}>
         {/* Progress Bar */}
-        <div className="mb-3.5">
+        <div className="mb-3">
           <div className="flex justify-between text-[11px] font-medium mb-1.5">
-            <span
-              className={`text-[10px] uppercase font-black tracking-wider ${
-                isOverdue ? "text-rose-700" : "text-slate-400"
-              }`}
-            >
+            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
               Progress
             </span>
-            <span className={`font-extrabold ${isOverdue ? "text-rose-950" : "text-slate-800"}`}>
+            <span className="font-bold text-slate-700">
               {task.progressPercentage}%
             </span>
           </div>
-          <div
-            className={`w-full h-2 rounded-full overflow-hidden ${
-              isOverdue ? "bg-rose-200/70" : "bg-slate-100"
-            }`}
-          >
+          <div className="w-full h-1.5 rounded-full overflow-hidden bg-slate-100">
             <div
               className={`h-full rounded-full transition-all duration-300 ${
                 isOverdue
-                  ? "bg-gradient-to-r from-rose-500 to-red-600"
+                  ? "bg-rose-500"
                   : task.status === "completed"
                   ? "bg-emerald-500"
                   : task.progressPercentage > 50
-                  ? "bg-gradient-to-r from-indigo-500 to-cyan-500"
-                  : "bg-blue-500"
+                  ? "bg-indigo-600"
+                  : "bg-sky-500"
               }`}
               style={{ width: `${task.progressPercentage}%` }}
             />
@@ -157,49 +143,39 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
         <div className="flex items-center justify-between text-xs text-slate-500">
           <div className="flex items-center gap-2 min-w-0 pr-2">
             <div
-              className={`w-7 h-7 rounded-full overflow-hidden shrink-0 border ${
-                isOverdue ? "bg-rose-100 border-rose-300 ring-2 ring-rose-400/20" : "bg-indigo-50 border-slate-200"
-              }`}
+              className="w-6 h-6 rounded-full overflow-hidden shrink-0 border border-slate-200 bg-slate-100"
               title={`Assigned to: ${task.assignedTo?.name || "Unknown"}`}
             >
               <Image
                 src={getUserAvatar(task.assignedTo)}
                 alt={task.assignedTo?.name || "User"}
-                width={28}
-                height={28}
+                width={24}
+                height={24}
                 className="object-cover w-full h-full"
                 unoptimized
               />
             </div>
-            <span
-              className={`text-xs font-bold truncate max-w-[110px] ${
-                isOverdue ? "text-rose-900" : "text-slate-800"
-              }`}
-            >
+            <span className="text-xs font-semibold text-slate-800 truncate max-w-[120px]">
               {task.assignedTo?.name || "Assigned"}
             </span>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {task.comments && task.comments.length > 0 && (
-              <span
-                className={`flex items-center gap-1 text-[11px] font-bold ${
-                  isOverdue ? "text-rose-700" : "text-slate-400"
-                }`}
-              >
+              <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-400">
                 <MessageSquare className="w-3.5 h-3.5" />
                 {task.comments.length}
               </span>
             )}
 
             <span
-              className={`flex items-center gap-1 text-[11px] font-black px-2.5 py-1 rounded-xl transition-all ${
+              className={`flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md border ${
                 isOverdue
-                  ? "text-white bg-gradient-to-r from-rose-600 to-red-600 shadow-xs shadow-rose-600/30 animate-pulse"
-                  : "text-slate-600 bg-slate-50 border border-slate-200/80"
+                  ? "text-rose-700 bg-rose-100/70 border-rose-200"
+                  : "text-slate-600 bg-slate-50 border-slate-200/80"
               }`}
             >
-              <Calendar className="w-3 h-3" />
+              <Calendar className="w-3 h-3 text-slate-400" />
               <span>
                 {new Date(task.dueDate).toLocaleDateString("en-IN", {
                   month: "short",

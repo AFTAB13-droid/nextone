@@ -30,7 +30,7 @@ export default function ErrorBoundaryPage({
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-600 via-amber-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-rose-600/20">
             <Layers className="w-5 h-5" />
           </div>
-          <span className="font-black text-base text-slate-900 tracking-wider">NextOne Portal</span>
+          <span className="font-black text-base text-slate-900 tracking-wider">Nexton Portal</span>
         </div>
         <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-xs font-mono text-rose-700 font-bold">
           <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
@@ -94,7 +94,7 @@ export default function ErrorBoundaryPage({
 
       {/* Footer */}
       <footer className="w-full text-center text-xs text-slate-400 py-4 z-10">
-        &copy; {new Date().getFullYear()} NextOne Portal. System isolation safeguards intact.
+        &copy; {new Date().getFullYear()} Nexton Portal. System isolation safeguards intact.
       </footer>
     </div>
   );

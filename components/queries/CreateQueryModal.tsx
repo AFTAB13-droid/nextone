@@ -141,7 +141,7 @@ export function CreateQueryModal({
             <input
               type="text"
               required
-              placeholder="e.g. Blocked on Razorpay Production Webhook keys / Need spec clarification on Mumbai deployment"
+              placeholder="e.g. Clarification on Client Payment Terms / Vendor Invoice discrepancy for review"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-slate-900 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 font-bold transition-all shadow-inner"

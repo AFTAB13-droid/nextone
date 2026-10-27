@@ -241,7 +241,7 @@ export function EditUserModal({
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
-              placeholder="Enter new secure password (e.g. NextOne@2025)..."
+              placeholder="Enter new secure password (e.g. Nexton@2025)..."
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className="w-full text-xs sm:text-sm bg-white border border-slate-200 rounded-2xl pl-10 pr-12 py-3 text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 font-mono transition-all"

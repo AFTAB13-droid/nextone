@@ -264,7 +264,7 @@ export function CreateTaskModal({
           <div className="relative">
             <input
               type="text"
-              placeholder="e.g. Backend, UPI-Gateway, Sprint-4, High-Priority"
+              placeholder="e.g. Operations, Finance, ClientRelations, Documentation"
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
               className="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-slate-900 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 font-medium transition-all"

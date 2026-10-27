@@ -1,7 +1,7 @@
-# NextOne Company Portal 🚀
+# Nexton Company Portal 🚀
 ### Role-Based Access Control, Task Lifecycle Operations & Hierarchical Query Escalation
 
-**NextOne Portal** is a production-grade enterprise operations platform built with **Next.js 14 (App Router)**, **MongoDB (Mongoose)**, **Tailwind CSS**, and **JWT Authentication**.
+**Nexton Portal** is a production-grade enterprise operations platform built with **Next.js 14 (App Router)**, **MongoDB (Mongoose)**, **Tailwind CSS**, and **JWT Authentication**.
 
 ---
 
@@ -20,22 +20,22 @@ To keep API route handlers lean and maintainable, all heavy tasks and business r
 - `services/queryService.ts`: Hierarchical ticket raising (Employee → Manager, Manager → Admin), threaded discussions, and manager-to-admin escalation engine.
 - `services/notificationService.ts`: In-app notification creation, unread badge calculation, and mark-as-read tracking.
 - `services/cloudinaryService.ts`: Media uploads and attachment storage with Cloudinary API integration and responsive fallbacks.
-- `services/fcmService.ts`: Pre-wired architecture for Firebase Cloud Messaging (FCM) push notifications.
+- `services/fcmService.ts`: Architecture for Firebase Cloud Messaging (FCM) push notifications.
 
 ---
 
 ## 🔑 Quick Demo Credentials (Pre-Configured)
 
-All demo accounts share the password: **`NextOne@2025`**
+All demo accounts share the password: **`Nexton@2025`**
 
-| Role | Email | Supervised Under / Notes |
-| :--- | :--- | :--- |
-| **Executive Admin** | `admin@nextone.com` | Top-level oversight across entire company |
-| **Manager (Tech Lead)** | `sarah.lead@nextone.com` | Supervised by Admin; Leads Alex & Emily |
-| **Manager (Product Director)** | `david.lead@nextone.com` | Supervised by Admin; Leads Marcus |
-| **Employee (Frontend Dev)** | `alex.dev@nextone.com` | Reports to Sarah Jenkins |
-| **Employee (UI/UX Designer)** | `emily.design@nextone.com` | Reports to Sarah Jenkins |
-| **Employee (Marketing)** | `marcus.growth@nextone.com` | Reports to David Miller |
+| Role | Name | Email | Reporting Line / Focus |
+| :--- | :--- | :--- | :--- |
+| **Executive Admin** | Vikram Malhotra | `admin@nexton.com` | Top-level oversight across entire company |
+| **Operations Lead (Manager)** | Priya Sharma | `priya.sharma@nexton.com` | Leads Aarav Patel & Neha Gupta |
+| **Accounts Head (Manager)** | Rahul Verma | `rahul.verma@nexton.com` | Leads Rohan Mehta |
+| **Employee (Operations)** | Aarav Patel | `aarav.patel@nexton.com` | Reports to Priya Sharma |
+| **Employee (Design & Brand)** | Neha Gupta | `neha.gupta@nexton.com` | Reports to Priya Sharma |
+| **Employee (Business Dev)** | Rohan Mehta | `rohan.mehta@nexton.com` | Reports to Rahul Verma |
 
 > **Tip:** The Login page includes **1-Click Demo Buttons** for instant executive testing without typing!
 

@@ -30,7 +30,7 @@ export class UserService {
       throw new Error(`User with email "${normalizedEmail}" already exists`);
     }
 
-    const rawPassword = input.password || "NextOne@2025";
+    const rawPassword = input.password || "Nexton@2025";
     const hashedPassword = await AuthService.hashPassword(rawPassword);
 
     const defaultAvatar = getUserAvatar({

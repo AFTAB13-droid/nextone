@@ -69,7 +69,7 @@ export function OfflineScreen() {
           No Internet Connection
         </h3>
         <p className="text-xs text-slate-600 font-medium leading-relaxed max-w-sm mx-auto mb-6">
-          Your device appears to be offline. NextOne requires an active network link to synchronize real-time tasks, targets, and internal queries.
+          Your device appears to be offline. Nexton requires an active network link to synchronize real-time tasks, targets, and internal queries.
         </p>
 
         {/* Action Buttons */}

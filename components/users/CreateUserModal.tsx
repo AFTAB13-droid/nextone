@@ -34,7 +34,7 @@ export function CreateUserModal({
 }: CreateUserModalProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("NextOne@2025");
+  const [password, setPassword] = useState("Nexton@2025");
   const [role, setRole] = useState<UserRole>("employee");
   const [gender, setGender] = useState<"male" | "female" | "other">("male");
   const [managerId, setManagerId] = useState<string>("");
@@ -97,7 +97,7 @@ export function CreateUserModal({
 
       setName("");
       setEmail("");
-      setPassword("NextOne@2025");
+      setPassword("Nexton@2025");
       onUserCreated();
       onClose();
     } catch (err: unknown) {
@@ -220,7 +220,7 @@ export function CreateUserModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Provision Enterprise User"
-      description="Executive Provisioning: Generate enterprise credentials and map hierarchy within NextOne India"
+      description="Executive Provisioning: Generate enterprise credentials and map hierarchy within Nexton"
       maxWidth="xl"
     >
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -291,7 +291,7 @@ export function CreateUserModal({
               <input
                 type="email"
                 required
-                placeholder="e.g. aarav.sharma@nextone.in"
+                placeholder="e.g. aarav.sharma@nexton.in"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-slate-900 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 font-medium transition-all"

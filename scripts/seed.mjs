@@ -43,63 +43,20 @@ async function runSeed() {
     const notifsCollection = db.collection("notifications");
 
     const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash("NextOne@2025", salt);
+    const passwordHash = await bcrypt.hash("Nexton@2025", salt);
 
     console.log("[Seed] Creating Admin account...");
     const adminRes = await usersCollection.findOneAndUpdate(
-      { email: "admin@nextone.com" },
+      { email: { $in: ["admin@nexton.com", "admin@nextone.com"] } },
       {
         $set: {
-          name: "NextOne Executive Admin",
-          email: "admin@nextone.com",
+          name: "Vikram Malhotra",
+          email: "admin@nexton.com",
           password: passwordHash,
           role: "admin",
           department: "Executive Management",
-          designation: "Chief Operations Officer",
-          phone: "+1 800-555-0199",
-          avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80",
-          isActive: true,
-          firstLoginCompleted: true,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true, returnDocument: "after" }
-    );
-    const adminId = adminRes._id || (await usersCollection.findOne({ email: "admin@nextone.com" }))._id;
-
-    console.log("[Seed] Creating Managers...");
-    const m1Res = await usersCollection.findOneAndUpdate(
-      { email: "sarah.lead@nextone.com" },
-      {
-        $set: {
-          name: "Sarah Jenkins",
-          email: "sarah.lead@nextone.com",
-          password: passwordHash,
-          role: "manager",
-          department: "Engineering & Tech",
-          designation: "Principal Tech Lead",
-          avatar: "/avatars/woman-1.svg",
-          isActive: true,
-          firstLoginCompleted: true,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true, returnDocument: "after" }
-    );
-    const m1Id = m1Res._id || (await usersCollection.findOne({ email: "sarah.lead@nextone.com" }))._id;
-
-    const m2Res = await usersCollection.findOneAndUpdate(
-      { email: "david.lead@nextone.com" },
-      {
-        $set: {
-          name: "David Miller",
-          email: "david.lead@nextone.com",
-          password: passwordHash,
-          role: "manager",
-          department: "Product & Growth",
-          designation: "Product Director",
+          designation: "Managing Director",
+          phone: "+91 98200 12345",
           avatar: "/avatars/man-2.svg",
           isActive: true,
           firstLoginCompleted: true,
@@ -109,20 +66,69 @@ async function runSeed() {
       },
       { upsert: true, returnDocument: "after" }
     );
-    const m2Id = m2Res._id || (await usersCollection.findOne({ email: "david.lead@nextone.com" }))._id;
+    const adminDoc = adminRes.value || adminRes;
+    const adminId = adminDoc?._id || (await usersCollection.findOne({ email: "admin@nexton.com" }))?._id;
+
+    console.log("[Seed] Creating Managers...");
+    const m1Res = await usersCollection.findOneAndUpdate(
+      { email: { $in: ["priya.sharma@nexton.com", "sarah.lead@nexton.com", "sarah.lead@nextone.com"] } },
+      {
+        $set: {
+          name: "Priya Sharma",
+          email: "priya.sharma@nexton.com",
+          password: passwordHash,
+          role: "manager",
+          department: "Operations & Delivery",
+          designation: "Senior Operations Lead",
+          phone: "+91 98200 23456",
+          avatar: "/avatars/woman-1.svg",
+          isActive: true,
+          firstLoginCompleted: true,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
+      },
+      { upsert: true, returnDocument: "after" }
+    );
+    const m1Doc = m1Res.value || m1Res;
+    const m1Id = m1Doc?._id || (await usersCollection.findOne({ email: "priya.sharma@nexton.com" }))?._id;
+
+    const m2Res = await usersCollection.findOneAndUpdate(
+      { email: { $in: ["rahul.verma@nexton.com", "david.lead@nexton.com", "david.lead@nextone.com"] } },
+      {
+        $set: {
+          name: "Rahul Verma",
+          email: "rahul.verma@nexton.com",
+          password: passwordHash,
+          role: "manager",
+          department: "Accounts & Business",
+          designation: "Accounts & Business Head",
+          phone: "+91 98200 34567",
+          avatar: "/avatars/man-2.svg",
+          isActive: true,
+          firstLoginCompleted: true,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
+      },
+      { upsert: true, returnDocument: "after" }
+    );
+    const m2Doc = m2Res.value || m2Res;
+    const m2Id = m2Doc?._id || (await usersCollection.findOne({ email: "rahul.verma@nexton.com" }))?._id;
 
     console.log("[Seed] Creating Employees under Managers...");
     await usersCollection.findOneAndUpdate(
-      { email: "alex.dev@nextone.com" },
+      { email: { $in: ["aarav.patel@nexton.com", "alex.dev@nexton.com", "alex.dev@nextone.com"] } },
       {
         $set: {
-          name: "Alex Rivera",
-          email: "alex.dev@nextone.com",
+          name: "Aarav Patel",
+          email: "aarav.patel@nexton.com",
           password: passwordHash,
           role: "employee",
           managerId: m1Id,
-          department: "Engineering & Tech",
-          designation: "Senior Frontend Engineer",
+          department: "Operations & Delivery",
+          designation: "Operations Executive",
+          phone: "+91 98200 45678",
           avatar: "/avatars/man-1.svg",
           isActive: true,
           firstLoginCompleted: true,
@@ -134,16 +140,17 @@ async function runSeed() {
     );
 
     await usersCollection.findOneAndUpdate(
-      { email: "emily.design@nextone.com" },
+      { email: { $in: ["neha.gupta@nexton.com", "emily.design@nexton.com", "emily.design@nextone.com"] } },
       {
         $set: {
-          name: "Emily Chen",
-          email: "emily.design@nextone.com",
+          name: "Neha Gupta",
+          email: "neha.gupta@nexton.com",
           password: passwordHash,
           role: "employee",
           managerId: m1Id,
-          department: "Engineering & Tech",
-          designation: "UI/UX Product Designer",
+          department: "Marketing & Design",
+          designation: "Design & Brand Specialist",
+          phone: "+91 98200 56789",
           avatar: "/avatars/woman-2.svg",
           isActive: true,
           firstLoginCompleted: true,
@@ -155,16 +162,17 @@ async function runSeed() {
     );
 
     await usersCollection.findOneAndUpdate(
-      { email: "marcus.growth@nextone.com" },
+      { email: { $in: ["rohan.mehta@nexton.com", "marcus.growth@nexton.com", "marcus.growth@nextone.com"] } },
       {
         $set: {
-          name: "Marcus Vance",
-          email: "marcus.growth@nextone.com",
+          name: "Rohan Mehta",
+          email: "rohan.mehta@nexton.com",
           password: passwordHash,
           role: "employee",
           managerId: m2Id,
-          department: "Product & Growth",
-          designation: "Growth Marketing Specialist",
+          department: "Accounts & Business",
+          designation: "Business Development Associate",
+          phone: "+91 98200 67890",
           avatar: "/avatars/man-3.svg",
           isActive: true,
           firstLoginCompleted: true,
@@ -175,7 +183,7 @@ async function runSeed() {
       { upsert: true }
     );
 
-    console.log("[Seed] Completed! Sample credentials ready: NextOne@2025");
+    console.log("[Seed] Completed! Sample credentials ready: Nexton@2025");
     process.exit(0);
   } catch (err) {
     console.error("[Seed Error]", err.message);

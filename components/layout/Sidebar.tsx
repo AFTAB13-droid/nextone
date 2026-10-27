@@ -283,7 +283,7 @@ export function Sidebar({ role, user }: SidebarProps) {
             <Link
               href={`/${role}`}
               className="flex items-center gap-3 min-w-0 group"
-              title="NextOne Enterprise Platform"
+              title="Nexton Enterprise Platform"
             >
               <div className="relative w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-600/30 group-hover:shadow-indigo-500/50 group-hover:scale-105 transition-all duration-300 shrink-0 ring-1 ring-black/5">
                 <Layers className="w-5 h-5 transition-transform duration-300 group-hover:rotate-12" />
@@ -293,7 +293,7 @@ export function Sidebar({ role, user }: SidebarProps) {
               <div className="min-w-0 transition-opacity duration-300">
                 <div className="flex items-center gap-1.5">
                   <span className="font-black text-base text-slate-900 tracking-wider">
-                    NextOne
+                    Nexton
                   </span>
                   <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-200/80">
                     v2.5

@@ -27,8 +27,8 @@ import {
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@nextone.com");
-  const [password, setPassword] = useState("NextOne@2025");
+  const [email, setEmail] = useState("admin@nexton.com");
+  const [password, setPassword] = useState("Nexton@2025");
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<"admin" | "manager" | "employee">("admin");
   const [loading, setLoading] = useState(false);
@@ -38,25 +38,25 @@ export default function LoginPage() {
 
   const demoAccounts = {
     admin: {
-      email: "admin@nextone.com",
-      pass: "NextOne@2025",
-      name: "Executive Admin",
-      title: "Full Company & Hierarchy Oversight",
-      badge: "Executive Console",
+      email: "admin@nexton.com",
+      pass: "Nexton@2025",
+      name: "Vikram Malhotra",
+      title: "Managing Director • Executive Console",
+      badge: "Executive",
     },
     manager: {
-      email: "sarah.lead@nextone.com",
-      pass: "NextOne@2025",
-      name: "Sarah Jenkins",
-      title: "Team Delegation & Task Lifecycle",
-      badge: "Team Management",
+      email: "priya.sharma@nexton.com",
+      pass: "Nexton@2025",
+      name: "Priya Sharma",
+      title: "Senior Operations Lead • Team Management",
+      badge: "Manager",
     },
     employee: {
-      email: "alex.dev@nextone.com",
-      pass: "NextOne@2025",
-      name: "Alex Rivera",
-      title: "Individual Contributor & Targets",
-      badge: "Contributor Workspace",
+      email: "aarav.patel@nexton.com",
+      pass: "Nexton@2025",
+      name: "Aarav Patel",
+      title: "Operations Executive • Contributor Workspace",
+      badge: "Employee",
     },
   };
 
@@ -140,7 +140,7 @@ export default function LoginPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-black text-xl text-white tracking-wider">NextOne</span>
+                <span className="font-black text-xl text-white tracking-wider">Nexton</span>
                 <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
                   ENTERPRISE v2.5
                 </span>
@@ -166,7 +166,7 @@ export default function LoginPage() {
             </h1>
 
             <p className="text-sm sm:text-base text-slate-300 font-normal leading-relaxed max-w-xl">
-              NextOne unifies organization-wide task assignment, manager-to-employee work decomposition,
+              Nexton unifies organization-wide task assignment, manager-to-employee work decomposition,
               daily commitments, and team query resolution into a single real-time console.
             </p>
           </div>
@@ -397,7 +397,7 @@ export default function LoginPage() {
                   <input
                     type="email"
                     required
-                    placeholder="name@nextone.com"
+                    placeholder="name@nexton.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full text-sm sm:text-base bg-slate-50/90 border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 sm:py-4 text-slate-900 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-500 font-medium transition-all shadow-inner"
@@ -462,7 +462,7 @@ export default function LoginPage() {
 
         {/* Bottom Right Footer */}
         <div className="w-full text-center sm:text-left text-xs text-slate-400 flex flex-wrap items-center justify-between gap-3 z-10 pt-4">
-          <p>&copy; {new Date().getFullYear()} NextOne Inc. All Rights Reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Nexton Inc. All Rights Reserved.</p>
           <div className="flex items-center gap-3 text-xs font-mono text-slate-400">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />

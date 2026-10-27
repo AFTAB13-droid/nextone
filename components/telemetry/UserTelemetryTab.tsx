@@ -175,7 +175,7 @@ export function UserTelemetryTab({ user }: UserTelemetryTabProps) {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `NextOne_WorkHours_${user.name.replace(/\s+/g, "_")}_${range}.csv`);
+    link.setAttribute("download", `Nexton_WorkHours_${user.name.replace(/\s+/g, "_")}_${range}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

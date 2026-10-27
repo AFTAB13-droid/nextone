@@ -396,39 +396,38 @@ export default function EmployeeTasksPage() {
                       <tr
                         key={t._id}
                         onClick={() => handleOpenDetails(t)}
-                        className={`transition-all duration-200 group cursor-pointer border-b ${
+                        className={`transition-colors duration-150 group cursor-pointer border-b ${
                           isOverdue
-                            ? "bg-gradient-to-r from-rose-100/85 via-red-50/70 to-rose-50/40 hover:bg-rose-100/95 border-b-rose-200 border-l-4 border-l-rose-600 shadow-xs"
-                            : "border-slate-100 hover:bg-slate-50/70"
+                            ? "bg-rose-50/30 hover:bg-rose-50/60 border-b-rose-100 border-l-2 border-l-rose-500"
+                            : "border-slate-100 hover:bg-slate-50/80"
                         }`}
                       >
                         {/* Task Title & ID */}
-                        <td className="px-6 py-4.5 max-w-[280px]">
+                        <td className="px-5 py-3.5 max-w-[280px]">
                           <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                             <span
-                              className={`text-[10px] font-mono font-black px-2.5 py-0.5 rounded-lg border flex items-center gap-1 ${
+                              className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md border flex items-center gap-1 ${
                                 isOverdue
-                                  ? "bg-rose-100 text-rose-800 border-rose-300"
-                                  : "bg-slate-100 text-slate-800 border-slate-200"
+                                  ? "bg-rose-100/80 text-rose-800 border-rose-200"
+                                  : "bg-slate-100 text-slate-700 border-slate-200"
                               }`}
                             >
-                              {isOverdue && <Flame className="w-3 h-3 text-rose-600 animate-pulse" />}
                               {t.taskId || `#${t._id.slice(-6)}`}
                             </span>
                             {isOverdue && (
-                              <span className="text-[9px] font-black uppercase tracking-wider bg-rose-600 text-white px-2 py-0.5 rounded-full shadow-2xs animate-pulse">
+                              <span className="text-[9px] font-bold uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-200 px-1.5 py-0.5 rounded-md">
                                 Overdue
                               </span>
                             )}
                             {t.parentTaskId && (
-                              <span className="text-[9px] font-bold bg-cyan-50 text-cyan-700 px-1.5 py-0.5 rounded border border-cyan-200 flex items-center gap-1">
+                              <span className="text-[9px] font-semibold bg-cyan-50 text-cyan-700 px-1.5 py-0.5 rounded-md border border-cyan-200/70 flex items-center gap-1">
                                 <GitFork className="w-2.5 h-2.5" />
                                 Subtask
                               </span>
                             )}
                           </div>
                           <p
-                            className={`font-black text-sm line-clamp-1 transition-colors ${
+                            className={`font-semibold text-sm line-clamp-1 transition-colors ${
                               isOverdue
                                 ? "text-rose-950 group-hover:text-rose-700"
                                 : "text-slate-900 group-hover:text-indigo-600"
@@ -439,7 +438,7 @@ export default function EmployeeTasksPage() {
                           {t.description && (
                             <p
                               className={`text-[11px] line-clamp-1 mt-0.5 ${
-                                isOverdue ? "text-rose-700/80 font-medium" : "text-slate-400"
+                                isOverdue ? "text-rose-800/80" : "text-slate-400"
                               }`}
                             >
                               {t.description}
@@ -448,75 +447,58 @@ export default function EmployeeTasksPage() {
                         </td>
 
                         {/* Delegated By */}
-                        <td className="px-6 py-4.5">
-                          <div className={`text-xs font-semibold ${isOverdue ? "text-rose-900" : "text-slate-700"}`}>
+                        <td className="px-5 py-3.5">
+                          <div className="text-xs font-medium text-slate-700">
                             {t.assignedBy?.name || "Manager"}
                           </div>
-                          <span className={`text-[10px] capitalize block ${isOverdue ? "text-rose-600 font-medium" : "text-slate-400"}`}>
+                          <span className="text-[10px] capitalize block text-slate-400">
                             {t.assignedBy?.role || "Manager"}
                           </span>
                         </td>
 
                         {/* Priority */}
-                        <td className="px-6 py-4.5">
+                        <td className="px-5 py-3.5">
                           <PriorityBadge priority={t.priority} />
                         </td>
 
                         {/* Status */}
-                        <td className="px-6 py-4.5">
-                          <div className="flex items-center gap-1.5">
-                            <StatusBadge status={t.status} />
-                            {t.status === "in_review" && (
-                              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                            )}
-                          </div>
+                        <td className="px-5 py-3.5">
+                          <StatusBadge status={t.status} />
                         </td>
 
                         {/* Due Date */}
-                        <td className="px-6 py-4.5">
-                          {isOverdue ? (
-                            <div>
-                              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-rose-100 border border-rose-300 text-rose-800 w-fit">
-                                <Flame className="w-3.5 h-3.5 text-rose-600 animate-pulse" />
-                                <span className="font-mono text-[11px] font-black text-rose-700">
-                                  {new Date(t.dueDate).toLocaleDateString("en-IN", {
-                                    month: "short",
-                                    day: "numeric",
-                                  })}
-                                </span>
-                              </div>
-                              <span className="text-[9px] font-black text-rose-600 block mt-1 uppercase tracking-wider">
-                                Action Overdue
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1.5">
-                              <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                              <span className="font-mono text-[11px] text-slate-600">
-                                {new Date(t.dueDate).toLocaleDateString("en-IN", {
-                                  month: "short",
-                                  day: "numeric",
-                                })}
-                              </span>
-                            </div>
-                          )}
+                        <td className="px-5 py-3.5">
+                          <span
+                            className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg border ${
+                              isOverdue
+                                ? "text-rose-700 bg-rose-100/70 border-rose-200"
+                                : "text-slate-600 bg-slate-50 border-slate-200/80"
+                            }`}
+                          >
+                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                            {new Date(t.dueDate).toLocaleDateString("en-IN", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
                         </td>
 
                         {/* Progress */}
-                        <td className="px-6 py-4.5 min-w-[130px]">
-                          <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-1">
+                        <td className="px-5 py-3.5 min-w-[120px]">
+                          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700 mb-1">
                             <span>{t.progressPercentage}%</span>
                           </div>
-                          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all duration-300 ${
                                 isOverdue
-                                  ? "bg-gradient-to-r from-rose-500 to-red-600"
+                                  ? "bg-rose-500"
                                   : t.status === "completed"
                                   ? "bg-emerald-500"
                                   : t.progressPercentage > 50
-                                  ? "bg-gradient-to-r from-indigo-500 to-cyan-500"
-                                  : "bg-blue-500"
+                                  ? "bg-indigo-600"
+                                  : "bg-sky-500"
                               }`}
                               style={{ width: `${t.progressPercentage}%` }}
                             />
@@ -524,17 +506,13 @@ export default function EmployeeTasksPage() {
                         </td>
 
                         {/* Action Button */}
-                        <td className="px-6 py-4.5 text-right" onClick={(e) => e.stopPropagation()}>
+                        <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => handleOpenDetails(t)}
-                            className={`px-3.5 py-2 text-xs font-extrabold rounded-xl transition-all duration-200 inline-flex items-center gap-1.5 btn-action ${
-                              isOverdue
-                                ? "text-white bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 shadow-md shadow-rose-600/20"
-                                : "text-indigo-700 bg-indigo-50 hover:bg-indigo-600 hover:text-white border border-indigo-200/80 shadow-2xs"
-                            }`}
+                            className="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all inline-flex items-center gap-1 text-indigo-700 bg-indigo-50 hover:bg-indigo-600 hover:text-white border border-indigo-200/70 shadow-2xs"
                           >
                             <Eye className="w-3.5 h-3.5" />
-                            <span>Inspect</span>
+                            <span>Details</span>
                           </button>
                         </td>
                       </tr>

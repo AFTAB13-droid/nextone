@@ -5,31 +5,31 @@ import { Shield, GitBranch, User, Flame, AlertCircle, Clock, CheckCircle2, XCirc
 export function RoleBadge({ role }: { role: UserRole }) {
   const configs: Record<
     UserRole,
-    { label: string; bg: string; text: string; border: string; glow: string; icon: React.ReactNode }
+    { label: string; bg: string; text: string; border: string; dot: string; icon: React.ReactNode }
   > = {
     admin: {
       label: "Admin",
-      bg: "bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-900",
-      text: "text-indigo-200",
-      border: "border-indigo-500/40 shadow-[0_0_12px_rgba(99,102,241,0.25)]",
-      glow: "bg-indigo-400",
-      icon: <Shield className="w-3 h-3 text-cyan-300 stroke-[2.5]" />,
+      bg: "bg-indigo-50 text-indigo-700",
+      text: "text-indigo-700",
+      border: "border-indigo-200/90",
+      dot: "bg-indigo-500",
+      icon: <Shield className="w-3 h-3 text-indigo-600 stroke-[2.2]" />,
     },
     manager: {
       label: "Manager",
-      bg: "bg-gradient-to-r from-blue-900 via-indigo-900 to-cyan-950",
-      text: "text-cyan-200",
-      border: "border-cyan-500/35 shadow-[0_0_10px_rgba(6,182,212,0.2)]",
-      glow: "bg-cyan-400",
-      icon: <GitBranch className="w-3 h-3 text-cyan-400 stroke-[2.5]" />,
+      bg: "bg-sky-50 text-sky-700",
+      text: "text-sky-700",
+      border: "border-sky-200/90",
+      dot: "bg-sky-500",
+      icon: <GitBranch className="w-3 h-3 text-sky-600 stroke-[2.2]" />,
     },
     employee: {
       label: "Employee",
-      bg: "bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900",
-      text: "text-slate-200",
-      border: "border-slate-700 shadow-sm",
-      glow: "bg-emerald-400",
-      icon: <User className="w-3 h-3 text-emerald-400 stroke-[2.5]" />,
+      bg: "bg-slate-50 text-slate-700",
+      text: "text-slate-700",
+      border: "border-slate-200/90",
+      dot: "bg-slate-500",
+      icon: <User className="w-3 h-3 text-slate-600 stroke-[2.2]" />,
     },
   };
 
@@ -37,14 +37,10 @@ export function RoleBadge({ role }: { role: UserRole }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-black tracking-wide uppercase border ${c.bg} ${c.text} ${c.border} transition-all duration-200 hover:scale-[1.02]`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide uppercase border ${c.bg} ${c.border}`}
     >
       {c.icon}
       <span>{c.label}</span>
-      <span className="relative flex h-1.5 w-1.5 ml-0.5">
-        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${c.glow}`} />
-        <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${c.glow}`} />
-      </span>
     </span>
   );
 }
@@ -52,91 +48,79 @@ export function RoleBadge({ role }: { role: UserRole }) {
 export function StatusBadge({ status }: { status: TaskStatus | QueryStatus | string }) {
   const configs: Record<
     string,
-    { label: string; bg: string; text?: string; border: string; dot: string; pulse?: boolean }
+    { label: string; bg: string; text?: string; border: string; dot: string }
   > = {
     assigned: {
       label: "Assigned",
-      bg: "bg-blue-50/90 text-blue-700",
-      border: "border-blue-200",
+      bg: "bg-blue-50/80 text-blue-700",
+      border: "border-blue-200/80",
       dot: "bg-blue-500",
-      pulse: false,
     },
     pending: {
       label: "Pending",
-      bg: "bg-amber-50/90 text-amber-700",
-      border: "border-amber-200",
+      bg: "bg-amber-50/80 text-amber-700",
+      border: "border-amber-200/80",
       dot: "bg-amber-500",
-      pulse: false,
     },
     in_progress: {
       label: "In Progress",
-      bg: "bg-cyan-50/90 text-cyan-800",
-      border: "border-cyan-300 shadow-[0_0_8px_rgba(6,182,212,0.15)]",
-      dot: "bg-cyan-500",
-      pulse: true,
+      bg: "bg-sky-50/80 text-sky-800",
+      border: "border-sky-200/80",
+      dot: "bg-sky-500",
     },
     on_hold: {
       label: "On Hold",
-      bg: "bg-purple-50/90 text-purple-700",
-      border: "border-purple-200",
+      bg: "bg-purple-50/80 text-purple-700",
+      border: "border-purple-200/80",
       dot: "bg-purple-500",
-      pulse: false,
     },
     in_review: {
       label: "In Review",
-      bg: "bg-indigo-50/90 text-indigo-700",
-      border: "border-indigo-300 shadow-[0_0_8px_rgba(99,102,241,0.15)]",
+      bg: "bg-indigo-50/80 text-indigo-700",
+      border: "border-indigo-200/80",
       dot: "bg-indigo-500",
-      pulse: true,
     },
     completed: {
       label: "Completed",
-      bg: "bg-emerald-50/90 text-emerald-800",
-      border: "border-emerald-300",
+      bg: "bg-emerald-50/80 text-emerald-800",
+      border: "border-emerald-200/80",
       dot: "bg-emerald-500",
-      pulse: false,
     },
     cancelled: {
       label: "Cancelled",
       bg: "bg-slate-100 text-slate-600",
       border: "border-slate-200",
       dot: "bg-slate-400",
-      pulse: false,
     },
     blocked: {
       label: "Blocked",
-      bg: "bg-rose-50/90 text-rose-700",
-      border: "border-rose-300",
+      bg: "bg-rose-50/80 text-rose-700",
+      border: "border-rose-200/80",
       dot: "bg-rose-500",
-      pulse: true,
     },
     open: {
       label: "Open Query",
-      bg: "bg-emerald-50/90 text-emerald-700",
-      border: "border-emerald-300",
+      bg: "bg-emerald-50/80 text-emerald-700",
+      border: "border-emerald-200/80",
       dot: "bg-emerald-500",
-      pulse: true,
     },
     resolved: {
       label: "Resolved",
-      bg: "bg-teal-50/90 text-teal-800",
-      border: "border-teal-300",
+      bg: "bg-teal-50/80 text-teal-800",
+      border: "border-teal-200/80",
       dot: "bg-teal-500",
-      pulse: false,
     },
     reopened: {
       label: "Reopened",
-      bg: "bg-amber-50/90 text-amber-800",
-      border: "border-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.2)]",
+      bg: "bg-amber-50/80 text-amber-800",
+      border: "border-amber-200/80",
       dot: "bg-amber-500",
-      pulse: true,
     },
     closed: {
       label: "Closed",
       bg: "bg-slate-100 text-slate-700",
       border: "border-slate-200",
       dot: "bg-slate-400",
-      pulse: false,
     },
   };
 
@@ -146,21 +130,13 @@ export function StatusBadge({ status }: { status: TaskStatus | QueryStatus | str
       bg: "bg-slate-100 text-slate-800",
       border: "border-slate-200",
       dot: "bg-slate-400",
-      pulse: false,
     };
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[11px] font-extrabold border ${c.bg} ${c.border} transition-all`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold border ${c.bg} ${c.border}`}
     >
-      <span className="relative flex h-2 w-2">
-        {c.pulse && (
-          <span
-            className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${c.dot}`}
-          />
-        )}
-        <span className={`relative inline-flex rounded-full h-2 w-2 ${c.dot}`} />
-      </span>
+      <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
       <span>{c.label}</span>
     </span>
   );
@@ -173,35 +149,35 @@ export function PriorityBadge({ priority }: { priority: TaskPriority | "normal" 
   > = {
     urgent: {
       label: "Urgent",
-      bg: "bg-gradient-to-r from-rose-50 to-red-100/80",
+      bg: "bg-rose-50 text-rose-700",
       text: "text-rose-700",
-      border: "border-rose-300 shadow-[0_0_10px_rgba(244,63,94,0.2)] animate-pulse",
-      icon: <Flame className="w-3 h-3 text-rose-600 stroke-[2.5]" />,
+      border: "border-rose-200",
+      icon: <Flame className="w-3 h-3 text-rose-600 stroke-[2]" />,
     },
     high: {
       label: "High",
-      bg: "bg-amber-50",
+      bg: "bg-amber-50 text-amber-800",
       text: "text-amber-800",
-      border: "border-amber-300 shadow-2xs",
-      icon: <AlertCircle className="w-3 h-3 text-amber-600 stroke-[2.5]" />,
+      border: "border-amber-200",
+      icon: <AlertCircle className="w-3 h-3 text-amber-600 stroke-[2]" />,
     },
     medium: {
       label: "Medium",
-      bg: "bg-sky-50",
+      bg: "bg-sky-50 text-sky-800",
       text: "text-sky-800",
       border: "border-sky-200",
       icon: <Clock className="w-3 h-3 text-sky-600" />,
     },
     normal: {
       label: "Normal",
-      bg: "bg-blue-50",
+      bg: "bg-blue-50 text-blue-800",
       text: "text-blue-800",
       border: "border-blue-200",
       icon: <Clock className="w-3 h-3 text-blue-600" />,
     },
     low: {
       label: "Low",
-      bg: "bg-slate-100",
+      bg: "bg-slate-50 text-slate-700",
       text: "text-slate-700",
       border: "border-slate-200",
       icon: <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />,
@@ -212,7 +188,7 @@ export function PriorityBadge({ priority }: { priority: TaskPriority | "normal" 
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border ${c.bg} ${c.text} ${c.border}`}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${c.bg} ${c.text} ${c.border}`}
     >
       {c.icon}
       <span>{c.label}</span>

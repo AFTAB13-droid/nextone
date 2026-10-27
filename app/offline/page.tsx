@@ -36,7 +36,7 @@ export default function OfflinePage() {
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-indigo-600/20">
             <Layers className="w-5 h-5" />
           </div>
-          <span className="font-black text-base text-slate-900 tracking-wider">NextOne Portal</span>
+          <span className="font-black text-base text-slate-900 tracking-wider">Nexton Portal</span>
         </div>
         <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-mono text-slate-500">
           <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
@@ -59,7 +59,7 @@ export default function OfflinePage() {
           Connection Link Lost
         </h1>
         <p className="text-sm sm:text-base text-slate-600 font-medium max-w-md mx-auto leading-relaxed mb-4">
-          NextOne could not establish a connection to the internet. Please verify your network cables, router, or mobile data settings.
+          Nexton could not establish a connection to the internet. Please verify your network cables, router, or mobile data settings.
         </p>
 
         <p className="text-xs font-mono text-slate-400 mb-8">{statusText}</p>
@@ -95,7 +95,7 @@ export default function OfflinePage() {
 
       {/* Footer */}
       <footer className="w-full text-center text-xs text-slate-400 py-4 z-10">
-        &copy; {new Date().getFullYear()} NextOne Portal. Client offline detection active.
+        &copy; {new Date().getFullYear()} Nexton Portal. Client offline detection active.
       </footer>
     </div>
   );

@@ -110,7 +110,7 @@ export class EmailReportService {
         <body>
           <div class="container">
             <div class="header">
-              <div style="font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #a5b4fc;">NextOne Enterprise • Telemetry Audit</div>
+              <div style="font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #a5b4fc;">Nexton Enterprise • Telemetry Audit</div>
               <h1 style="margin: 6px 0 0 0; font-size: 24px; font-weight: 900; letter-spacing: -0.5px;">Official Work Hours & Presence Report</h1>
               <div style="font-size: 13px; color: #cbd5e1; margin-top: 4px;">Reporting Period: <strong>${reportPeriod}</strong></div>
             </div>
@@ -120,7 +120,7 @@ export class EmailReportService {
                 Hello <strong>${recipientName}</strong>,
               </p>
               <p style="font-size: 13px; color: #475569; line-height: 1.5;">
-                Enclosed is your verified work hours, screen time, and portal activity summary compiled directly from NextOne's ambient telemetry system.
+                Enclosed is your verified work hours, screen time, and portal activity summary compiled directly from Nexton's ambient telemetry system.
               </p>
 
               ${
@@ -188,7 +188,7 @@ export class EmailReportService {
             </div>
 
             <div class="footer">
-              NextOne Operations Portal • Verified Automated Telemetry Engine • Generated on ${new Date().toLocaleString()}
+              Nexton Operations Portal • Verified Automated Telemetry Engine • Generated on ${new Date().toLocaleString()}
             </div>
           </div>
         </body>
@@ -213,10 +213,10 @@ export class EmailReportService {
       });
 
       const info = await transporter.sendMail({
-        from: `"NextOne Enterprise" <${smtpUser}>`,
+        from: `"Nexton Enterprise" <${smtpUser}>`,
         to: recipientEmail,
         cc: ccEmail || undefined,
-        subject: `NextOne Work Hours & Telemetry Report — ${reportPeriod}`,
+        subject: `Nexton Work Hours & Telemetry Report — ${reportPeriod}`,
         html: htmlContent,
       });
 

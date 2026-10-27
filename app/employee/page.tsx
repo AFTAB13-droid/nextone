@@ -102,12 +102,12 @@ export default function EmployeeDashboardPage() {
     <PortalShell
       user={currentUser}
       title="Employee Workspace"
-      subtitle="Track your assigned deliverables, update work progress, and consult your designated manager"
+      subtitle="Track assigned deliverables, update work progress, and consult your reporting manager"
     >
       {/* Top Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
             Welcome back, {currentUser.name}
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -117,7 +117,7 @@ export default function EmployeeDashboardPage() {
 
         <button
           onClick={() => setIsQueryModalOpen(true)}
-          className="px-4 py-2.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md shadow-indigo-600/25 transition-all flex items-center gap-1.5"
+          className="px-3.5 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs transition-all flex items-center gap-1.5"
         >
           <HelpCircle className="w-4 h-4" />
           Ask Reporting Manager
@@ -125,7 +125,7 @@ export default function EmployeeDashboardPage() {
       </div>
 
       {/* KPI Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard
           title="Active Deliverables"
           value={activeTasks.length}
@@ -163,7 +163,7 @@ export default function EmployeeDashboardPage() {
       </div>
 
       {/* Today's Target Highlight Banner */}
-      <div className="mb-8 p-5 bg-gradient-to-r from-indigo-50/90 via-white to-purple-50/70 rounded-2xl border border-indigo-100/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="mb-6 p-4 sm:p-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20 shrink-0">
             <TargetIcon className="w-5 h-5" />

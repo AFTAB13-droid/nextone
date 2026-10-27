@@ -258,10 +258,10 @@ export default function FirstLoginWelcomeModal({
                 <span>Welcome & Onboarding</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white drop-shadow-sm">
-                Welcome to NextOne, {displayUser.name}!
+                Welcome to Nexton, {displayUser.name}!
               </h2>
               <p className="text-indigo-100 text-sm mt-1 max-w-xl">
-                We are delighted to welcome you to NextOne. Please review your orientation guidelines and accept company policies to enter your workspace.
+                We are delighted to welcome you to Nexton. Please review your orientation guidelines and accept company policies to enter your workspace.
               </p>
             </div>
 
@@ -325,7 +325,7 @@ export default function FirstLoginWelcomeModal({
                 ) : (
                   <>
                     <h4 className="font-semibold text-slate-800">
-                      {displayUser.role === "manager" ? "Direct Leadership / Admin" : displayUser.role === "admin" ? "System Super Admin" : "NextOne Operations"}
+                      {displayUser.role === "manager" ? "Direct Leadership / Admin" : displayUser.role === "admin" ? "System Super Admin" : "Nexton Operations"}
                     </h4>
                     <p className="text-xs text-slate-500">Directly coordinated through Management</p>
                   </>
@@ -342,10 +342,10 @@ export default function FirstLoginWelcomeModal({
               </div>
               <div>
                 <h3 className="font-bold text-slate-900 text-sm sm:text-base">
-                  Executive Welcome from NextOne Leadership
+                  Executive Welcome from Nexton Leadership
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">
-                  &ldquo;Welcome to our enterprise ecosystem! NextOne is designed to empower every employee and team lead with real-time operational transparency, high-velocity collaboration, and frictionless task execution. You are equipped with cutting-edge tools to track targets, resolve bottlenecks instantly, and thrive in an agile environment. We are excited to build remarkable outcomes together.&rdquo;
+                  &ldquo;Welcome to our enterprise ecosystem! Nexton is designed to empower every employee and team lead with real-time operational transparency, high-velocity collaboration, and frictionless task execution. You are equipped with cutting-edge tools to track targets, resolve bottlenecks instantly, and thrive in an agile environment. We are excited to build remarkable outcomes together.&rdquo;
                 </p>
               </div>
             </div>
@@ -439,7 +439,7 @@ export default function FirstLoginWelcomeModal({
                   className="mt-0.5 w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"
                 />
                 <span className="text-xs text-slate-600 leading-relaxed group-hover:text-slate-900 transition-colors">
-                  <strong className="text-slate-800 font-semibold">Privacy Policy & Code of Conduct:</strong> I have reviewed and agree to NextOne&apos;s data privacy principles, organizational ethics, and confidential information protocols.
+                  <strong className="text-slate-800 font-semibold">Privacy Policy & Code of Conduct:</strong> I have reviewed and agree to Nexton&apos;s data privacy principles, organizational ethics, and confidential information protocols.
                 </span>
               </label>
 

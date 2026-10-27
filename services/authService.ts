@@ -18,7 +18,16 @@ export class AuthService {
     await connectDB();
 
     const normalizedEmail = email.toLowerCase().trim();
-    const userDoc = await User.findOne({ email: normalizedEmail, isActive: true }).select("+password");
+    let userDoc = await User.findOne({ email: normalizedEmail, isActive: true }).select("+password");
+
+    // Support flexible alias between nexton.com and nextone.com
+    if (!userDoc && normalizedEmail.includes("@nextone.")) {
+      const alias = normalizedEmail.replace("@nextone.", "@nexton.");
+      userDoc = await User.findOne({ email: alias, isActive: true }).select("+password");
+    } else if (!userDoc && normalizedEmail.includes("@nexton.")) {
+      const alias = normalizedEmail.replace("@nexton.", "@nextone.");
+      userDoc = await User.findOne({ email: alias, isActive: true }).select("+password");
+    }
 
     if (!userDoc || !userDoc.password) {
       throw new Error("Invalid email or password");

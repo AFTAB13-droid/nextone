@@ -764,7 +764,7 @@ export default function AdminUsersPage() {
               <span>of {users.length} total enterprise accounts displayed</span>
             </div>
             <div className="flex items-center gap-4 text-[11px] text-slate-400 font-mono">
-              <span>NextOne Security Layer Active</span>
+              <span>Nexton Security Layer Active</span>
               <span>•</span>
               <span>Role-Based Access Control</span>
             </div>

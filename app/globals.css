@@ -46,6 +46,20 @@ body {
   background-attachment: fixed;
 }
 
+/* Premium Light Gradient Mesh Login Pattern */
+.bg-login-mesh {
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.16) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.18) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.14) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.14) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(238, 242, 255, 0.7) 0px, transparent 80%),
+    radial-gradient(#cbd5e1 1.15px, transparent 1.15px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 28px 28px;
+  background-attachment: fixed;
+}
+
 /* Light high-tech login pattern */
 .bg-login-pattern {
   background-color: #ffffff;
@@ -176,3 +190,25 @@ body {
 .animate-orbit-reverse {
   animation: orbitRotateReverse 8s linear infinite;
 }
+
+/* Wrong Password Shake Animation */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%, 45%, 75% { transform: translateX(-8px); }
+  30%, 60%, 90% { transform: translateX(8px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* Subtle Floating Glow Pulse */
+@keyframes softFloat {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-8px) scale(1.02); }
+}
+
+.animate-soft-float {
+  animation: softFloat 6s ease-in-out infinite;
+}
+

@@ -25,6 +25,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Megaphone,
+  GitBranch,
 } from "lucide-react";
 import { UserRole, AuthSession } from "@/lib/types";
 import { getUserAvatar } from "@/lib/avatarHelper";
@@ -143,7 +144,8 @@ export function Sidebar({ role, user }: SidebarProps) {
     {
       groupTitle: "Organization",
       items: [
-        { href: "/admin/users", label: "Team & Hierarchy", icon: Users },
+        { href: "/admin/users", label: "User Directory", icon: Users },
+        { href: "/admin/teams", label: "Teams & Hierarchy", icon: GitBranch },
       ],
     },
     {

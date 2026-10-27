@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import PortalShell from "@/components/layout/PortalShell";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { RoleBadge } from "@/components/ui/Badge";
@@ -267,177 +268,7 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* ================= ACTIVE SUPERVISORY HIERARCHY SECTION ================= */}
-      <div className="bg-white rounded-[32px] p-6 sm:p-8 border border-slate-200/90 shadow-sm mb-10 overflow-hidden relative">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-pulse" />
-              <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                Active Supervisory Hierarchy
-              </h3>
-            </div>
-            <p className="text-xs text-slate-500 mt-1 font-medium">
-              Interactive managerial hierarchy trees: Click any profile or avatar to inspect full employee logs
-            </p>
-          </div>
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/80">
-            <GitBranch className="w-3.5 h-3.5 text-indigo-600" />
-            <span>{managers.length} Active Operational Nodes</span>
-          </div>
-        </div>
-
-        {managers.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 text-xs">
-            No manager accounts registered yet. Create a Manager account to establish hierarchy lines.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {managers.map((mgr) => {
-              const team = employees.filter((e) => {
-                const mid = typeof e.managerId === "object" && e.managerId ? e.managerId._id : e.managerId;
-                return mid === mgr._id;
-              });
-
-              return (
-                <div
-                  key={mgr._id}
-                  className="rounded-3xl bg-gradient-to-b from-indigo-50/70 via-white to-white p-5 sm:p-6 border border-indigo-100/90 shadow-sm hover:shadow-md transition-all duration-200 group relative flex flex-col justify-between"
-                >
-                  <div>
-                    {/* Manager Header: Clickable to view profile */}
-                    <div
-                      onClick={() => openUserProfile(mgr)}
-                      className="flex items-center gap-3.5 cursor-pointer p-2 rounded-2xl hover:bg-white/80 transition-all"
-                    >
-                      <div className="relative w-12 h-12 rounded-2xl overflow-hidden bg-white ring-2 ring-indigo-500/25 shadow-md shrink-0 group-hover:scale-105 transition-transform">
-                        <Image
-                          src={getUserAvatar(mgr)}
-                          alt={mgr.name}
-                          width={48}
-                          height={48}
-                          className="w-full h-full object-cover"
-                          unoptimized
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <p className="text-sm font-black text-slate-900 truncate hover:text-indigo-600">
-                            {mgr.name}
-                          </p>
-                        </div>
-                        <p className="text-xs font-semibold text-slate-500 truncate">
-                          {mgr.designation} • {mgr.department}
-                        </p>
-                        <p className="text-[10px] text-indigo-600 font-mono mt-0.5 truncate">{mgr.email}</p>
-                      </div>
-                    </div>
-
-                    {/* Subordinates List */}
-                    <div className="pt-4 mt-3 border-t border-indigo-100/90 space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <p className="text-[11px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                          <Users className="w-3.5 h-3.5 text-indigo-600" />
-                          <span>Direct Reports ({team.length})</span>
-                        </p>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
-                            {team.length} Active
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openManagerTeamAssign(mgr);
-                            }}
-                            className="text-[11px] font-extrabold text-indigo-700 hover:text-indigo-900 bg-indigo-100/80 hover:bg-indigo-200 px-2.5 py-1 rounded-xl transition-all flex items-center gap-1 shadow-2xs"
-                            title="Assign unassigned employees to this manager"
-                          >
-                            <UserPlus className="w-3 h-3 text-indigo-600" />
-                            <span>Assign</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {team.length === 0 ? (
-                        <p className="text-xs text-slate-400 italic py-3 bg-white/60 rounded-xl px-3 border border-dashed border-indigo-200 text-center">
-                          No associates assigned under this manager.
-                        </p>
-                      ) : (
-                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                          {team.map((emp) => (
-                            <div
-                              key={emp._id}
-                              className="flex items-center justify-between p-2.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:border-indigo-300 hover:shadow-xs transition-all"
-                            >
-                              <div
-                                onClick={() => openUserProfile(emp)}
-                                className="flex items-center gap-2.5 min-w-0 cursor-pointer hover:opacity-85"
-                              >
-                                <div className="w-8 h-8 rounded-xl overflow-hidden bg-slate-100 ring-1 ring-slate-200 shrink-0">
-                                  <Image
-                                    src={getUserAvatar(emp)}
-                                    alt={emp.name}
-                                    width={32}
-                                    height={32}
-                                    className="w-full h-full object-cover"
-                                    unoptimized
-                                  />
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="text-xs font-bold text-slate-800 truncate hover:text-indigo-600">
-                                    {emp.name}
-                                  </p>
-                                  <p className="text-[10px] text-slate-400 truncate">{emp.designation}</p>
-                                </div>
-                              </div>
-
-                              <button
-                                onClick={() => {
-                                  setSelectedEmployeeForAssign(emp);
-                                  setIsAssignOpen(true);
-                                }}
-                                className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 px-2 py-1 rounded-lg hover:bg-indigo-50 transition-colors shrink-0"
-                              >
-                                Reassign
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Card bottom footer */}
-                  <div className="pt-3 mt-4 border-t border-indigo-100/60 flex items-center justify-between text-[11px] text-slate-400 font-mono">
-                    <span>Supervisor ID: #{mgr._id.slice(-6)}</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openManagerTeamAssign(mgr)}
-                        className="font-bold text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg border border-indigo-200 transition-colors flex items-center gap-1"
-                        title="Manage team members for this manager"
-                      >
-                        <UserPlus className="w-3.5 h-3.5 text-indigo-600" />
-                        <span>Assign Team</span>
-                      </button>
-                      <button
-                        onClick={() => openUserProfile(mgr)}
-                        className="font-bold text-indigo-600 hover:underline flex items-center gap-1"
-                      >
-                        <span>Full Profile</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* ================= ALL USERS: TABLE VIEW OR CARDS VIEW ================= */}
+      {/* ================= ALL USERS: TABLE VIEW OR CARDS VIEW (PRIMARY DIRECTORY) ================= */}
       {viewMode === "table" ? (
         /* UPGRADED ENTERPRISE TABLE VIEW */
         <div className="bg-white rounded-[32px] sm:rounded-[36px] border border-slate-200/90 shadow-sm overflow-hidden mb-8">
@@ -960,6 +791,199 @@ export default function AdminUsersPage() {
           )}
         </div>
       )}
+
+      {/* ================= ACTIVE SUPERVISORY HIERARCHY PREVIEW (TOP 3 TEAMS) ================= */}
+      <div className="bg-white rounded-[32px] p-6 sm:p-8 border border-slate-200/90 shadow-sm mb-10 overflow-hidden relative">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-pulse" />
+              <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                Active Supervisory Hierarchy
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500 mt-1 font-medium">
+              Interactive managerial hierarchy trees: Click any profile or avatar to inspect full employee logs
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-500 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/80">
+              <GitBranch className="w-3.5 h-3.5 text-indigo-600" />
+              <span>{managers.length} Active Operational Nodes</span>
+            </div>
+            <Link
+              href="/admin/teams"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold border border-indigo-200 transition-all shadow-2xs"
+            >
+              <span>Full View</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+
+        {managers.length === 0 ? (
+          <div className="text-center py-8 text-slate-400 text-xs">
+            No manager accounts registered yet. Create a Manager account to establish hierarchy lines.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {managers.slice(0, 3).map((mgr) => {
+              const team = employees.filter((e) => {
+                const mid = typeof e.managerId === "object" && e.managerId ? e.managerId._id : e.managerId;
+                return mid === mgr._id;
+              });
+
+              return (
+                <div
+                  key={mgr._id}
+                  className="rounded-3xl bg-gradient-to-b from-indigo-50/70 via-white to-white p-5 sm:p-6 border border-indigo-100/90 shadow-sm hover:shadow-md transition-all duration-200 group relative flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Manager Header: Clickable to view profile */}
+                    <div
+                      onClick={() => openUserProfile(mgr)}
+                      className="flex items-center gap-3.5 cursor-pointer p-2 rounded-2xl hover:bg-white/80 transition-all"
+                    >
+                      <div className="relative w-12 h-12 rounded-2xl overflow-hidden bg-white ring-2 ring-indigo-500/25 shadow-md shrink-0 group-hover:scale-105 transition-transform">
+                        <Image
+                          src={getUserAvatar(mgr)}
+                          alt={mgr.name}
+                          width={48}
+                          height={48}
+                          className="w-full h-full object-cover"
+                          unoptimized
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <p className="text-sm font-black text-slate-900 truncate hover:text-indigo-600">
+                            {mgr.name}
+                          </p>
+                        </div>
+                        <p className="text-xs font-semibold text-slate-500 truncate">
+                          {mgr.designation} • {mgr.department}
+                        </p>
+                        <p className="text-[10px] text-indigo-600 font-mono mt-0.5 truncate">{mgr.email}</p>
+                      </div>
+                    </div>
+
+                    {/* Subordinates List */}
+                    <div className="pt-4 mt-3 border-t border-indigo-100/90 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[11px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5 text-indigo-600" />
+                          <span>Direct Reports ({team.length})</span>
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                            {team.length} Active
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openManagerTeamAssign(mgr);
+                            }}
+                            className="text-[11px] font-extrabold text-indigo-700 hover:text-indigo-900 bg-indigo-100/80 hover:bg-indigo-200 px-2.5 py-1 rounded-xl transition-all flex items-center gap-1 shadow-2xs"
+                            title="Assign unassigned employees to this manager"
+                          >
+                            <UserPlus className="w-3 h-3 text-indigo-600" />
+                            <span>Assign</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {team.length === 0 ? (
+                        <p className="text-xs text-slate-400 italic py-3 bg-white/60 rounded-xl px-3 border border-dashed border-indigo-200 text-center">
+                          No associates assigned under this manager.
+                        </p>
+                      ) : (
+                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                          {team.map((emp) => (
+                            <div
+                              key={emp._id}
+                              className="flex items-center justify-between p-2.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:border-indigo-300 hover:shadow-xs transition-all"
+                            >
+                              <div
+                                onClick={() => openUserProfile(emp)}
+                                className="flex items-center gap-2.5 min-w-0 cursor-pointer hover:opacity-85"
+                              >
+                                <div className="w-8 h-8 rounded-xl overflow-hidden bg-slate-100 ring-1 ring-slate-200 shrink-0">
+                                  <Image
+                                    src={getUserAvatar(emp)}
+                                    alt={emp.name}
+                                    width={32}
+                                    height={32}
+                                    className="w-full h-full object-cover"
+                                    unoptimized
+                                  />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-bold text-slate-800 truncate hover:text-indigo-600">
+                                    {emp.name}
+                                  </p>
+                                  <p className="text-[10px] text-slate-400 truncate">{emp.designation}</p>
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={() => {
+                                  setSelectedEmployeeForAssign(emp);
+                                  setIsAssignOpen(true);
+                                }}
+                                className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 px-2 py-1 rounded-lg hover:bg-indigo-50 transition-colors shrink-0"
+                              >
+                                Reassign
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Card bottom footer */}
+                  <div className="pt-3 mt-4 border-t border-indigo-100/60 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                    <span>Supervisor ID: #{mgr._id.slice(-6)}</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openManagerTeamAssign(mgr)}
+                        className="font-bold text-xs text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-lg border border-indigo-200 transition-colors flex items-center gap-1"
+                        title="Manage team members for this manager"
+                      >
+                        <UserPlus className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Assign Team</span>
+                      </button>
+                      <button
+                        onClick={() => openUserProfile(mgr)}
+                        className="font-bold text-indigo-600 hover:underline flex items-center gap-1"
+                      >
+                        <span>Full Profile</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Section Footer: Link to Full Teams & Hierarchy Console */}
+        <div className="pt-4 mt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+          <span>
+            Previewing 3 of {managers.length} supervisory branches.
+          </span>
+          <Link
+            href="/admin/teams"
+            className="font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+          >
+            <span>Open All {managers.length} Teams & Full Hierarchy View</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      </div>
 
       {/* Modals & Profile Drawer */}
       <CreateUserModal
